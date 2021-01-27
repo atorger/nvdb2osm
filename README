@@ -328,6 +328,11 @@ dessa täcker in väldigt många fall och olika typer av knepigheter i
 NVDB-datat så är det troligt att skriptet kommer behöva kompletteras
 ytterligare för att kunna översätta all NVDB-data i hela Sverige.
 
+För att spara tid i bästa snabbhacksanda kör geometrikoden en massa
+integritetstest på det egna datat efter förändringar görs istället för
+vettiga unittest, det gör att skriptet går långsammare än det annars
+skulle göra. Om man orkar kan man fixa det senare.
+
 Det finns en .pylintrc så man kan köra pylint på koden.
 
 nvdb2osm.py:
@@ -472,3 +477,6 @@ Rondeller har ofta namn. I de kartor som bygger på NVDB-datat så
 använder man i regel gatunamn även i rondeller, men skriptet lägger
 dit rondellnamnet istället, medan gatunamnen (ofta fler än ett) hamnar
 i "alt_name"-fältet.
+
+Undernummer läggs inte till på vägnummer än så länge. Men det kanske
+man vill ha med?

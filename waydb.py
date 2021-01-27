@@ -372,14 +372,15 @@ class WayDatabase:
         if ep_count > 0:
             print("  Warning: extend snaps typically means that there are gaps in the data source's geometry")
 
-        # FIXME remove after stable
-        for ways in rlid_ways.values():
-            for way in ways:
-                for ep in [ way.way[0], way.way[-1] ]:
-                    dist, new_point, _ = endpoints.find_nearest_within(ep, self.POINT_SNAP_DISTANCE, exclude_self=True)
-                    if new_point is not None:
-                        print(dist, ep, new_point)
-                        raise RuntimeError("endpoints placed too closely together")
+        self_check = False
+        if self_check:
+            for ways in rlid_ways.values():
+                for way in ways:
+                    for ep in [ way.way[0], way.way[-1] ]:
+                        dist, new_point, _ = endpoints.find_nearest_within(ep, self.POINT_SNAP_DISTANCE, exclude_self=True)
+                        if new_point is not None:
+                            print(dist, ep, new_point)
+                            raise RuntimeError("endpoints placed too closely together")
 
         print("  Join segments with same RLID and insert to search data structure...", end='', flush=True)
         self._insert_into_reference_geometry(rlid_ways, endpoints)

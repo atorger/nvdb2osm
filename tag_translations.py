@@ -253,7 +253,7 @@ def tag_translation_single_value_with_time_interval(tags, key, value):
     if time_intervals == -1:
         append_fixme_value(tags, "time interval parse failure")
     elif time_intervals is not None:
-        tags[key + ":conditional"] = "%s @ %s" % (value, time_intervals)
+        tags[key + ":conditional"] = "%s @ (%s)" % (value, time_intervals)
     else:
         tags[key] = value
 
@@ -289,19 +289,33 @@ def tag_translation_DKBarighet(tags):
 # tag_translation_DKBegrAxelBoggiTryck()
 #
 def tag_translation_DKBegrAxelBoggiTryck(tags):
+    time_interval = parse_time_interval_tags(tags)
+    if time_interval == -1:
+        append_fixme_value(tags, "time interval parse failure")
+        time_interval = None
+
     for i in range(1, 4): # i = 1..3
         weight = tags.get("TRYCK" + str(i), -1)
         if weight > 0 and "TYPTRYCK" + str(i) in tags:
             typ = tags["TYPTRYCK" + str(i)]
-            if typ == "axeltryck":
-                tags["maxaxleload"] = weight
-            elif typ == "boggitryck":
-                tags["maxbogieweight"] = weight
-            elif typ == "trippelaxeltryck":
-                tags["maxaxleload:conditional"] = str(weight) + ' @ "triple axle"'
+            if time_interval is None:
+                if typ == "axeltryck":
+                    tags["maxaxleload"] = weight
+                elif typ == "boggitryck":
+                    tags["maxbogieweight"] = weight
+                elif typ == "trippelaxeltryck":
+                    tags["maxaxleload:conditional"] = '%s @ "triple axle"' % weight
+            else:
+                if typ == "axeltryck":
+                    tags["maxaxleload:conditional"] = "%s @ (%s)" % (weight, time_interval)
+                elif typ == "boggitryck":
+                    tags["maxbogieweight:conditional"] = "%s @ (%s)" % (weight, time_interval)
+                elif typ == "trippelaxeltryck":
+                    tags["maxaxleload:conditional"] = '%s @ (%s AND "triple axle")' % (weight, time_interval)
 
         tags.pop("TRYCK" + str(i), None)
         tags.pop("TYPTRYCK" + str(i), None)
+    _ = [tags.pop(key, None) for key in [ "AARTAL1", "AARTAL2", "LOEPNUMME1", "LOEPNUMME2", "MEDELADEON", "ORGNISTI1", "ORGNISTI2" ]]
 
 # tag_translation_DKBegrBruttovikt()
 #
@@ -911,14 +925,6 @@ TAG_TRANSLATIONS = {
     },
     "NVDB_DKBegrAxelBoggiTryck": {
         "translator_function": tag_translation_DKBegrAxelBoggiTryck,
-        "expect_unset_time_intervals": True,
-        "AARTAL1": None,
-        "AARTAL2": None,
-        "LOEPNUMME1": None,
-        "LOEPNUMME2": None,
-        "MEDELADEON": None,
-        "ORGNISTI1": None,
-        "ORGNISTI2": None
     },
     "NVDB_DKBegrBruttovikt": {
         "translator_function": tag_translation_DKBegrBruttovikt,

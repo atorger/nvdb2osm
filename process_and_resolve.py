@@ -36,7 +36,6 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
 
     for way in ways:
         wd = NvdbSegmentDup(way)
-        # FIXME check date keep one with newest date if different
         if wd not in waysd:
             waysd[wd] = way
         else:
@@ -155,7 +154,7 @@ def preprocess_footcycleway_crossings(points, way_db):
 #  - It's not possible to resolve the layer tag from OSM data. If the NVDB data would be 100%
 #    correct it would be possible to make good educated guesses with an advanced algorithm. However
 #    as the data is not that good and multi-layer bridges are rare, there's no algoritm for that, a
-#    FIXME tag is added instead with crossing bridges and tunnels are detected.
+#    fix me tag is added instead with crossing bridges and tunnels are detected.
 #
 #  - OSM mapping tradition is to map a cycleway/footway that passes under a street as a tunnel,
 #    even when the construction is technically a short bridge. In NVDB this is mapped as överfart

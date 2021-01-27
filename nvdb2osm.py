@@ -16,7 +16,6 @@ from osmxml import waydb2osmxml, write_osmxml
 from nvdb_ti import time_interval_strings
 
 # FIXME replace ' ' with '=' in translation table
-# FIXME long gap fix? Example: RekFarligtGods Malmö
 
 def read_nvdb_shapefile(directory, name, tag_translations):
     pattern = os.path.join(directory, "*" + name + ".shp")
@@ -229,7 +228,11 @@ def main():
     used_keys = SortedDict()
     cleanup_used_nvdb_tags(way_db.way_db, used_keys)
     cleanup_used_nvdb_tags(way_db.point_db, used_keys)
+
     check_for_leftover_keys(used_keys)
+    print("Time intervals used:")
+    for str1 in time_interval_strings:
+        print("  '%s'" % str1)
 
     way_db.join_segments_with_same_tags()
 
@@ -238,8 +241,9 @@ def main():
     waydb2osmxml(way_db, output_filename)
     print("done", flush=True)
 
-    for str1 in time_interval_strings:
-        print("Time interval: '%s'" % str1)
+    print("Conversion is complete. NVDB data is not 100% perfect/complete: remember\n"
+          "to validate the OSM file (JOSM validator) and check any fixme tags.\n"
+          "Merge responsibly!")
 
 if __name__ == "__main__":
     main()

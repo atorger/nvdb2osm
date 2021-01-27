@@ -238,10 +238,10 @@ class GeometrySearch:
             if seg.way[idx].dist != p.dist:
                 print("dist %s => %s" % (seg.way[idx].dist, p.dist))
             else:
-                print("no change in dist %s", p.dist)
+                print("no change in dist %s" % p.dist)
             seg.way[idx].dist = p.dist
 
-    def _test_way_dist(self, way): #FIXME remove when robust
+    def _test_way_dist(self, way):
         assert self._use_dist
         it = iter(way.way)
         prev = next(it)
