@@ -33,7 +33,7 @@ def write_osmxml(way_list, point_list, filename):
             self_crossing_rlids.add(seg.rlid)
     if len(self_crossing) > 0:
         print("Warning: data contains self-crossing ways, these will be split to support OSM XML format")
-        print("These are the RLIDs for the self-crossing ways: %s" % self_crossing_rlids)
+        print(f"These are the RLIDs for the self-crossing ways: {self_crossing_rlids}")
 
     unique_id = 1
     points = {}
@@ -49,16 +49,16 @@ def write_osmxml(way_list, point_list, filename):
         for seg in point_list:
             p = seg.way
             if p in points:
-                raise RuntimeError("Duplicate node in tagged node database %s %s" % (seg.rlid, latlon_str(seg.way)))
+                raise RuntimeError(f"Duplicate node in tagged node database {seg.rlid} {latlon_str(seg.way)}")
             p.node_id = unique_id
             unique_id += 1
             points[p] = p.node_id
             lat, lon = sweref99_transformer.transform(p.y, p.x)
-            print("<node id='-%s' version='1' lat='%s' lon='%s'>" % (p.node_id, lat, lon))
-            print("  <tag k='source' v='NVDB' />")
-            print("  <tag k='NVDB:RLID' v='%s' />" % seg.rlid)
+            print(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}'>\n" \
+                  f"  <tag k='source' v='NVDB' />\n" \
+                  f"  <tag k='NVDB:RLID' v='{seg.rlid}' />")
             for k, v in seg.tags.items():
-                print("  <tag k='%s' v='%s' />" % (k, tag_to_str(v)))
+                print(f"  <tag k='{k}' v='{tag_to_str(v)}' />")
             print("</node>")
 
         # all anonymous nodes (points)
@@ -69,7 +69,7 @@ def write_osmxml(way_list, point_list, filename):
                     unique_id += 1
                     points[p] = p.node_id
                     lat, lon = sweref99_transformer.transform(p.y, p.x)
-                    print("<node id='-%s' version='1' lat='%s' lon='%s' />" % (p.node_id, lat, lon))
+                    print(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}' />")
                 else:
                     p.node_id = points[p]
 
@@ -88,13 +88,13 @@ def write_osmxml(way_list, point_list, filename):
             for way in ways:
                 seg.way_id = unique_id
                 unique_id += 1
-                print("<way id='-%s' version='1'>" % seg.way_id)
+                print(f"<way id='-{seg.way_id}' version='1'>")
                 for p in way:
-                    print("  <nd ref='-%s' />" % p.node_id)
-                print("  <tag k='source' v='NVDB' />")
-                print("  <tag k='NVDB:RLID' v='%s' />" % seg.rlid)
+                    print(f"  <nd ref='-{p.node_id}' />")
+                print(f"  <tag k='source' v='NVDB' />\n" \
+                      f"  <tag k='NVDB:RLID' v='{seg.rlid}' />")
                 for k, v in seg.tags.items():
-                    print("  <tag k='%s' v='%s' />" % (k, tag_to_str(v)))
+                    print(f"  <tag k='{k}' v='{tag_to_str(v)}' />")
                 print("</way>")
 
         print("</osm>")
