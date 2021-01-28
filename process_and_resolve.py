@@ -1,3 +1,5 @@
+from functools import cmp_to_key
+
 from geometry_basics import *
 from geometry_search import GeometrySearch
 from merge_tags import merge_tags, append_fixme_value
@@ -369,6 +371,26 @@ def process_street_crossings(points, way_db, data_src_name):
         print("Warning: did not find any way crossing for %s street crossings, fixme tags added" % fixme_count)
     return crossings
 
+# compare_vagnummer()
+#
+# Sort function for road numbers, used when there is more than one road number on the same road segment.
+#
+def compare_vagnummer(r1, r2):
+    r1_is_e = str(r1)[0] == 'E'
+    r2_is_e = str(r2)[0] == 'E'
+    # E roads get sorted first
+    if r1_is_e != r2_is_e:
+        if r1_is_e:
+            return -1
+        return 1
+    if r1_is_e:
+        num1 = int(r1[1:])
+        num2 = int(r2[1:])
+    else:
+        num1 = int(r1)
+        num2 = int(r2)
+    return num1 - num2
+
 # resolve_highways()
 #
 # Using information from multiple layers, figure out what the highway tag should be (and some side tags)
@@ -549,7 +571,10 @@ def resolve_highways(way_db):
 
             # convert tags
             if "NVDB_vagnummer" in way.tags:
-                way.tags["ref"] = way.tags["NVDB_vagnummer"]
+                refs = way.tags["NVDB_vagnummer"]
+                if isinstance(refs, list):
+                    refs.sort(key=cmp_to_key(compare_vagnummer))
+                way.tags["ref"] = refs
 
 
     # Second pass for things we couldn't resolve in the first pass
