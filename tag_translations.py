@@ -99,12 +99,16 @@
 
 from nvdb_ti import parse_time_interval_tags, parse_range_date
 
+# append_fixme_value()
+#
 def append_fixme_value(tags, fixme_value):
     if "fixme" not in tags:
         tags["fixme"] = "NVDB import: " + fixme_value
     else:
         tags["fixme"] = tags["fixme"] + "; " + fixme_value
 
+# tag_translation_expect_unset_time_intervals()
+#
 def tag_translation_expect_unset_time_intervals(tags):
     time_intervals = parse_time_interval_tags(tags)
     if time_intervals == -1:
@@ -114,6 +118,11 @@ def tag_translation_expect_unset_time_intervals(tags):
         print("Warning: unexpected time interval (not implemented) RLID %s" % tags["RLID"])
         append_fixme_value(tags, "Warning: time interval handling not implemented)")
 
+# add_extra_nodes_tag()
+#
+# Add key/value tags to the custom NVDB_extra_nodes tag, the purpose being to
+# store tags that cannot be mapped to the single node due to conflicts.
+#
 def add_extra_nodes_tag(tags, extra_nodes):
     if len(extra_nodes) == 0:
         return
@@ -129,17 +138,10 @@ def add_extra_nodes_tag(tags, extra_nodes):
     tags["NVDB_extra_nodes"] = en_str
     append_fixme_value(tags, "NVDB_extra_nodes need to be mapped manually")
 
-def merge_conditions(cond_list):
-    if len(cond_list) == 0:
-        return ""
-    cond_str = ""
-    for cond in cond_list:
-        cond_str += " AND " + cond
-    cond_str = cond_str[5:]
-    if len(cond_list) > 1:
-        cond_str = "(" + cond_str + ")"
-    return cond_str
-
+# parse_speed_limit()
+#
+# Parse NVDB speed limit, taking certain NVDB peculiarities into account.
+#
 def parse_speed_limit(tags, key):
     speed = tags[key]
     if speed == "gångfart":
@@ -153,6 +155,10 @@ def parse_speed_limit(tags, key):
     del tags[key]
     return speed
 
+# parse_direction()
+#
+# Parse NVDB direction and convert to OSM :forward/:backward or nothing.
+#
 def parse_direction(tags):
     if not "RIKTNING" in tags or tags["RIKTNING"] == "Med och mot" or tags["RIKTNING"] is None:
         dir_str = ""
@@ -167,6 +173,11 @@ def parse_direction(tags):
     tags.pop("RIKTNING", None)
     return dir_str
 
+# parse_vehicle_types()
+#
+# Parse NVDB vehicle types ("fordonstyp"), and alternatively if purpose/user lists are provided
+# also road users ("trafikant"
+#
 def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
     del_tags = []
     idx = 1
@@ -199,13 +210,92 @@ def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
         del tags[k]
     return vtypes
 
+# Translation table used by the tag_translation_fordon_trafikant() function
+VEHICLES_AND_ROAD_USERS_TRANSLATIONS = {
+    "ambulans":              "emergency",
+    "anläggningens fordon":  "IGNORE",
+    "arbetsfordon":          "IGNORE",
+    "beskickningsfordon":    "USER diplomatic", # custom tag
+    "beställd taxi":         "taxi",
+    "besökare":              "PURPOSE destination",
+    "bil":                   "motorcar",
+    "bilägare med arrendekontrakt": "USER permit_holder",
+    "bokbuss":               "bus",
+    "buss":                  "bus",
+    "cykel":                 "bicycle",
+    "efterfordon":           "trailer",
+    "fordon":                "vehicle",
+
+    # the actual vehicle is described in an extra free-text tag as it's free text it's not
+    # reasonable to make a translation tabel for it
+    "fordon enligt beskrivning": "IGNORE",
+
+    "fordon i linjetrafik":  "bus",
+    "fordon i linjetrafik vid på- och avstigning":        "bus",
+    "fordon med särskilt tillstånd":                      "USER permit_holder",
+
+    # full length: "fordon eller fordonståg vars längd, lasten inräknad, överstiger 10 meter"
+    "fordon eller fordonståg vars längd, lasten inräkna": "lhv",
+
+    # full length: "fordon som används av rörelsehindrade med särskilt tillstånd"
+    "fordon som används av rörelsehindrade med särskilt": "USER disabled",
+
+    "fordon som används för distribution av post":        "IGNORE",
+    "fyrhjulig moped":       "atv",
+    "färdtjänstfordon":      "psv",
+    "godstransporter":       "hgv",
+    "hästfordon":            "carriage",
+    "kommunens servicefordon": "IGNORE",
+    "lastbil":               "hgv",
+    "lastbil vid på- och avlastning": "PURPOSE delivery",
+    "2-axlig lastbil":       "hgv",
+    "lätt lastbil":          "goods",
+    "lätt motorcykel":       "motorcycle",
+    "lätt terrängvagn":      "atv",
+    "moped":                 "moped",
+    "moped klass I":         "moped",
+    "moped klass II":        "mofa",
+    "motorcykel":            "motorcycle",
+    # full length: "motordrivet fordon med tillkopplad släpvagn annat än påhängsvagn eller enaxlig släpvagn"
+    "motordrivet fordon med tillkopplad släpvagn annat": "hgv",
+    "motordrivna fordon":    "motor_vehicle",
+    "motorfordon":           "motor_vehicle",
+    "motorredskap":          "IGNORE",
+    "motorredskap klass I":  "IGNORE",
+    "motorredskap klass II": "IGNORE",
+    "okänt":                 "IGNORE",
+    "personbil":             "motorcar",
+    "renhållningsbil":       "IGNORE",
+    "taxi":                  "taxi",
+    "terrängmotorfordon":    "atv",
+    "terrängmotorfordon och terrängsläp": "atv",
+    "terrängskoter":         "snowmobile",
+    "terrängsläp":           "trailer",
+    "terrängvagn":           "atv",
+    "trafik":                "vehicle",
+    "traktor":               "agricultural",
+    "transporter":           "PURPOSE delivery",
+    "trehjulig moped":       "moped",
+    "truck":                 "IGNORE",
+    "tung lastbil":          "hgv",
+    "tung motorcykel":       "motorcycle",
+    "tung terrängvagn":      "atv",
+    "utryckningsfordon":     "emergency",
+    "på- eller avlastning av gods": "PURPOSE delivery",
+    "på- eller avstigning":  "PURPOSE embark_disembark", # custom conditional
+    "påhängsvagn":           "trailer",
+    "skolskjuts":            "psv",
+    "släpkärra":             "trailer",
+    "släpvagn":              "trailer"
+}
+
+# tag_translation_fordon_trafikant()
+#
+# Translate NVDB vehicles and road users into OSM tags. Note that in this case OSM tags are
+# not as detailed as NVDB tags, so translation is not 100% correct. Most of those marked as
+# "IGNORE" are used for exemptions, and we don't consider those as important to document.
+#
 def tag_translation_fordon_trafikant(tag, rlid):
-    #
-    # Note: OSM tags are not as detailed as NVDB tags, so translation is not 100% correct
-    #
-    # Most of those marked as "IGNORE" are used for exemptions, and we don't consider
-    # those as important to document.
-    #
 
     if isinstance(tag, int):
         # in some cases the tag is provided as an int instead of text
@@ -248,6 +338,11 @@ def tag_translation_fordon_trafikant(tag, rlid):
         return "FIXME"
     return VEHICLES_AND_ROAD_USERS_TRANSLATIONS[tag]
 
+# tag_translation_single_value_with_time_interval()
+#
+# Generic function for translating NVDB tags that are a single value combined with a
+# time interval
+#
 def tag_translation_single_value_with_time_interval(tags, key, value):
     time_intervals = parse_time_interval_tags(tags)
     if time_intervals == -1:
@@ -288,6 +383,9 @@ def tag_translation_DKBarighet(tags):
 
 # tag_translation_DKBegrAxelBoggiTryck()
 #
+# Maxaxleload/maxbogieweight/triple axle
+#  - we skip information about organisation (Länsstyrelse) etc, and just keep the weight information
+#
 def tag_translation_DKBegrAxelBoggiTryck(tags):
     time_interval = parse_time_interval_tags(tags)
     if time_interval == -1:
@@ -319,17 +417,20 @@ def tag_translation_DKBegrAxelBoggiTryck(tags):
 
 # tag_translation_DKBegrBruttovikt()
 #
+# Maxweightrating
+#  - FORD_TAG=ja means "also applies to vehicle trains". OSM doesn't do that distinction, so we ignore it
+#
 def tag_translation_DKBegrBruttovikt(tags):
     key = "maxweightrating"
-    if tags["FORD_TAG"] == "ja":
-        key += ":hgv"
     value = tags["BRUTTOVIKT"]
-    tags.pop("RIKTNING", None) # we ignore riktning
-    tags.pop("FORD_TAG", None)
+    tags.pop("RIKTNING", None) # ignored
+    tags.pop("FORD_TAG", None) # ignored
     tags.pop("BRUTTOVIKT", None)
     tag_translation_single_value_with_time_interval(tags, key, value)
 
 # tag_translation_DKBegrFordBredd()
+#
+# Maxwidth
 #
 def tag_translation_DKBegrFordBredd(tags):
     key = "maxwidth"
@@ -341,8 +442,10 @@ def tag_translation_DKBegrFordBredd(tags):
 
 # tag_translation_DKBegrFordLangd()
 #
+# Maxlength
+#
 def tag_translation_DKBegrFordLangd(tags):
-    key = "maxwidth"
+    key = "maxlength"
     value = tags["FORD_LGD"]
     tags.pop("FORD_LGD", None)
     for i in range(1, 4):
@@ -476,6 +579,8 @@ def tag_translation_DKForbudTrafik(tags):
     print("DKForbudTrafik output", tags)
 
 # tag_translation_DKHastighetsgrans()
+#
+# Maxspeed, sometimes conditional
 #
 def tag_translation_DKHastighetsgrans(tags):
     time_interval = parse_time_interval_tags(tags)
@@ -811,6 +916,9 @@ def tag_translation_DKRastplats(tags):
 
 # tag_translation_DKVagnummer()
 #
+# Road numbers, may be more than one per road. Information is refined in highway
+# resolve function.
+#
 def tag_translation_DKVagnummer(tags):
     if tags["EUROPAVÄG"] == -1:
         tags["NVDB_vagnummer"] = "E" + str(tags["HUVUDNR"])
@@ -820,6 +928,8 @@ def tag_translation_DKVagnummer(tags):
     del tags["EUROPAVÄG"]
 
 # tag_translation_DKVaghinder()
+#
+# Barriers
 #
 def tag_translation_DKVaghinder(tags):
     hindertyp = tags["HINDERTYP"]
@@ -1131,84 +1241,10 @@ TAG_TRANSLATIONS = {
     }
 }
 
-VEHICLES_AND_ROAD_USERS_TRANSLATIONS = {
-    "ambulans":              "emergency",
-    "anläggningens fordon":  "IGNORE",
-    "arbetsfordon":          "IGNORE",
-    "beskickningsfordon":    "USER diplomatic", # custom tag
-    "beställd taxi":         "taxi",
-    "besökare":              "PURPOSE destination",
-    "bil":                   "motorcar",
-    "bilägare med arrendekontrakt": "USER permit_holder",
-    "bokbuss":               "bus",
-    "buss":                  "bus",
-    "cykel":                 "bicycle",
-    "efterfordon":           "trailer",
-    "fordon":                "vehicle",
-
-    # the actual vehicle is described in an extra free-text tag as it's free text it's not
-    # reasonable to make a translation tabel for it
-    "fordon enligt beskrivning": "IGNORE",
-
-    "fordon i linjetrafik":  "bus",
-    "fordon i linjetrafik vid på- och avstigning":        "bus",
-    "fordon med särskilt tillstånd":                      "USER permit_holder",
-
-    # full length: "fordon eller fordonståg vars längd, lasten inräknad, överstiger 10 meter"
-    "fordon eller fordonståg vars längd, lasten inräkna": "lhv",
-
-    # full length: "fordon som används av rörelsehindrade med särskilt tillstånd"
-    "fordon som används av rörelsehindrade med särskilt": "USER disabled",
-
-    "fordon som används för distribution av post":        "IGNORE",
-    "fyrhjulig moped":       "atv",
-    "färdtjänstfordon":      "psv",
-    "godstransporter":       "hgv",
-    "hästfordon":            "carriage",
-    "kommunens servicefordon": "IGNORE",
-    "lastbil":               "hgv",
-    "lastbil vid på- och avlastning": "PURPOSE delivery",
-    "2-axlig lastbil":       "hgv",
-    "lätt lastbil":          "goods",
-    "lätt motorcykel":       "motorcycle",
-    "lätt terrängvagn":      "atv",
-    "moped":                 "moped",
-    "moped klass I":         "moped",
-    "moped klass II":        "mofa",
-    "motorcykel":            "motorcycle",
-    # full length: "motordrivet fordon med tillkopplad släpvagn annat än påhängsvagn eller enaxlig släpvagn"
-    "motordrivet fordon med tillkopplad släpvagn annat": "hgv",
-    "motordrivna fordon":    "motor_vehicle",
-    "motorfordon":           "motor_vehicle",
-    "motorredskap":          "IGNORE",
-    "motorredskap klass I":  "IGNORE",
-    "motorredskap klass II": "IGNORE",
-    "okänt":                 "IGNORE",
-    "personbil":             "motorcar",
-    "renhållningsbil":       "IGNORE",
-    "taxi":                  "taxi",
-    "terrängmotorfordon":    "atv",
-    "terrängmotorfordon och terrängsläp": "atv",
-    "terrängskoter":         "snowmobile",
-    "terrängsläp":           "trailer",
-    "terrängvagn":           "atv",
-    "trafik":                "vehicle",
-    "traktor":               "agricultural",
-    "transporter":           "PURPOSE delivery",
-    "trehjulig moped":       "moped",
-    "truck":                 "IGNORE",
-    "tung lastbil":          "hgv",
-    "tung motorcykel":       "motorcycle",
-    "tung terrängvagn":      "atv",
-    "utryckningsfordon":     "emergency",
-    "på- eller avlastning av gods": "PURPOSE delivery",
-    "på- eller avstigning":  "PURPOSE embark_disembark", # custom conditional
-    "påhängsvagn":           "trailer",
-    "skolskjuts":            "psv",
-    "släpkärra":             "trailer",
-    "släpvagn":              "trailer"
-}
-
+# _build_vehicle_list
+#
+# extract vehicles form the VEHICLES_AND_ROAD_USERS_TRANSLATIONS table
+#
 def _build_vehicle_list():
     vl = []
     for vehicle in VEHICLES_AND_ROAD_USERS_TRANSLATIONS.values():
