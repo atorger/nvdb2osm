@@ -24,6 +24,24 @@ installera med pip install -r requirements.txt
 För generell Python-användning och installation får man Googla :-)
 
 
+Hur importen går till
+---------------------
+
+1. Ladda ner paketerat NVDB-data från https://lastkajen.trafikverket.se/
+2. Konvertera datat till OSM-format med Python-skriptet
+3. Ladda in resultatet som ett eget lager i JOSM
+4. Ladda ner existerande OSM-karta för motsvarande område till eget
+   lager i JOSM
+5. Förbered existerande OSM-data för att sammanfogas med NVDB
+6. Sammanfoga lagren, och ladda upp
+
+Att ladda ner och köra det här skriptet är ett litet jobb, det stora
+jobbet är att sammanfoga det manuellt med existerande. Har man inte
+möjlighet/kunskap att köra Python-skript kan man kanske be någon annan
+köra skripet för det område man är intresserad av för att få en
+OSM-fil som man sen kan jobba med.
+
+
 Bakgrund
 --------
 
@@ -58,19 +76,21 @@ fortsatt viktig och central.
 Om NVDBs precision
 ------------------
 
-De flesta av våra vägar finns redan i OSM, men de är gjorda när
-datakällorna inte var lika bra så de vägar som inte är importerade
-från NVDB har i regel lite sämre precision.
+De flesta av våra vägar finns redan i OSM, men många är kartlagda för
+många år sedan när datakällorna inte var lika bra, så de vägar som
+inte är importerade från NVDB har i regel lite sämre precision.
 
-NVDB-datat är dock inte 100% perfekt. Bro- och tunneldatat uppvisar en
-del precisionsfel, i enstaka fall kan en bro ligga flera hundra meter
-fel. Inne i städer där cykelvägar och vägar kartläggs nära bredvid
-varandra läggs de inte alltid exakt geografiskt utan på ett sätt som
-ger vägarna mer utrymme.
+NVDB-datat är dock inte 100% perfekt. "Värsta" exemplet är bro- och
+tunneldatat som uppvisar en hel del precisionsfel, i enstaka fall kan
+en bro ligga flera hundra meter fel. I andra fall handlar det mer om
+hur man väljer att kartlägga vid begränsat utrymme: inne i städer där
+cykelvägar och vägar kartläggs nära bredvid varandra läggs de inte
+alltid exakt geografiskt utan på ett sätt som ger vägarna mer
+utrymme.
 
-NVDB-datat innehåller också flera överlapp och små glapp här och var
-som gör det besvärligt att jobba med maskinellt, men de allra flesta
-av dessa småfel hanteras och repareras av importskriptet.
+NVDB-datat innehåller också flera överlapp och små glapp här och var,
+vilket gör det besvärligt att jobba med maskinellt, men de flesta av
+dessa småfel hanteras och repareras av importskriptet.
 
 Hursomhelst, överlag är NVDB en mycket bra datakälla med bra
 precision, så man behöver i regel inte korrigera vägarna efter
@@ -83,24 +103,33 @@ Om NVDBs data-taggar
 
 OSM har all information i samma geometri genom att man sätter en mängd
 taggar på varje väg/nod. NVDB är istället organiserat i lager med
-olika information, underliggande geometri är dock densamma.
+olika information, underliggande geometri är dock
+densamma. Hastighetsgränser ligger i ett lager, vägnamn i ett annat
+och så vidare.
 
 Importskriptet tar alltså alla dessa lager, översätter taggarna lager
 för lager och sammanfogar. Ibland överlappar information och skripet
 försöker lösa dessa situationer automatiskt, vilket går i de flesta
-fall, annars skrivs det ut en varning och en "fixme"-tag skrivs in.
+fall. Om inte skrivs det ut en varning och en "fixme"-tag skrivs in i
+resulterande OSM-fil så man kan gå in och justera manuellt.
 
-NVDB har med vissa undantag en hög grad av korrekthet i informationen,
-så den går överlag lita på när man inte har någon bättre
-information. Nybyggnationer kan den ligga efter på och där saknas
-geometri och ibland kan den vara uppbruten så vissa lager har ny
-information och andra lager har gammal.
+(NVDB:s Shape-filer (.shp) går att öppna direkt i JOSM, vilket är
+användbart om man vill jämföra. JOSM gör viss geometriförenkling och
+tar bort dubletter när den öppnar en Shape-fil, så håller man på
+debugga sådant behöver man analysera datat på annat vis.)
+
+NVDB har med få undantag en hög grad av korrekthet i informationen, så
+den går överlag lita på när man inte har någon bättre information.
+För nybyggnationer kan datat dock vara inaktuellt och där kan det
+saknas geometri. Ibland kan vissa lager ha ny information och andra
+lager har gammal, och då kan det bli det problem i sammanfogningen,
+normalt lyckas dock skriptet tugga igenom datat ändå.
 
 Enskild väg har inte lika rik information eftersom den inte underhålls
 statligt. Vägbeläggning sägs vara grus även om vägföreningen lagt
 asfalt till exempel. I vissa (sällsynta) fall kan vägar vara så dåligt
-underhållna att de inte är framkomliga för bilar. Där är flygfoton och
-lokal kännedom till hjälp.
+underhållna att de inte längre är framkomliga för bilar. Där är
+flygfoton och lokal kännedom till hjälp.
 
 Många av NVDB:s taggar går att översätta mer eller mindre rakt av till
 en motsvarande OSM-tag. I vissa fall har dock NVDB mer information än
@@ -113,24 +142,6 @@ I ett flertal fall finns det olika tänkbara översättningslösningar,
 för att se hur skriptet gör får man läsa koden.
 
 
-Hur importen går till
----------------------
-
-1. Ladda ner paketerat NVDB-data från https://lastkajen.trafikverket.se/
-2. Konvertera datat till OSM-format med Python-skriptet
-3. Ladda in resultatet som ett eget lager i JOSM
-4. Ladda ner existerande OSM-karta för motsvarande område till eget
-   lager i JOSM
-5. Förbered existerande OSM-data för att sammanfogas med NVDB
-6. Sammanfoga lagren, och ladda upp
-
-Att ladda ner och köra det här skriptet är ett litet jobb, det stora
-jobbet är att sammanfoga det manuellt med existerande. Har man inte
-möjlighet/kunskap att köra Python-skript kan man kanske be någon annan
-köra skripet för det område man är intresserad av för att få en
-OSM-fil som man sen kan jobba med.
-
-
 NVDB:RLID - länk till källdatat
 -------------------------------
 
@@ -139,17 +150,19 @@ source=NVDB och lägger till en custom-tagg "NVDB:RLID" med motsvarande
 unikt RLID som finns i NVDB. Varje bit väg i NVDB har ett sådant
 ID-nummer.
 
-I vissa fall är dessa ganska korta stumpar. De kan inte slås ihop
-eftersom de har olika RLID. Man skulle förvisso kunna ha flera RLID
-på NVDB:RLID-taggen, separerade med semikolon och så får man slå upp i
-NVDB för att avgöra vilken del som hör till vilket RLID. Överlag är
-det dock så att andra taggar (vägtyp etc) delar upp minst lika mycket
-så har så långt inte sett någon verklig vinning av att slå ihop
-segment.
+I vissa fall är dessa ganska korta vägstumpar, särskilt där vägar
+byggts om. De kan inte slås ihop eftersom de har olika RLID (=olika
+värden för samma tag => kräver olika segment). Man skulle förvisso
+kunna ha flera RLID på NVDB:RLID-taggen separerade med semikolon, och
+använda originaldatat från NVDB för att avgöra vilken del av vägen som
+hör till vilket RLID. Överlag är det dock så att andra taggar (vägtyp
+etc) delar upp minst lika mycket så har så långt inte sett någon
+verklig vinning av att slå ihop segment.
 
-Att behålla en länk till källdatat gör det enklare att i framtiden
-uppdatera datat, det går också enkelt att göra sökningar på specifika
-RLID om man manuellt vill jämföra OSM-datat och NVDB-datat.
+Att behålla en länk till källdatat gör det enklare att se var i kartan
+import är gjord, och i framtiden uppdatera datat, det går också enkelt
+att göra sökningar på specifika RLID om man manuellt vill jämföra
+OSM-datat och NVDB-datat.
 
 
 Tips för att sammanfoga med existerande data
@@ -169,8 +182,9 @@ först, och är du nybörjare börja med en mindre komplex geometri
 översatt OSM-lager göras, och det finns mer tolkning av hur
 kartläggning ska göras (mappa cykelvägar separat eller ej, och hur de
 exakt placeras i förhållande till intilliggande väg) och det finns mer
-av avancerade relationer att ta hänsyn till - det är helt enkelt många
-gånger svårare att jobba med stadsgeometri än landsbygd.
+av avancerade relationer att ta hänsyn till (busslinjer etc) - det är
+helt enkelt mycket gånger svårare att jobba med stadsgeometri än
+landsbygd.
 
 Se till att du jobbar på ett ställe på kartan där ingen annan håller
 på just nu. Det kan nämligen bli väldigt besvärligt om två personer
@@ -180,28 +194,35 @@ just nu. Försök också jobba i mindre bitar så du kan ladda upp samma
 dag som du laddade ned för att redigera, ju kortare tid mellan ned-
 och uppladdning desto mindre risk för kollisioner med andras arbete.
 
-Vissa delar av kartan är senast uppdaterad när tillgängligt
-källmaterial var mindre exakt, man kan därför hitta stora områden som
-är ganska detaljerade men som har ett offset på ett antal tiotals
-meter. I sådana fall måste man först korrigera offset på det gamla
-datat innan man börjar arbeta med att sammanfoga, annars kommer de
-exakta NDVB-vägarna gå rakt över lantbruk, sjöar och byggnader osv.
+Vissa delar av kartan är senast uppdaterad när positionsdatat i
+tillgängligt källmaterial var mindre exakt, man kan därför hitta stora
+områden som är ganska detaljerade men som har ett offset på ett antal
+tiotals meter. I sådana fall måste man först korrigera offset på det
+gamla datat innan man börjar arbeta med att sammanfoga, annars kommer
+de exakta NDVB-vägarna gå rakt över lantbruk, sjöar och byggnader
+osv. Gör då offset-korrigeringen i en separat förändring och ladda upp
+innan du börjar jobba med importen.
 
 För att underlätta för framtida uppdateringar av NVDB-datat så bör man
 inte modifiera NVDB-geometrin om det inte är nödvändigt. Om vägarna
-ändrar form blir det svårare för ett skript att matcha. Ibland måste
-man ändra och det är okej förstås. Att lägga till noder och dela upp
-i kortare segment gör mindre skillnad, det är när man flyttar på noder
-så vägarna ändrar form som gör det svårare för framtida uppdateringar.
+ändrar form blir det svårare för ett uppdateringsskript att
+matcha. Ibland måste man ändra för att spegla vad som faktiskt hänt i
+verkligheten och det är okej förstås. Att lägga till noder i vägar
+eller dela upp dem i kortare segment gör mindre i fråga om att matcha
+vid uppdatering. Det är när man flyttar på noder så vägarna ändrar
+form som gör det svårare, men som sagt ibland kan det vara nödvändigt
+när vägen faktiskt byggts om i verkligheten.
 
 När man väl börjar med sammanfogningen så slår man antingen ihop
-lagren, eller så gör man copy/paste mellan lagren.
+de två lagren (dvs import-lagret och existerande OSM-karta), eller så
+gör man copy/paste mellan lagren.
 
 JOSM:s validator-funktion (som körs automatiskt när man laddar upp) är
 bra på att upptäcka saker man glömt, som att man har två likadana
-vägar nästan på varandra, eller okopplade segment osv, därför kan det
-vara effektivare att börja med att slå ihop lagren direkt även om det
-är svårare att hålla reda på vilka vägar man gått igenom och inte.
+vägar nästan ovanpå varandra, okopplade segment mm, därför kan det
+vara ett effektivare arbetsflöde att börja med att slå ihop lagren
+direkt även om det blir lite grötigt och är svårare att hålla reda på
+vilka vägar man gått igenom och inte.
 
 Om du inte redan installerat "utilsplugin2" i JOSM så gör det, för du
 behöver verktyget "replace geometry". Gör select på existerande
@@ -223,7 +244,7 @@ Det här import-skriptet skapar inga relations-objekt. Busslinjer,
 landsvägar etc finns ofta redan inlagda som relationer, se till att
 dessa behålls och kopplas ihop korrekt. Genom att använda replace
 geometry där gammal geometri ersätts istället för delete/insert så
-behålls länkar till relationer.
+behålls länkar till relationer automatiskt.
 
 Tidigare taggar ger också information om import redan skett, dvs om du
 kan se att NVDB är källa och det finns ett RLID på
@@ -239,8 +260,8 @@ FIXME-taggar och JOSM Validator
 
 Skriptet lägger till fixme-taggar där det inte klarar av att lösa en
 konflikt eller där NVDB inte ger tillräckligt med information. Dessa
-bör man gå igenom och lösa manuellt. Använd JOSMs sökfunktion och sök
-på fixme=* för att få fram all geometri som är taggad.
+måste man gå igenom och lösa manuellt. Använd JOSMs sökfunktion och
+sök på fixme=* för att få fram all geometri som är taggad.
 
 När skripet körs loggar den till konsollen och skriver ut "Warning:
 ...." när den stöter på något problem. Det kan vara bra att titta på
@@ -251,15 +272,14 @@ Man *måste* använda JOSM Validator på OSM-filen för att se vilka
 problem den upptäcker, och åtgärda manuellt vid behov. I stadsmiljöer
 kan det vara ganska mycket som behöver manuell justering, på
 landsbyggden ibland ingenting. Bro- och tunneldatat i NVDB har en del
-begränsningar och precisionsproblem vilket, kanske saknas en cykelbro
-osv.
+begränsningar och precisionsproblem, kanske saknas en cykelbro osv.
 
-När man håller på och bollar med lager så slutar ibland Validator
-köra och visar istället ett gammalt resultat. För att tvinga den att
-köra om, markera alla objekt du vill verifiera och tryck på
-validator-knappen.
+(När man håller på och bollar med lager i JOSM så slutar ibland
+Validator köra och visar istället ett gammalt resultat. För att tvinga
+den att köra om, markera alla objekt du vill verifiera och tryck på
+validator-knappen.)
 
-Exempel på Validator-varningar man kan få, med kommentarer:
+Exempel på vanliga Validator-varningar, med kommentarer:
 
  - Barrier=yes is unspecific:
     - Begränsad NVDB-information. Kanske kan du förbättra genom
@@ -272,22 +292,22 @@ Exempel på Validator-varningar man kan få, med kommentarer:
       någon information om hur många filer som går i vardera
       riktning. Det går i regel lista ut från flygfoto.
  - Stub end:
-    - Skriptet städar upp stumpar så de som blir kvar bör man i
-      regel vara kvar. Ofta rör det sig om en faktisk kort vägstump
+    - Skriptet städar upp stumpar, så de som ändå blir kvar bör man i
+      regel lämna orörda. Ofta rör det sig om en faktisk kort vägstump
       med ett unikt RLID, och för att enklare koppla ihop med NVDB i
       framtida uppdateringar bör man låta den vara kvar.
  - Suspicious tag combination oneway=yes with lanes:bus:forward:
     - Felakting varning(?), att ange riktning på lanes även om vägen
       är enkelriktad verkar vara okej enligt OSM-wiki
-    - Skriptet filtrar bort forward/backward i andra fall, men
-      behåller på lanes.
+    - Skriptet filtrar bort onödiga forward/backward i andra fall när
+      vägen är enkelriktad, men behåller på lanes.
  - Way end node near other highway:
     - Kan nästan alltid ignoreras, handlar ofta om hållplatser som
       rätteligen slutar nära en annan väg
  - Overlapping highways / highway duplicated nodes / highways with
    same position:
     - I sällsynta fall har NVDB vägar med olika RLID som ligger ovanpå
-      varandra. Det är så sällsynt så skripet har ingen korringering
+      varandra. Det är så sällsynt så skripet har ingen korrigering
       för det, om det uppstår får man laga det manuellt.
  - Suspicious roundabout direction:
     - Vissa rondeller är inte helt runda och då kan JOSM tro att de
@@ -304,14 +324,17 @@ uppdaterat genom manuell kartläggning utan att behöva synka med någon
 extern databas som NVDB. I praktiken finns inte så många aktiva
 kartläggare i Sverige, men med NVDB inmatad i grunden finns ändå en
 god chans att hålla datat fräscht på traditionellt vis - vägnätet är
-ju ändå ganska statiskt.
+ju ändå ganska statiskt. Så även om vi bara tar in NVDB-datat en gång
+så lämnar i OSM-kartan i en bättre situation än den var innan.
 
-Det finns ingen funktion i OSM för att synka automatiskt, så att göra
-en uppdatering i framtiden skulle antagligen gå till som så att man
-använder detta skript och konverterar det senaste NVDB-datat, sen
-skriver man ett nytt skript som jämför detta med data som finns inne i
-OSM, och därefter genererar en skillnadsfil (diff) som man manuellt
-får föra över.
+Det finns ingen funktion i OSM för att synka automatiskt med externa
+databaser, så att göra en uppdatering i framtiden skulle antagligen gå
+till som så att man använder detta skript och konverterar det senaste
+NVDB-datat, sen skriver man ett nytt skript som jämför detta med data
+som finns inne i OSM, och därefter genererar en skillnadsfil (diff)
+som man manuellt får föra över. Detta skulle man kanske göra en gång
+varannat år eller så, för att komplettera sådant som kartläggare inte
+hunnit uppdatera manuellt.
 
 Detta nya skript blir troligen ganska svårt att skriva eftersom man
 helst vill att det ska kunna filtrera bort justeringar i datat som
@@ -344,8 +367,9 @@ ytterligare för att kunna översätta all NVDB-data i hela Sverige.
 
 För att spara tid i bästa snabbhacksanda kör geometrikoden en massa
 integritetstest på det egna datat efter förändringar, som alternativ
-till unittest, det gör att skriptet går långsammare än det annars
-skulle göra. Om man orkar kan man fixa det senare.
+till en stor mängd enhetstest. Det gör att skriptet går långsammare än
+det annars skulle göra. Om man orkar kan man fixa det senare (dvs ta
+bort integritetstesterna och göra enhetstest på sidan om istället).
 
 Det finns en .pylintrc så man kan köra pylint på koden.
 
@@ -364,21 +388,23 @@ enstaka fall görs speciell förbehandling av lagret om det behövs, till
 exempel bro- och tunnellagret.
 
 3. Samma process görs med alla lager med punktgeometri.
-Punktgeometrierna läses in efteråt eftersom de behöver matchas mot
-linjegeometrin.
+Punktgeometrierna läses in efter linjegeometrin eftersom de behöver
+matchas mot linjegeometrin.
 
-4. Vissa taggar kan inte översättas direkt vid inläsning, utan man
-behöver information från flera lager för att kunna räkna ut
+4. Vissa taggar kan inte översättas direkt vid inläsning, eftersom man
+behöver information från flera lager samtidigt för att kunna räkna ut
 OSM-taggarna. Highway-taggarna är ett exempel. Så nästa steg är att
 med hjälp av all inläst information räkna ut resterande taggar.
 
-5. Olika typer av uppstädningar av geometri och taggar.
+5. Olika typer av uppstädningar av geometri och taggar, orimligt korta
+segment osv.
 
 6. Förenkling av geometri. NVDB har väldigt många punkter i sin
 geometri för att göra mjuka kurvor osv. I OSM används traditionellt
 inte lika många punkter, och i detta steg förenklas geometrin för att
 bättre passa stilen i OSM. Det görs inte samma förenkling för alla
-objekt, rondeller behåller fler punkter än landsvägar till exempel.
+objekt, rondeller behåller fler punkter än landsvägar till exempel,
+precis som det brukar vara i OSM.
 
 7. Geometrin skrivs ut till OSM XML-format, och körningen är klar.
 
@@ -397,7 +423,7 @@ taggar finns i merge_tags.py
 merge_tags.py
 
 När lager läggs ovanpå varandra kan ibland samma taggar kollidera, och
-regler för att lösa situationer finns här.
+regler för att lösa sådana situationer finns här.
 
 process_and_resolve.py
 
@@ -408,10 +434,14 @@ highway-taggen ut här.
 nvdb_ti.py
 
 Översättning av NVDB-tidsintervall till OSM-format. Väldigt hackigt
-implementerat och inte heltäckande. Borde göras som en generell
-lösning med en tidsintervall-klass osv istället för en massa bollande
-med strängar som nu. Men i praktiken så funkar detta, det har
+implementerat och inte heltäckande. Borde egentligen göras mer
+generell med en tidsintervall-klass istället för en massa bollande med
+strängar som nu. Men i praktiken så funkar detta, det har
 kompletterats med fler fall efter hand de dyker upp i datat.
+
+I loggen skrivs det i slutet ut en list av alla tidsintervall som
+översatts, titta gärna på den och se så det ser vettigt ut. Om inte
+behöver koden kompletteras med ytterligare något fall.
 
 twodimsearch.py:
 
@@ -421,35 +451,40 @@ ett kd-träd, men de Python-implementationer jag hittade passade inte
 syftet eller var långsamma, så nu används stället ordnade träd, ett
 för x och ett för y för varje x.
 
+Att göra en optimal implementation av detta skulle snabba upp skriptet
+rejält.
+
 geometry_search.py:
 
 Började som en generell sökstruktur för att hitta korsande linjer och
 liknande, men mer specifika NVDB-funktioner har krypit in över
-tiden. Från början var det tänkt att all geometri skulle matas in när
-den skapas, men pga små-fel i NVDB-datat har en kompletteringsfunktion
-behövt läggas till i efterhand, vilket blev lite hackigt. Men det
-funkar.
+tiden, så den är inte längre så isolerad modul som jag skulle
+önska. Från början var det tänkt att all geometri skulle matas in när
+den objektet skapas, men pga små-fel i NVDB-datat har en
+kompletteringsfunktion behövt läggas till i efterhand, vilket blev
+lite hackigt. Men det funkar.
 
 waydb.py:
 
-"databas" för NVDB-geometrin och funktioner för att sammanfoga ett
+"Databas" för NVDB-geometrin och funktioner för att sammanfoga ett
 NVDB lager i taget. Databasen skapas med lagret DKReflinjetillkomst
-som innehåller all geometri, detta används därefter som en fast
+som innehåller "all" geometri, detta används därefter som en fast
 referensgeometri som de andra lagren anpassas till.
 
 Tyvärr visade det sig att referenslagret ofta inte är 100%
 i ordning. Ibland saknas vissa delar av geometrin, vissa linjer är
 avhuggna osv. Därför kan geometrin numera kompletteras i
-efterhand med en lite knökig funktion. Skulle man göra om det från
-början skulle man antagligen designa det så att man startar med tom
-databas och normalfallet är att geometrin byggs upp lager för lager.
+efterhand, med en lite knölig funktion (bygger på att få
+kompletteringar behöver göras). Skulle man göra om det från början
+skulle man antagligen designa det så att man startar med tom databas
+och normalfallet är att geometrin byggs upp lager för lager.
 
 I teorin ska alla NVDB-lager matcha referensgeometrin exakt och
 vägsegment som ska sitta ihop ska verkligen sitta ihop i geometrin
-osv. I praktiken är det inte så, så mycket i waydb handlar om att
-snäppa punkter till referensgeometrin och få allt att sitta ihop i
-slutänden. Waydb använder twodimsearch och geometry_serach till stor
-del för att åstadkomma detta.
+osv. I praktiken är det emellertid inte så, så mycket i waydb handlar
+om att snäppa punkter till referensgeometrin och få allt att sitta
+ihop i slutänden. Waydb använder twodimsearch och geometry_serach till
+stor del för att åstadkomma detta.
 
 övriga filer:
 
