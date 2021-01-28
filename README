@@ -77,14 +77,14 @@ Om NVDBs precision
 ------------------
 
 De flesta av våra vägar finns redan i OSM, men många är kartlagda för
-många år sedan när datakällorna inte var lika bra, så de vägar som
-inte är importerade från NVDB har i regel lite sämre precision.
+många år sedan när datakällorna inte var lika bra som NVDB är, så de
+är ofta värda att uppdatera.
 
-NVDB-datat är dock inte 100% perfekt. "Värsta" exemplet är bro- och
-tunneldatat som uppvisar en hel del precisionsfel, i enstaka fall kan
-en bro ligga flera hundra meter fel. I andra fall handlar det mer om
-hur man väljer att kartlägga vid begränsat utrymme: inne i städer där
-cykelvägar och vägar kartläggs nära bredvid varandra läggs de inte
+NVDB-datat om än bra är inte 100% perfekt. "Värsta" exemplet är bro-
+och tunneldatat som uppvisar en hel del precisionsfel, i enstaka fall
+kan en bro ligga flera hundra meter fel. I andra fall handlar det mer
+om hur man väljer att kartlägga vid begränsat utrymme: inne i städer
+där cykelvägar och vägar kartläggs nära bredvid varandra läggs de inte
 alltid exakt geografiskt utan på ett sätt som ger vägarna mer
 utrymme.
 
