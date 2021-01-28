@@ -254,6 +254,15 @@ Man kan använda webb-verktyget http://overpass-turbo.eu för att göra
 taggsökningar, exempelvis på "NVDB:RLID=*" och/eller source=NVDB för
 att se var i kartan import gjorts.
 
+När man konverterar en del i taget så kommer förstås vägar längs
+kanterna på området man jobbar med vara avhuggna. Det kan vara
+frestande att låta dem vara okopplade eftersom man snart ska ta in
+nästa del, men för att inte hamna i en situation med en trasig karta
+uppladdat till OSM se till att koppla ihop vägarna längs kanterna med
+existerande vägar (om de finns). Justera de existerande vägarna
+istället för NVDB-vägarna, så när man tar in nästa del passar de
+ihop.
+
 
 FIXME-taggar och JOSM Validator
 -------------------------------
