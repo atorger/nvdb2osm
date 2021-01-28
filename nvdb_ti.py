@@ -24,7 +24,7 @@ def parse_time_interval_tags(tags):
         },
         {
             "keys": [ "STDAT", "SLDAT" ],
-            "not_used_values": [ "1899-12-29", -1, None ],
+            "not_used_values": [ -1, None ], # most common not used == "1899-12-29" x 2, handled in parser
             "output_key": "date_interval",
             "parser": parse_date_interval
         },
@@ -186,9 +186,10 @@ def parse_hourmin_interval(values):
     return "%02d:%02d-%02d:%02d" % (values[0], values[1], values[2], values[3])
 
 def parse_date_interval(values):
-    start_d = values[0]
-    end_d = values[1]
-    return parse_range_date(start_d) + "-" + parse_range_date(end_d)
+    di = parse_range_date(values[0]) + "-" + parse_range_date(values[1])
+    if di == "Dec 29-Dec 29" or di == "Jan 01-Dec 29":
+        return None
+    return di
 
 def parse_day_interval(values):
     day_map = { "måndag": "Mo", "tisdag": "Tu", "onsdag": "We", "torsdag": "Th", "fredag": "Fr", "lördag": "Sa", "söndag": "Su" }
