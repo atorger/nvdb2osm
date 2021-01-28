@@ -36,7 +36,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
         filename = files[0]
         gdf_filename = files[0]
     print("Reading file %s..." % filename, end='', flush=True)
-    gdf = geopandas.read_file(gdf_filename)
+    gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
     print("done (%s segments)" % len(gdf), flush=True)
     assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
     ways = []
