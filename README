@@ -107,7 +107,7 @@ en motsvarande OSM-tag. I vissa fall har dock NVDB mer information än
 vad OSM har taggar för (till exempel fordon- och trafikanttyp), och i
 andra fall har NVDB mindre information än vad OSM förväntar sig
 (körfältens riktning på flerfiliga vägar och vilket av flera körfält
-som är kollektiv).
+som är för kollektivtrafik).
 
 I ett flertal fall finns det olika tänkbara översättningslösningar,
 för att se hur skriptet gör får man läsa koden.
@@ -173,7 +173,7 @@ av avancerade relationer att ta hänsyn till - det är helt enkelt många
 gånger svårare att jobba med stadsgeometri än landsbygd.
 
 Se till att du jobbar på ett ställe på kartan där ingen annan håller
-på just nu. Det kan nämligen bli väldigt besvärligt om två stycken
+på just nu. Det kan nämligen bli väldigt besvärligt om två personer
 håller på och redigerar kartan på samma ställe. Använd exempelvis
 history-funktionen på openstreetmap.org så kan de se var folk jobbar
 just nu. Försök också jobba i mindre bitar så du kan ladda upp samma
@@ -201,7 +201,7 @@ JOSM:s validator-funktion (som körs automatiskt när man laddar upp) är
 bra på att upptäcka saker man glömt, som att man har två likadana
 vägar nästan på varandra, eller okopplade segment osv, därför kan det
 vara effektivare att börja med att slå ihop lagren direkt även om det
-är svårare att hålla reda på vilka vägar man gått igenom och ej.
+är svårare att hålla reda på vilka vägar man gått igenom och inte.
 
 Om du inte redan installerat "utilsplugin2" i JOSM så gör det, för du
 behöver verktyget "replace geometry". Gör select på existerande
@@ -221,9 +221,9 @@ fler segment för att matcha.
 
 Det här import-skriptet skapar inga relations-objekt. Busslinjer,
 landsvägar etc finns ofta redan inlagda som relationer, se till att
-dessa behållsa och kopplas ihop korrekt. Genom att använda
-replace geometry där gammal geometri ersätts istället för
-delete/insert så behålls länkar till relationer.
+dessa behålls och kopplas ihop korrekt. Genom att använda replace
+geometry där gammal geometri ersätts istället för delete/insert så
+behålls länkar till relationer.
 
 Tidigare taggar ger också information om import redan skett, dvs om du
 kan se att NVDB är källa och det finns ett RLID på
@@ -255,8 +255,9 @@ begränsningar och precisionsproblem vilket, kanske saknas en cykelbro
 osv.
 
 När man håller på och bollar med lager så slutar ibland Validator
-köra utan använder cachat resultat. För att tvinga den att köra,
-markera alla objekt du vill verifiera och kör validator.
+köra och visar istället ett gammalt resultat. För att tvinga den att
+köra om, markera alla objekt du vill verifiera och tryck på
+validator-knappen.
 
 Exempel på Validator-varningar man kan få, med kommentarer:
 
@@ -300,10 +301,10 @@ Hålla datat uppdaterat
 NVDB är en levande databas och uppdateras hela tiden. Tanken med OSM
 är att det ska finnas tillräckligt många frivilliga som håller datat
 uppdaterat genom manuell kartläggning utan att behöva synka med någon
-extern databas. I praktiken finns inte så många aktiva kartläggare i
-Sverige, men med NVDB inmatad i grunden finns ändå en god chans att
-hålla datat fräscht på traditionellt vis - vägnätet är ju ändå ganska
-statiskt.
+extern databas som NVDB. I praktiken finns inte så många aktiva
+kartläggare i Sverige, men med NVDB inmatad i grunden finns ändå en
+god chans att hålla datat fräscht på traditionellt vis - vägnätet är
+ju ändå ganska statiskt.
 
 Det finns ingen funktion i OSM för att synka automatiskt, så att göra
 en uppdatering i framtiden skulle antagligen gå till som så att man
@@ -328,13 +329,12 @@ Information om koden
 Denna information kan bli snabbt inaktuell i och med att koden
 uppdateras.
 
-Koden är överlag ett "snabbhack", fokus på att få något som fungerar
-så snabbt som möjligt snarare än att hitta optimala lösningar och
-design. Hade jag börjat om från början skulle jag troligen försöka
-använda mer av shapely-biblioteket för att få effektivare
+Koden är överlag ett "snabbhack", fokus på att få fram något som
+fungerar så fort som möjligt snarare än att producera snygg effektiv
+kod och design. Hade jag börjat om från början skulle jag troligen
+försöka använda mer av shapely-biblioteket för att få effektivare
 kod. Eftersom det mesta av geometriberäkningarna görs i Python-kod är
-skriptet ganska långsamt, det tar cirka 15 minuter att tugga igenom en
-kommun.
+skriptet ganska långsamt.
 
 Testning inför första release har bestått av att översätta Malmö,
 Göteborg, stor-Stockholm, Umeå, Uppsala, Jokkmokk och Luleå. Även om
@@ -343,8 +343,8 @@ NVDB-datat så är det troligt att skriptet kommer behöva kompletteras
 ytterligare för att kunna översätta all NVDB-data i hela Sverige.
 
 För att spara tid i bästa snabbhacksanda kör geometrikoden en massa
-integritetstest på det egna datat efter förändringar görs istället för
-vettiga unittest, det gör att skriptet går långsammare än det annars
+integritetstest på det egna datat efter förändringar, som alternativ
+till unittest, det gör att skriptet går långsammare än det annars
 skulle göra. Om man orkar kan man fixa det senare.
 
 Det finns en .pylintrc så man kan köra pylint på koden.
@@ -355,7 +355,7 @@ Här finns main(), alltså huvudfunktionen som kör hela processen. Grovt
 sett funkar det så här:
 
 1. Läs in ett lager med referensgeometrin och skapa en datastruktur
-med denna som resterande lager matchas mot.
+med denna som alla efterföljande lager matchas mot.
 
 2. Läs in alla lager med linjegeometri, ett i taget. Direkt efter
 inläsning översätts de flesta taggarna till OSM-taggar, och därefter
@@ -363,14 +363,14 @@ sammanfogas det med övriga lager, låst mot referensgeometrin. I
 enstaka fall görs speciell förbehandling av lagret om det behövs, till
 exempel bro- och tunnellagret.
 
-3. Samma process görs med alla lager med
-punktgeometri. Punktgeometrierna läses in efteråt eftersom de behöver
-matchas mot linjegeometrin.
+3. Samma process görs med alla lager med punktgeometri.
+Punktgeometrierna läses in efteråt eftersom de behöver matchas mot
+linjegeometrin.
 
-4. Vissa taggar kan inte översättas direkt vid inläsning utav ett
-lager, utan man behöver information från flera lager för att kunna
-räkna ut OSM-taggarna. Highway-taggarna är ett exempel. Så nästa steg
-är att med hjälp av all inläst information räkna ut resterande taggar.
+4. Vissa taggar kan inte översättas direkt vid inläsning, utan man
+behöver information från flera lager för att kunna räkna ut
+OSM-taggarna. Highway-taggarna är ett exempel. Så nästa steg är att
+med hjälp av all inläst information räkna ut resterande taggar.
 
 5. Olika typer av uppstädningar av geometri och taggar.
 
@@ -411,7 +411,7 @@ nvdb_ti.py
 implementerat och inte heltäckande. Borde göras som en generell
 lösning med en tidsintervall-klass osv istället för en massa bollande
 med strängar som nu. Men i praktiken så funkar detta, det har
-kompletterats med fler fall efterhand de dyker upp i datat.
+kompletterats med fler fall efter hand de dyker upp i datat.
 
 twodimsearch.py:
 
@@ -425,7 +425,7 @@ geometry_search.py:
 
 Började som en generell sökstruktur för att hitta korsande linjer och
 liknande, men mer specifika NVDB-funktioner har krypit in över
-tiden. Från början var det tänkt att all geometri kulle matas in när
+tiden. Från början var det tänkt att all geometri skulle matas in när
 den skapas, men pga små-fel i NVDB-datat har en kompletteringsfunktion
 behövt läggas till i efterhand, vilket blev lite hackigt. Men det
 funkar.
