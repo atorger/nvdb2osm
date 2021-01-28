@@ -265,6 +265,7 @@ class WayDatabase:
 
     POINT_SNAP_DISTANCE = 0.1
     MAX_SNAP_DISTANCE = 2
+    EMERGENCY_SNAP_DISTANCE = 7
 
     def __init__(self, reference_geometry):
 
@@ -737,7 +738,8 @@ class WayDatabase:
                     new_way.append(point)
                 snapped.append(False) # only count points snap to self RLID
         if ref_way is None:
-            raise RuntimeError("Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+            print("Warning: Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+            return False
         assert ref_way.rlid == way.rlid
 
         print("Warning: must extend reference geometry for RLID %s (only %s of %s points could be snapped)" % (way.rlid, snap_count, len(way.way)))
@@ -758,7 +760,8 @@ class WayDatabase:
                 continue
             if not snapped[way_idx]:
                 # this means snap failure in the middle too not just an extension problem
-                raise RuntimeError("Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+                print("Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+                return False
         extend_way_start = []
         extend_way_end = []
         for idx, point in enumerate(new_way):
@@ -775,6 +778,7 @@ class WayDatabase:
         if len(extend_way_end) > 0:
             extend_way_end.insert(0, new_way[last_snap])
             self._ref_gs.extend_geometry(ref_way, extend_way_end, current_segs)
+        return True
 
     def _adapt_way_into_reference_geometry(self, way, data_src_name, is_retry=False):
         # first snap each point of the way into the existing geometry
@@ -784,19 +788,31 @@ class WayDatabase:
             return None, [ way ]
         new_way = []
         prev = None
+        max_snap_distance = self.MAX_SNAP_DISTANCE
         for way_idx, point in enumerate(way.way):
-            p, ref_way = self._ref_gs.snap_waypoint_into_geometry(way, way_idx, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE, new_way)
+            p, ref_way = self._ref_gs.snap_waypoint_into_geometry(way, way_idx, self.POINT_SNAP_DISTANCE, max_snap_distance, new_way)
             if p is None:
                 if is_retry:
-                    raise RuntimeError("Way with RLID %s %s has no existing geometry within %s meters" % (way.rlid, latlon_str(point), self.MAX_SNAP_DISTANCE))
-                self._retry_adapt_way_extending_reference_geometry(way)
-                return self._adapt_way_into_reference_geometry(way, data_src_name, is_retry=True)
+                    raise RuntimeError("Way with RLID %s %s has no existing geometry within %s meters" % (way.rlid, latlon_str(point), max_snap_distance))
+                success = self._retry_adapt_way_extending_reference_geometry(way)
+                if success:
+                    return self._adapt_way_into_reference_geometry(way, data_src_name, is_retry=True)
+
+                if max_snap_distance < self.EMERGENCY_SNAP_DISTANCE:
+                    max_snap_distance = self.EMERGENCY_SNAP_DISTANCE
+                    p, ref_way = self._ref_gs.snap_waypoint_into_geometry(way, way_idx, self.POINT_SNAP_DISTANCE, max_snap_distance, new_way)
+                    if p is None:
+                        raise RuntimeError("Way with RLID %s %s has no existing geometry within %s meters" % (way.rlid, latlon_str(point), max_snap_distance))
+
             self._test_way_dist(ref_way)
             if p != prev:
                 # sometimes close points are merged to the same position
                 assert p.dist >= 0
                 new_way.append(p)
             prev = p
+
+        if max_snap_distance == self.EMERGENCY_SNAP_DISTANCE:
+            print("Warning: had to use emergency snap distance (%sm) for %s to get it to match reference geometry" % (max_snap_distance, way.rlid))
         way.way = new_way
         if len(way.way) == 1:
             #print("RLID %s reduced to a point" % way.rlid)
