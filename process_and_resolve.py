@@ -6,6 +6,10 @@ from proj_xy import latlon_str
 from waydb import GEO_FILL_LENGTH
 from tag_translations import ALL_VEHICLES
 
+# merge_translated_tags()
+#
+# Help function to merge tags with special case for fix me tag.
+#
 def merge_translated_tags(way, tags):
     for k, v in tags.items():
         if k == "fixme":
@@ -14,6 +18,8 @@ def merge_translated_tags(way, tags):
             way.tags[k] = v
 
 # find_overlapping_and_remove_duplicates()
+#
+# Go through a freshly read NVDB layer and log any overlaps and remove any duplicates.
 #
 def find_overlapping_and_remove_duplicates(data_src_name, ways):
 
@@ -89,9 +95,9 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
 #
 # NVDB NVDB_DKGCM_passage (crossings for cycleways and footways) points are often placed a bit
 # beside the actual crossings so we need scan the geometry and find which crossings they belong
-# and align
+# and align.
 #
-# NVDB_DKGCM_vagtyp data must be in the database for this function to work
+# NVDB_DKGCM_vagtyp data must be in the database for this function to work.
 #
 def preprocess_footcycleway_crossings(points, way_db):
 
@@ -151,10 +157,10 @@ def preprocess_footcycleway_crossings(points, way_db):
 #      - Errors are more prominent in city areas like Stockholm with many long bridges and tunnels,
 #        in rural areas the data is often mostly correct
 #
-#  - It's not possible to resolve the layer tag from OSM data. If the NVDB data would be 100%
+#  - It's not possible to resolve the "layer" tag for OSM data. If the NVDB data would be 100%
 #    correct it would be possible to make good educated guesses with an advanced algorithm. However
-#    as the data is not that good and multi-layer bridges are rare, there's no algoritm for that, a
-#    fix me tag is added instead with crossing bridges and tunnels are detected.
+#    as the data is not that good and multi-layer bridges are rare, we've not made an algoritm for
+#    that, a fix me tag is added instead when crossing bridges and tunnels are detected.
 #
 #  - OSM mapping tradition is to map a cycleway/footway that passes under a street as a tunnel,
 #    even when the construction is technically a short bridge. In NVDB this is mapped as överfart
@@ -290,7 +296,9 @@ def preprocess_bridges_and_tunnels(ways, way_db):
 
 # process_street_crossings()
 #
-#
+# Process the NVDB point layer DKKorsning and geometry it affects. This includes
+# setting names on roundabouts and snapping the points to actual crossings in the
+# line geometry.
 #
 def process_street_crossings(points, way_db, data_src_name):
 
@@ -623,7 +631,7 @@ def resolve_highways(way_db):
 #
 # Speed limits in NVDB often has direction. Here we merge such that if we have forward/backward
 # with the same speed we remove the direction. Note however that there are real cases when
-# maxspeed indeed is different backward vs forward
+# maxspeed indeed is different backward vs forward.
 #
 def simplify_speed_limits(way_db):
 
@@ -760,6 +768,10 @@ def postprocess_miscellaneous_tags(tags):
     if tags.get("highway", None) in [ "steps", "footway" ]:
         tags.pop("maxspeed", None)
 
+# cleanup_used_nvdb_tags()
+#
+# Remove all tags that have been used when resolving various things
+#
 def cleanup_used_nvdb_tags(way_db, in_use):
     used_keys = [
         "NVDB_vagnummer",
@@ -789,13 +801,22 @@ def cleanup_used_nvdb_tags(way_db, in_use):
                     in_use[key] += 1
     return in_use
 
-def check_for_leftover_keys(in_use):
+# log_used_and_leftover_keys()
+#
+# Log all the keys we have used, and warn if there are keys left that haven't been translated.
+#
+def log_used_and_leftover_keys(in_use):
     print("Current keys in use:")
     for k, v in in_use.items():
         print("  '%s': %s" % (k, v))
         if k[0].isupper() and k != "NVDB:RLID" and k != "NVDB_extra_nodes":
             print("Warning: key %s was not parsed" % k)
 
+# way_to_simplify_epsilon()
+#
+# Depending on type of way return the precision (in meters) we want to keep when
+# geometry is simplified.
+#
 def way_to_simplify_epsilon(way):
     if way.tags.get("junction", "") == "roundabout":
         return 0.25
@@ -805,6 +826,10 @@ def way_to_simplify_epsilon(way):
         return 0.75
     return 1.0
 
+# keep_end_stub()
+#
+# For short end stubs, return True if we want to keep them anyway depending on type
+#
 def keep_end_stub(way):
     # in Stockholm dataset a number of steps in stub ends have been observed
     return way.tags.get("highway", None) == "steps"

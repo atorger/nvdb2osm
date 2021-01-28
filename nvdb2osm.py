@@ -17,6 +17,10 @@ from nvdb_ti import time_interval_strings
 
 # FIXME replace ' ' with '=' in translation table
 
+# read_nvdb_shapefile()
+#
+# Read a NVDB shapefile and apply tag translations.
+#
 def read_nvdb_shapefile(directory, name, tag_translations):
     pattern = os.path.join(directory, "*" + name + ".shp")
     files = glob.glob(pattern)
@@ -69,6 +73,10 @@ def read_nvdb_shapefile(directory, name, tag_translations):
         print("done (%s segments kept, %s skipped)" % (len(ways), skip_count), flush=True)
     return ways
 
+# insert_rlid_elements()
+#
+# Wrapper to insert a read NVDB layer into the database, logging progress.
+#
 def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None):
     print("Merging %s segments..." % len(ways), end='', flush=True)
     last_print = 0
@@ -83,6 +91,10 @@ def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None):
                 append_fixme_value(way.tags, "no nearby reference geometry to snap to")
     print("done", flush=True)
 
+# main()
+#
+# The main function, entry point of the program.
+#
 def main():
 
     master_geometry_name = "NVDB_DKReflinjetillkomst"
@@ -229,7 +241,7 @@ def main():
     cleanup_used_nvdb_tags(way_db.way_db, used_keys)
     cleanup_used_nvdb_tags(way_db.point_db, used_keys)
 
-    check_for_leftover_keys(used_keys)
+    log_used_and_leftover_keys(used_keys)
     print("Time intervals used:")
     for str1 in time_interval_strings:
         print("  '%s'" % str1)
