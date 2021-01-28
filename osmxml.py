@@ -5,6 +5,7 @@ from geometry_basics import *
 from proj_xy import sweref99_transformer, latlon_str
 from shapely_utils import way_is_self_crossing, split_self_crossing_way
 
+
 def waydb2osmxml(way_db, filename):
     ways = []
     points = []
@@ -13,6 +14,7 @@ def waydb2osmxml(way_db, filename):
     for segs in way_db.point_db.values():
         points += segs
     write_osmxml(ways, points, filename)
+
 
 def write_osmxml(way_list, point_list, filename):
 
@@ -38,12 +40,10 @@ def write_osmxml(way_list, point_list, filename):
     unique_id = 1
     points = {}
 
-    original_stdout = sys.stdout
-    with open(filename, 'w', encoding='utf-8') as stream:
-        sys.stdout = stream
+    with open(filename, 'w', encoding="utf-8") as stream:
         # header
-        print("<?xml version='1.0' encoding='UTF-8'?>")
-        print("<osm version='0.6' generator='nvdb2osm.py'>")
+        stream.write("<?xml version='1.0' encoding='UTF-8'?>")
+        stream.write("<osm version='0.6' generator='nvdb2osm.py'>")
 
         # all nodes with tags (points)
         for seg in point_list:
@@ -54,27 +54,27 @@ def write_osmxml(way_list, point_list, filename):
             unique_id += 1
             points[p] = p.node_id
             lat, lon = sweref99_transformer.transform(p.y, p.x)
-            print(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}'>\n" \
-                  f"  <tag k='source' v='NVDB' />\n" \
-                  f"  <tag k='NVDB:RLID' v='{seg.rlid}' />")
+            stream.write(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}'>\n"
+                         f"  <tag k='source' v='NVDB' />\n"
+                         f"  <tag k='NVDB:RLID' v='{seg.rlid}' />\n")
             for k, v in seg.tags.items():
-                print(f"  <tag k='{k}' v='{tag_to_str(v)}' />")
-            print("</node>")
+                stream.write(f"  <tag k='{k}' v='{tag_to_str(v)}' />\n")
+            stream.write("</node>")
 
         # all anonymous nodes (points)
         for seg in way_list:
             for p in seg.way:
-                if not p in points:
+                if p not in points:
                     p.node_id = unique_id
                     unique_id += 1
                     points[p] = p.node_id
                     lat, lon = sweref99_transformer.transform(p.y, p.x)
-                    print(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}' />")
+                    stream.write(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}' />\n")
                 else:
                     p.node_id = points[p]
 
         # debug fillpoints
-        #for x, ymap in way_db.gs._fillpoints.xmap.items():
+        # for x, ymap in way_db.gs._fillpoints.xmap.items():
         #    for y, refs in ymap.items():
         #        lat, lon = sweref99_transformer.transform(y, x)
         #        print("<node id='-%s' version='1' lat='%s' lon='%s' />" % (unique_id, lat, lon))
@@ -82,21 +82,19 @@ def write_osmxml(way_list, point_list, filename):
 
         # all ways
         for seg in way_list:
-            ways = [ seg.way ]
+            ways = [seg.way]
             if seg in self_crossing:
                 ways = split_self_crossing_way(seg.way)
             for way in ways:
                 seg.way_id = unique_id
                 unique_id += 1
-                print(f"<way id='-{seg.way_id}' version='1'>")
+                stream.write(f"<way id='-{seg.way_id}' version='1'>\n")
                 for p in way:
-                    print(f"  <nd ref='-{p.node_id}' />")
-                print(f"  <tag k='source' v='NVDB' />\n" \
-                      f"  <tag k='NVDB:RLID' v='{seg.rlid}' />")
+                    stream.write(f"  <nd ref='-{p.node_id}' />\n")
+                stream.write(f"  <tag k='source' v='NVDB' />\n" \
+                             f"  <tag k='NVDB:RLID' v='{seg.rlid}' />\n")
                 for k, v in seg.tags.items():
-                    print(f"  <tag k='{k}' v='{tag_to_str(v)}' />")
-                print("</way>")
+                    stream.write(f"  <tag k='{k}' v='{tag_to_str(v)}' />\n")
+                stream.write("</way>\n")
 
-        print("</osm>")
-
-        sys.stdout = original_stdout
+        stream.write("</osm>\n")

@@ -48,6 +48,15 @@ möjlighet/kunskap att köra Python-skript kan man kanske be någon annan
 köra skripet för det område man är intresserad av för att få en
 OSM-fil som man sen kan jobba med.
 
+Windows 10 Install notes
+------------------------
+
+Anaconda för python gör det enklare.
+
+    conda install geopandas
+    conda install sortedcontainers
+    pip install scanf
+
 
 Bakgrund
 --------
