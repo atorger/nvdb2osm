@@ -345,6 +345,12 @@ För att underlätta för ett uppdateringsskript är det önskvärt att
 kartläggare ser till att behålla NVDB:RLID-taggarna så det går
 snabbare att matcha ihop element och upptäcka skillnader.
 
+I fallet man bara behöver uppdatera taggar utan att ändra geometrin,
+till exempel när tidsintervall på förbud ändrats, blir det ganska
+enkelt så länge NVDB:RLID-taggarna hålls intakta. Då behöver skriptet
+inte jämföra geometri utan bara söka fram väg med matchande RLID och
+jämföra taggarna.
+
 
 Information om koden
 --------------------
