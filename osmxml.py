@@ -39,7 +39,7 @@ def write_osmxml(way_list, point_list, filename):
     points = {}
 
     original_stdout = sys.stdout
-    with open(filename, 'w') as stream:
+    with open(filename, 'w', encoding='utf-8') as stream:
         sys.stdout = stream
         # header
         print("<?xml version='1.0' encoding='UTF-8'?>")
