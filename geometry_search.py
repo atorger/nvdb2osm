@@ -40,7 +40,7 @@ class GeometrySearch:
         for p in it:
             self._realpoints.insert(p, way)
             if self._use_dist:
-                if p in self_points and p != first:
+                if p in self_points and (p != way.way[0] or way.way[-1] != way.way[0]): # exclude closed loop case
                     print("Self-crossing point")
                     if p in self._self_cross_points:
                         self._self_cross_points[p].add(way)
