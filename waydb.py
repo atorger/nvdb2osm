@@ -171,6 +171,32 @@ def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
             i += 1
     return ways
 
+# remove_DKReflinjetillkomst_overlaps
+#
+# In rare occassions overlaps have been observed in the NVDB ref layer. This function cleans it up.
+#
+def remove_DKReflinjetillkomst_overlaps(ways, snap_dist):
+
+    if len(ways) == 1:
+        return ways
+
+    def startavst(w):
+        return w.tags["STARTAVST"]
+
+    ways.sort(key=startavst)
+
+    has_overlap = False
+    prev_way = ways[0]
+    for way in ways[1:]:
+        if prev_way.tags["SLUTAVST"] > way.tags["STARTAVST"]:
+            print(f"Warning: overlapping segment for RLID {way.rlid}.")
+            has_overlap = True
+            break
+        prev_way = way
+    if has_overlap:
+        return join_ways_using_nvdb_tags(ways, snap_dist)
+    return ways
+
 # print_progress()
 #
 # print progress 10%...20%... etc
@@ -454,6 +480,7 @@ class WayDatabase:
             # make longest possible ways of RLID segments
             joined_ways = join_ways(ways)
             joined_ways = join_DKReflinjetillkomst_gaps(joined_ways, endpoints, self.POINT_SNAP_DISTANCE)
+            joined_ways = remove_DKReflinjetillkomst_overlaps(joined_ways, self.POINT_SNAP_DISTANCE)
             for way in joined_ways:
                 # very short segments lead to problems with snapping (can cause gaps where there should not be any)
                 new_way = remove_short_segments_and_redundant_points(way.way, self.POINT_SNAP_DISTANCE, endpoints)
