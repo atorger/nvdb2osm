@@ -7,16 +7,23 @@ nedladdat NVDB-data (i SHP-format) till en OSM XML-fil.
 
 Det körs på kommandoraden:
 
-nvdb2osm.py <katalog till nedladdade shape-filer> <output.osm>
+nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>
 
-Det tar cirka 15 minuter att tugga igenom en kommun. Shapefilerna
-laddas ner från Trafikverket. Man går till
+Exempel:
+
+nvdb2osm.py Vilhelmina_kommun_Shape_TNE__9343.zip vilhelmina.osm
+
+Det tar cirka 15 minuter att tugga igenom en kommun. Arkiven med
+shape-filer laddas ner från Trafikverket. Man går till
 https://lastkajen.trafikverket.se/ om man inte har ett konto finns det
 knapp att registrera sig där.
 
 Väl inne går man till Fillager->Vägdata->Kommuner/Län Shape och så
 väljer man län och kommun. Det går ladda ner hela län om man vill, men
 det blir orimligt mycket data att tugga på en gång.
+
+Det går att köra skriptet direkt på zip-arkivet man laddar ner, det är
+inte nödvändigt att packa upp det, men även det fungerar.
 
 Skriptet kräver vissa tredjepartsmoduler, listade i requirements.txt,
 installera med pip install -r requirements.txt

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import zipfile
 import glob
 import os
 import sys
@@ -21,11 +22,21 @@ from nvdb_ti import time_interval_strings
 #
 # Read a NVDB shapefile and apply tag translations.
 #
-def read_nvdb_shapefile(directory, name, tag_translations):
-    pattern = os.path.join(directory, "*" + name + ".shp")
-    files = glob.glob(pattern)
-    print("Reading file %s..." % files[0], end='', flush=True)
-    gdf = geopandas.read_file(files[0])
+def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
+    if zipfile.is_zipfile(directory_or_zip):
+        zf = zipfile.ZipFile(directory_or_zip)
+        files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp")]
+        if len(files) == 0:
+            raise RuntimeError(f"No file name *{name}.shp in {directory_or_zip}")
+        filename = files[0]
+        gdf_filename = "zip://" + directory_or_zip + "!" + filename
+    else:
+        pattern = os.path.join(directory_or_zip, "*" + name + ".shp")
+        files = glob.glob(pattern)
+        filename = files[0]
+        gdf_filename = files[0]
+    print("Reading file %s..." % filename, end='', flush=True)
+    gdf = geopandas.read_file(gdf_filename)
     print("done (%s segments)" % len(gdf), flush=True)
     assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
     ways = []
@@ -154,7 +165,7 @@ def main():
     ]
 
     if len(sys.argv) != 3:
-        print("Usage: %s <directory with NVDB *.shp files> <filename of OSM XML output>" % sys.argv[0])
+        print("Usage: %s <zip or dir with NVDB *.shp files> <filename of OSM XML output>" % sys.argv[0])
         sys.exit(1)
 
     debug_dump_layers = False
