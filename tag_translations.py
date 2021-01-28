@@ -493,12 +493,12 @@ def tag_translation_DKHastighetsgrans(tags):
     doesnt_apply_to_these_vehicles = tags["HAVGIE1"] == 1
     if len(vtypes) > 0 and tags["HAVGIE1"] == -1:
         append_fixme_value(tags, "DKHastighetsgrans: got vehicles but applies-to not set")
-        print("Warning: DKHastighetsgrans: got vehicles without applies-to set")
+        print("Warning: DKHastighetsgrans: got vehicles without applies-to set RLID %s" % tags["RLID"])
         only_applies_to_these_vehicles = True # guess
 
     if (only_applies_to_these_vehicles or doesnt_apply_to_these_vehicles) and len(vtypes) == 0:
         append_fixme_value(tags, "DKHastighetsgrans: got applies-to but no vehicles")
-        print("Warning: DKHastighetsgrans: got applies-to without vehicles")
+        print("Warning: DKHastighetsgrans: got applies-to without vehicles RLID %s" % tags["RLID"])
         only_applies_to_these_vehicles = False
         doesnt_apply_to_these_vehicles = False
 
