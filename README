@@ -5,9 +5,23 @@ Import av Trafikverkets NVDB-data till OpenStreetMap
 Detta är README-filen till nvdb2osm.py, ett skript som konverterar
 nedladdat NVDB-data (i SHP-format) till en OSM XML-fil.
 
-Skriptet kräver vissa tredjepartsmoduler, blir uppenbart vilka när man
-försöker köra skriptet. De är lätta att få tag på, använd exempelvis
-"pip install".
+Det körs på kommandoraden:
+
+nvdb2osm.py <katalog till nedladdade shape-filer> <output.osm>
+
+Det tar cirka 15 minuter att tugga igenom en kommun. Shapefilerna
+laddas ner från Trafikverket. Man går till
+https://lastkajen.trafikverket.se/ om man inte har ett konto finns det
+knapp att registrera sig där.
+
+Väl inne går man till Fillager->Vägdata->Kommuner/Län Shape och så
+väljer man län och kommun. Det går ladda ner hela län om man vill, men
+det blir orimligt mycket data att tugga på en gång.
+
+Skriptet kräver vissa tredjepartsmoduler, listade i requirements.txt,
+installera med pip install -r requirements.txt
+
+För generell Python-användning och installation får man Googla :-)
 
 
 Bakgrund
