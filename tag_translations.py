@@ -954,6 +954,9 @@ def tag_translation_DKVaghinder(tags):
     elif hindertyp == "låst grind eller bom":
         tags["barrier"] = "gate"
         tags["locked"] = "yes"
+        # add bicycle/foot to not mess up routing past these barriers which are for motor vehicles
+        tags["bicycle"] = "yes"
+        tags["foot"] = "yes"
     elif hindertyp == "betonghinder":
         tags["barrier"] = "block"
     elif hindertyp == "spårviddshinder":

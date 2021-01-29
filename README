@@ -339,6 +339,18 @@ Exempel på vanliga Validator-varningar, med kommentarer:
       regel ignorera.
 
 
+Övrigt att tänka på
+-------------------
+
+Bommar som NVDB markerat med "låst grind eller bom" sätts till
+barrier=gate med locked=yes. I vissa delar av landet är dessa bommar
+nästan alltid öppna (skogsbolagens skogsbilvägar t ex). Om det är så
+kan man vilja gå igenom dessa och ta bort locked eller sätta locked=no
+där det passar. (Bommarna taggas med foot=yes och bicycle=yes så att
+även om de är markerade låsta kan cykelrutter och vandringsrutter
+komma förbi, så låset handlar om motorfordon.)
+
+
 Hålla datat uppdaterat
 ----------------------
 
