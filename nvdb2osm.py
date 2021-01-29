@@ -245,9 +245,8 @@ def main():
     # with the same RLID is oriented in the same direction to not work
     simplify_oneway(way_db)
 
-    for ways in way_db.way_db.values():
-        for way in ways:
-            postprocess_miscellaneous_tags(way.tags)
+    for way in way_db:
+        postprocess_miscellaneous_tags(way.tags)
 
     used_keys = SortedDict()
     cleanup_used_nvdb_tags(way_db.way_db, used_keys)
