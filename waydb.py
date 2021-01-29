@@ -302,6 +302,8 @@ class WayDatabase:
         self.gs = None
         self._ref_gs = GeometrySearch(GEO_FILL_LENGTH, use_dist=True)
         self._ref_way_db = {}
+        self._way_db_iter = None
+        self._way_db_sub_iter = None
 
         # Expected properties of 'reference_geometry':
         #
@@ -413,6 +415,22 @@ class WayDatabase:
         self._insert_into_reference_geometry(rlid_ways, endpoints)
         print("done", flush=True)
         print("done", flush=True)
+
+    def __iter__(self):
+        self._way_db_iter = iter(self.way_db.values())
+        self._way_db_sub_iter = None
+        return self
+
+    def __next__(self):
+        if self._way_db_sub_iter is None:
+            ways = next(self._way_db_iter) # when StopIteration is raised iteration is complete
+            self._way_db_sub_iter = iter(ways)
+        try:
+            way = next(self._way_db_sub_iter)
+            return way
+        except StopIteration:
+            self._way_db_sub_iter = None
+            return self.__next__()
 
     def _snap_points_to_nearby_endpoints(self, rlid_ways, endpoints):
         ep_count = 0
@@ -951,7 +969,10 @@ class WayDatabase:
                     next_length, _ = calc_way_length(segs[next_idx].way)
                 if prev_length == 0 and next_length == 0:
                     # unconnected short segment (hopefully rare)
-                    print("RLID %s has a short unconnected segment (%g)" % (seg.rlid, length))
+                    if len(segs) == 1:
+                        print("RLID %s is an alone short segment (%g), must be kept" % (seg.rlid, length))
+                    else:
+                        print("RLID %s has a short unconnected segment (%g), must be kept" % (seg.rlid, length))
                     new_segs.append(seg)
                     continue
                 if length > 2.0:
