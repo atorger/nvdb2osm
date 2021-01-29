@@ -365,16 +365,16 @@ def tag_translation_single_value_with_time_interval(tags, key, value):
 def tag_translation_DKBarighet(tags):
     winter_bk = tags["BAEIGHTSOD"] is not None and tags["BAEIGHTSOD"] != tags["BAEIGHTSSS"]
     tag_translations = {
-        "BAEIGHTSSS BK 1": "maxweight 64",
-        "BAEIGHTSSS BK 2": "maxweight 51.4",
-        "BAEIGHTSSS BK 3": "maxweight 37.5",
-        "BAEIGHTSSS BK 4": "maxweight 74",
-        "BAEIGHTSSS BK 4 - Särskilda villkor": "maxweight 74",
-        "BAEIGHTSOD BK 1": "wc 64",
-        "BAEIGHTSOD BK 2": "wc 51.4",
-        "BAEIGHTSOD BK 3": "wc 37.5",
-        "BAEIGHTSOD BK 4": "wc 74",
-        "BAEIGHTSOD BK 4 - Särskilda villkor": "wc 74",
+        "BAEIGHTSSS=BK 1": "maxweight=64",
+        "BAEIGHTSSS=BK 2": "maxweight=51.4",
+        "BAEIGHTSSS=BK 3": "maxweight=37.5",
+        "BAEIGHTSSS=BK 4": "maxweight=74",
+        "BAEIGHTSSS=BK 4 - Särskilda villkor": "maxweight=74",
+        "BAEIGHTSOD=BK 1": "wc=64",
+        "BAEIGHTSOD=BK 2": "wc=51.4",
+        "BAEIGHTSOD=BK 3": "wc=37.5",
+        "BAEIGHTSOD=BK 4": "wc=74",
+        "BAEIGHTSOD=BK 4 - Särskilda villkor": "wc=74",
         "STATDAUMOD": None,
         "SLUDATMSOD": None,
     }
@@ -987,10 +987,10 @@ def process_tag_translations(tags, tag_translations):
         if not isinstance(all_kv, list):
             all_kv = [ all_kv ]
         for item in all_kv:
-            kv = item.split()
+            kv = item.split('=')
             if len(kv) == 1:
                 raise RuntimeError("Bad item in add_keys_and_values %s" % item)
-            new_items[kv[0]] = kv[1]
+            new_items[kv[0].strip()] = kv[1].strip()
     for k, v in tags.items():
         if k in tag_translations:
             sub = tag_translations[k]
@@ -999,7 +999,7 @@ def process_tag_translations(tags, tag_translations):
             if sub is not None:
                 new_items[sub] = v
         else:
-            kv = "%s %s" % (k, v)
+            kv = "%s=%s" % (k, v)
             if kv in tag_translations:
                 sub = tag_translations.get(kv)
                 replaced_keys.append(k)
@@ -1008,8 +1008,8 @@ def process_tag_translations(tags, tag_translations):
                     if not isinstance(sub, list):
                         sub = [sub]
                     for kv in sub:
-                        kv = kv.split()
-                        new_items[kv[0]] = kv[1]
+                        kv = kv.split('=')
+                        new_items[kv[0].strip()] = kv[1].strip()
     tags.update(new_items)
     for k in replaced_keys:
         del tags[k]
@@ -1059,7 +1059,7 @@ TAG_TRANSLATIONS = {
         "NAMN": None
     },
     "NVDB_DKCirkulationsplats": {
-        "add_keys_and_values": "junction roundabout",
+        "add_keys_and_values": "junction=roundabout",
         "RIKTNING": None
     },
     "NVDB_DKCykVgKatier": {
@@ -1067,11 +1067,11 @@ TAG_TRANSLATIONS = {
     },
     "NVDB_DKFarjeled": {
         "LEDSNAMN": "name",
-        "add_keys_and_values": "route ferry"
+        "add_keys_and_values": "route=ferry"
     },
     "NVDB_DKForbjudenFardriktning": {
-        "RIKTNING Mot": "oneway yes",
-        "RIKTNING Med": "oneway -1",
+        "RIKTNING=Mot": "oneway=yes",
+        "RIKTNING=Med": "oneway=-1",
         "expect_unset_time_intervals": True
     },
     "NVDB_DKForbudTrafik": {
@@ -1079,16 +1079,16 @@ TAG_TRANSLATIONS = {
     },
     "NVDB_DKFunkVagklass": {},
     "NVDB_DKGagata": {
-        "add_keys_and_values": "NVDB_gagata yes",
-        "SIDA Vänster": "NVDB_gagata_side left",
-        "SIDA Höger": "NVDB_gagata_side right",
-        "SIDA Vänster och höger": "NVDB_gagata_side both"
+        "add_keys_and_values":    "NVDB_gagata=yes",
+        "SIDA=Vänster":           "NVDB_gagata_side=left",
+        "SIDA=Höger":             "NVDB_gagata_side=right",
+        "SIDA=Vänster och höger": "NVDB_gagata_side=both"
     },
     "NVDB_DKGangfartsomrade": {
-        "add_keys_and_values": "NVDB_gangfartsomrode yes",
-        "SIDA Vänster": "NVDB_gangfartsomrode_side left",
-        "SIDA Höger": "NVDB_gangfartsomrode_side right",
-        "SIDA Vänster och höger": "NVDB_gangfartsomrode_side both"
+        "add_keys_and_values":    "NVDB_gangfartsomrode=yes",
+        "SIDA=Vänster":           "NVDB_gangfartsomrode_side=left",
+        "SIDA=Höger":             "NVDB_gangfartsomrode_side=right",
+        "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both"
     },
     "NVDB_DKGatunamn": {
         "NAMN": "name",
@@ -1104,10 +1104,10 @@ TAG_TRANSLATIONS = {
         "AVFRTSAEEG": None
     },
     "NVDB_DKGCM_belyst": {
-        "add_keys_and_values": "lit yes"
+        "add_keys_and_values": "lit=yes"
     },
     "NVDB_DKGCM_separation": {
-        "add_keys_and_values": [ "segregated yes", "foot designated" ],
+        "add_keys_and_values": [ "segregated=yes", "foot=designated" ],
         "SEPARATION": None,
         "SIDA": None,
     },
@@ -1116,7 +1116,7 @@ TAG_TRANSLATIONS = {
         "translator_function": tag_translation_DKHastighetsgrans,
     },
     "NVDB_DKHuvudled": {
-        "add_keys_and_values": "priority_road designated",
+        "add_keys_and_values": "priority_road=designated",
     },
     "NVDB_DKInskrTranspFarligtGods": {
         "translator_function": tag_translation_DKInskrTranspFarligtGods,
@@ -1132,16 +1132,16 @@ TAG_TRANSLATIONS = {
         "ORGNISTIO7": None,
         "ORGNISTIOD": None,
         "MEDELADEON": None,
-        "MILOEZNKSS Miljözon klass 1": "environmental_zone:sv 1", # custom tag
-        "MILOEZNKSS Miljözon klass 2": "environmental_zone:sv 2", # custom tag
-        "MILOEZNKSS Miljözon klass 3": "environmental_zone:sv 3", # custom tag
-        "MILOEZNKSS None": None
+        "MILOEZNKSS=Miljözon klass 1": "environmental_zone:sv=1", # custom tag
+        "MILOEZNKSS=Miljözon klass 2": "environmental_zone:sv=2", # custom tag
+        "MILOEZNKSS=Miljözon klass 3": "environmental_zone:sv=3", # custom tag
+        "MILOEZNKSS=None": None
     },
     "NVDB_DKMotortrafikled": {
-        "add_keys_and_values": "NVDB_motortrafikled yes"
+        "add_keys_and_values": "NVDB_motortrafikled=yes"
     },
     "NVDB_DKMotorvag": {
-        "add_keys_and_values": "NVDB_motorvag yes"
+        "add_keys_and_values": "NVDB_motorvag=yes"
     },
     "NVDB_DKOvrigt_vagnamn": {
         "NAMN": "name",
@@ -1158,14 +1158,14 @@ TAG_TRANSLATIONS = {
         "SLUTDAT1": None
     },
     "NVDB_DKRekomVagFarligtGods": {
-        "REKOMEND rekommenderad primär väg": "hazmat designated",
-        "REKOMEND rekommenderad sekundär väg": "hazmat designated"
+        "REKOMEND=rekommenderad primär väg":   "hazmat=designated",
+        "REKOMEND=rekommenderad sekundär väg": "hazmat=designated"
     },
     "NVDB_DKSlitlager": {
         # note: surface=paved would be more correct, but asphalt is so dominant in Sweden that we use that
-        "TYP belagd": "surface asphalt",
+        "TYP=belagd": "surface=asphalt",
         # note: gravel de facto dominant in Scandinavia, while OSM wiki points at fine_gravel
-        "TYP grus":   "surface gravel"
+        "TYP=grus":   "surface=gravel"
     },
     "NVDB_DKVagbredd": {
         "BREDD": "width",
@@ -1180,35 +1180,35 @@ TAG_TRANSLATIONS = {
         "LÄN": None
     },
     "VIS_DKOmkorningsforbud": {
-        "RIKTNING Med": "overtaking:forward no",
-        "RIKTNING Mot": "overtaking:backward no",
-        "RIKTNING Med och mot": "overtaking no",
+        "RIKTNING=Med":         "overtaking:forward=no",
+        "RIKTNING=Mot":         "overtaking:backward=no",
+        "RIKTNING=Med och mot": "overtaking=no",
     },
 
     "NVDB_DKFarthinder": {
-        "TYP 1": "traffic_calming choker",  # Avsmalning till ett körfält
-        "TYP 2": "traffic_calming bump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
-        "TYP 3": "traffic_calming choker",  # Sidoförskjutning - avsmalning
-        "TYP 4": "traffic_calming choker",  # Sidoförskjutning - refug
-        "TYP 5": "traffic_calming dip",     # Väghåla
-        "TYP 6": "traffic_calming cushion", # Vägkudde
-        "TYP 7": "traffic_calming table",   # Förhöjd genomgående GCM-passage
-        "TYP 8": "traffic_calming table",   # Förhöjd korsning
-        "TYP 9": "traffic_calming yes",     # Övrigt farthinder
-        "TYP 10": "traffic_calming dynamic_bump", # Dynamiskt aktivt farthinder
-        "TYP 11": "traffic_calming dynamic_bump", # Dynamiskt passivt farthinder
+        "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
+        "TYP=2":  "traffic_calming=bump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
+        "TYP=3":  "traffic_calming=choker",  # Sidoförskjutning - avsmalning
+        "TYP=4":  "traffic_calming=choker",  # Sidoförskjutning - refug
+        "TYP=5":  "traffic_calming=dip",     # Väghåla
+        "TYP=6":  "traffic_calming=cushion", # Vägkudde
+        "TYP=7":  "traffic_calming=table",   # Förhöjd genomgående GCM-passage
+        "TYP=8":  "traffic_calming=table",   # Förhöjd korsning
+        "TYP=9":  "traffic_calming=yes",     # Övrigt farthinder
+        "TYP=10": "traffic_calming=dynamic_bump", # Dynamiskt aktivt farthinder
+        "TYP=11": "traffic_calming=dynamic_bump", # Dynamiskt passivt farthinder
         "LAEGE": None
     },
     "NVDB_DKGCM_passage": {
-        "REFGPASAGE ja": "crossing:island yes",
-        "REFGPASAGE nej": None,
-        "REFGPASAGE okänt": None,
+        "REFGPASAGE=ja": "crossing:island=yes",
+        "REFGPASAGE=nej": None,
+        "REFGPASAGE=okänt": None,
         "TRAIKATTYP": None,
-        "PASSAGETYP annan ordnad passage i plan": None,
-        "PASSAGETYP planskild passage underfart": None,
-        "PASSAGETYP planskild passage överfart": None,
-        "PASSAGETYP signalreglerat övergångsställe och/eller signalreg": [ "highway crossing", "crossing traffic_signals" ],
-        "PASSAGETYP övergångsställe och/eller cykelpassage/cykelöverfa": None
+        "PASSAGETYP=annan ordnad passage i plan": None,
+        "PASSAGETYP=planskild passage underfart": None,
+        "PASSAGETYP=planskild passage överfart": None,
+        "PASSAGETYP=signalreglerat övergångsställe och/eller signalreg": [ "highway=crossing", "crossing=traffic_signals" ],
+        "PASSAGETYP=övergångsställe och/eller cykelpassage/cykelöverfa": None
     },
     "NVDB_DKHojdhinder45dm": {
         "FRIHOJD": "maxheight",
@@ -1217,9 +1217,9 @@ TAG_TRANSLATIONS = {
     },
     "NVDB_DKKorsning": {
         "GENRALSEYP": "NVDB_generaliseringstyp",
-        "SIGALRGLNG ja": [ "highway crossing", "crossing traffic_signals" ],
-        "SIGALRGLNG nej": None,
-        "SIGALRGLNG okänt": None,
+        "SIGALRGLNG=ja":    [ "highway=crossing", "crossing=traffic_signals" ],
+        "SIGALRGLNG=nej":   None,
+        "SIGALRGLNG=okänt": None,
         "NAMN": "name",
         "TRAIKPATER": None,
         "TPLUNDRNER": None,
@@ -1227,22 +1227,22 @@ TAG_TRANSLATIONS = {
         "YKOORDINAT": None
     },
     "NVDB_DKStopplikt": {
-        "add_keys_and_values": "highway stop",
-        "RIKTNING Med": "direction forward",
-        "RIKTNING Mot": "direction backward",
-        "RIKTNING Med och mot": None
+        "add_keys_and_values":  "highway=stop",
+        "RIKTNING=Med":         "direction=forward",
+        "RIKTNING=Mot":         "direction=backward",
+        "RIKTNING=Med och mot": None
     },
     "NVDB_DKVaghinder": {
         "translator_function": tag_translation_DKVaghinder
     },
     "NVDB_DKVajningsplikt": {
-        "add_keys_and_values": "highway give_way",
-        "RIKTNING Med": "direction forward",
-        "RIKTNING Mot": "direction backward",
-        "RIKTNING Med och mot": None
+        "add_keys_and_values":  "highway=give_way",
+        "RIKTNING=Med":         "direction=forward",
+        "RIKTNING=Mot":         "direction=backward",
+        "RIKTNING=Med och mot": None
     },
     "NVDB_DKVandmojlighet": {
-        "add_keys_and_values": "highway turning_circle",
+        "add_keys_and_values": "highway=turning_circle",
         "KLASS": None,
         "TYP": None,
     },

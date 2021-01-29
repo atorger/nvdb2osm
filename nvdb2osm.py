@@ -16,8 +16,6 @@ from waydb import WayDatabase, print_progress
 from osmxml import waydb2osmxml, write_osmxml
 from nvdb_ti import time_interval_strings
 
-# FIXME replace ' ' with '=' in translation table
-
 # read_nvdb_shapefile()
 #
 # Read a NVDB shapefile and apply tag translations.
