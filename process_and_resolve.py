@@ -370,19 +370,35 @@ def process_street_crossings(points, way_db, data_src_name):
 # Sort function for road numbers, used when there is more than one road number on the same road segment.
 #
 def compare_vagnummer(r1, r2):
-    r1_is_e = str(r1)[0] == 'E'
-    r2_is_e = str(r2)[0] == 'E'
+    r1 = str(r1)
+    r2 = str(r2)
+    r1_is_e = r1[0] == 'E'
+    r2_is_e = r2[0] == 'E'
     # E roads get sorted first
     if r1_is_e != r2_is_e:
         if r1_is_e:
             return -1
         return 1
+    r1 = r1.split(".") # under number separator
+    r2 = r2.split(".")
     if r1_is_e:
-        num1 = int(r1[1:])
-        num2 = int(r2[1:])
+        num1 = int(r1[0][1:])
+        num2 = int(r2[0][1:])
     else:
-        num1 = int(r1)
-        num2 = int(r2)
+        num1 = int(r1[0])
+        num2 = int(r2[0])
+    if num1 != num2:
+        return num1 - num2
+
+    # under number
+    if len(r1) > 1:
+        num1 = int(r1[1])
+    else:
+        num1 = 0
+    if len(r2) > 1:
+        num2 = int(r2[1])
+    else:
+        num2 = 0
     return num1 - num2
 
 # resolve_highways()

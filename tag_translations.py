@@ -924,12 +924,16 @@ def tag_translation_DKRastplats(tags):
 # resolve function.
 #
 def tag_translation_DKVagnummer(tags):
-    if tags["EUROPAVÄG"] == -1:
-        tags["NVDB_vagnummer"] = "E" + str(tags["HUVUDNR"])
+    undernr = tags.get("UNDERNR", None)
+    if undernr <= 0 or undernr is None:
+        undernr = ""
     else:
-        tags["NVDB_vagnummer"] = tags["HUVUDNR"]
-    del tags["HUVUDNR"]
-    del tags["EUROPAVÄG"]
+        undernr = "." + str(undernr)
+    if tags["EUROPAVÄG"] == -1:
+        tags["NVDB_vagnummer"] = "E" + str(tags["HUVUDNR"]) + undernr
+    else:
+        tags["NVDB_vagnummer"] = str(tags["HUVUDNR"]) + undernr
+    _ = [tags.pop(key, None) for key in ["HUVUDNR", "UNDERNR", "EUROPAVÄG"]]
 
 # tag_translation_DKVaghinder()
 #
@@ -1169,7 +1173,6 @@ TAG_TRANSLATIONS = {
     },
     "NVDB_DKVagnummer": {
         "translator_function": tag_translation_DKVagnummer,
-        "UNDERNR": None, # FIXME should we tag "undernummer" in some way?
         "RIKTNING": None,
         "ORDNING": None,
         "ROLL": None,
