@@ -187,7 +187,7 @@ def parse_hourmin_interval(values):
 
 def parse_date_interval(values):
     di = parse_range_date(values[0]) + "-" + parse_range_date(values[1])
-    if di == "Dec 29-Dec 29" or di == "Jan 01-Dec 29":
+    if di in ("Dec 29-Dec 29", "Jan 01-Dec 29"):
         return None
     return di
 

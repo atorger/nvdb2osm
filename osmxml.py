@@ -1,4 +1,3 @@
-import sys
 import html
 
 from geometry_basics import *
