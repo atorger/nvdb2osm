@@ -47,28 +47,22 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
         if wd not in waysd:
             waysd[wd] = way
         else:
-            way2 = waysd[wd]
-            way_date = way.tags["FRAN_DATUM"]
-            way2_date = way2.tags["FRAN_DATUM"]
-            if isinstance(way.way, list):
-                print("Duplicate ways:")
-                print("  Way 1: %s tags=%s (%s points, index %s)" % (way, way.tags, len(way.way), way.way_id))
-                print("  Way 2: %s tags=%s (%s points, index %s)" % (way2, way2.tags, len(way2.way), way2.way_id))
-            else:
-                print("Duplicate nodes:")
-                print("  Node 1: %s tags=%s (%s, index %s)" % (way, way.tags, way.way, way.way_id))
-                print("  Node 2: %s tags=%s (%s, index %s)" % (way2, way2.tags, way2.way, way2.way_id))
-            if way2_date != way_date:
-                # date matters when resolving tags, so keep later date
-                if way2_date < way_date:
-                    waysd[wd] = way
-                    new_ways.remove(way2)
-                    new_ways.append(way)
+            #way2 = waysd[wd]
+
+            # duplicates are so normal and common, so we don't care to log them any longer
+            #if isinstance(way.way, list):
+            #    print("Duplicate ways:")
+            #    print("  Way 1: %s tags=%s (%s points, index %s)" % (way, way.tags, len(way.way), way.way_id))
+            #    print("  Way 2: %s tags=%s (%s points, index %s)" % (way2, way2.tags, len(way2.way), way2.way_id))
+            #else:
+            #    print("Duplicate nodes:")
+            #    print("  Node 1: %s tags=%s (%s, index %s)" % (way, way.tags, way.way, way.way_id))
+            #    print("  Node 2: %s tags=%s (%s, index %s)" % (way2, way2.tags, way2.way, way2.way_id))
             continue
 
         # overlapping segments are quite normal, but may be interesting to print, except for some
         # data layers when it's the norm
-        if isinstance(way.way, list) and data_src_name != "NVDB_DKHastighetsgrans":
+        if isinstance(way.way, list) and data_src_name not in ("NVDB_DKHastighetsgrans", "NVDB_DKVagnummer"):
             it = iter(way.way)
             prev = next(it)
             for p in it:
@@ -400,197 +394,196 @@ def resolve_highways(way_db):
     print("Resolve highway tags...", end='', flush=True)
     fixme_count = 0
     gcm_resolve_crossings = []
-    for ways in way_db.way_db.values():
-        for way in ways:
+    for way in way_db:
 
-            tags = {}
-            if "GCMTYP" in way.tags:
-                gcmtyp = way.tags["GCMTYP"]
+        tags = {}
+        if "GCMTYP" in way.tags:
+            gcmtyp = way.tags["GCMTYP"]
 
-                if gcmtyp == 1: # Cykelbana (C)
-                    tags["highway"] = "cycleway"
-                elif gcmtyp == 2: # Cykelfält (C)
-                    tags["highway"] = "cycleway"
-                elif gcmtyp == 3: # Cykelpassage (C)
-                    tags["highway"] = "cycleway"
-                    tags["cycleway"] = "crossing"
-                    tags["crossing"] = "marked"
-                elif gcmtyp == 4: # Övergångsställe (C+G)
-                    # note: may in some cases be marked only with traffic sign,
-                    # OSM "marked" actually refers to marking on road surface
-                    tags["crossing"] = "marked"
-                    tags["highway"] = "path" # refined later
-                    gcm_resolve_crossings.append(way)
-                elif gcmtyp == 5: # Gatupassage utan märkning (C+G)
-                    tags["crossing"] = "unmarked"
-                    tags["highway"] = "path" # refined later
-                    gcm_resolve_crossings.append(way)
-                # elif gcmtyp == 6: not used by NVDB
-                # elif gcmtyp == 7: not used by NVDB
-                elif gcmtyp == 8: # Koppling till annat nät (C+G)
-                    tags["highway"] = "path" # refined later
-                    gcm_resolve_crossings.append(way)
-                elif gcmtyp == 9: # Annan cykelbar förbindelse (C)
-                    tags["highway"] = "path"
-                    tags["bicycle"] = "yes"
-                elif gcmtyp == 10: # Annan ej cykelbar förbindelse (C+G)
-                    tags["highway"] = "path"
-                elif gcmtyp == 11: # Gångbana (G)
-                    tags["highway"] = "footway"
-                elif gcmtyp == 12: # Trottoar (G)
-                    tags["highway"] = "footway"
-                    tags["footway"] = "sidewalk"
-                elif gcmtyp == 13: # Fortsättning i nätet (C+G)
-                    # generally a logical continuation of a sidewalk broken up by a parking lot
-                    tags["highway"] = "path" # refined later
-                    gcm_resolve_crossings.append(way)
-                elif gcmtyp == 14: # Passage genom byggnad (G)
-                    tags["highway"] = "footway"
-                    tags["tunnel"] = "building_passage"
-                elif gcmtyp == 15: # Ramp (G)
-                    tags["highway"] = "footway"
-                    tags["incline"] = "up"
-                    tags["wheelchair"] = "yes"
-                    tags["fixme"] = "could not resolve incline"
-                elif gcmtyp == 16: # Perrong (G)
-                    tags["highway"] = "platform"
-                    tags["public_transport"] = "platform"
-                    tags["railway"] = "platform"
-                elif gcmtyp == 17: # Trappa (C+G)
-                    tags["highway"] = "steps"
-                elif gcmtyp == 18: # Rulltrappa (G)
-                    tags["highway"] = "steps"
-                    tags["conveying"] = "yes"
-                elif gcmtyp == 19: # Rullande trottoar (G)
-                    tags["highway"] = "footway"
-                    tags["footway"] = "sidewalk"
-                    tags["conveying"] = "yes"
-                elif gcmtyp == 20: # Hiss (G)
-                    tags["highway"] = "elevator"
-                elif gcmtyp == 21: # Snedbanehiss (G)
-                    tags["highway"] = "elevator"
-                elif gcmtyp == 22: # Linbana (G)
-                    tags["aerialway"] = "cablecar"
-                elif gcmtyp == 23: # Bergbana (G)
-                    tags["railway"] = "funicular"
-                elif gcmtyp == 24: # Torg (C+G)
-                    tags["highway"] = "footway"
-                elif gcmtyp == 25: # Kaj (C+G)
-                    tags["highway"] = "footway"
-                elif gcmtyp == 26: # Öppen yta (C+G)
-                    tags["highway"] = "path" # refined later
-                    gcm_resolve_crossings.append(way)
-                elif gcmtyp == 27: # Färja (C+G)
-                    tags["route"] = "ferry"
-                elif gcmtyp == 28: # Cykelpassage och övergångsställe (C+G)
-                    tags["highway"] = "cycleway"
-                    tags["cycleway"] = "crossing"
-                    tags["crossing"] = "marked"
-                elif gcmtyp == 29: # Cykelbana ej lämplig för gång (C)
-                    tags["highway"] = "cycleway"
-                    tags["foot"] = "no"
-                else:
-                    raise RuntimeError("Unknown GCM-typ %s" % gcmtyp)
-
-            elif "NVDB_cykelvagkat" in way.tags:
-                # value is one of "Regional cykelväg", "Huvudcykelväg", "Lokal cykelväg", we tag all the same
+            if gcmtyp == 1: # Cykelbana (C)
                 tags["highway"] = "cycleway"
-            elif "NVDB_gagata" in way.tags:
-                # We ignore NVDB_gagata_side, from investigations it doesn't seem to provide any valuable information
-                tags["highway"] = "pedestrian"
-                if way.tags.get("width", 1000) < 3:
-                    # JOSM doesn't like pedestrian roads narrower than 3 meters
-                    tags["highway"] = "cycleway"
-                    way.tags.pop("maxspeed", None) # cycleways shouldn't have maxspeed
-            elif "NVDB_gangfartsomrode" in way.tags:
-                # We ignore NVDB_gangfartsomrode_side, from investigations it seems that even if
-                # on only one side the speed limit is set to 5 km/h.
-                tags["highway"] = "living_street"
-            elif "NVDB_motorvag" in way.tags:
-                tags["highway"] = "motorway"
-            elif "NVDB_motortrafikled" in way.tags:
-                tags["highway"] = "trunk"
-                tags["motorroad"] = "yes"
-            elif "NVDB_gatutyp" in way.tags and way.tags["NVDB_gatutyp"] != "Övergripande länk":
-                gatutyp = way.tags["NVDB_gatutyp"]
-                if gatutyp == "Övergripande länk":
-                    raise RuntimeError() # should already be handled
-                if gatutyp == "Huvudgata":
-                    tags["highway"] = "residential"
-                elif gatutyp == "Lokalgata stor":
-                    tags["highway"] = "residential"
-                elif gatutyp == "Lokalgata liten":
-                    tags["highway"] = "residential"
-                elif gatutyp == "Kvartersväg":
-                    tags["highway"] = "service"
-                elif gatutyp == "Parkeringsområdesväg":
-                    tags["highway"] = "service"
-                    tags["service"] = "parking_aisle"
-                elif gatutyp == "Infartsväg/Utfartsväg":
-                    tags["highway"] = "service"
-                elif gatutyp == "Leveransväg":
-                    tags["highway"] = "unclassified"
-                elif gatutyp == "Småväg":
-                    tags["highway"] = "unclassified"
-                else:
-                    raise RuntimeError("Unknown gatutyp %s" % gatutyp)
-            elif "NVDB_vagnummer" in way.tags:
-                if not "KLASS" in way.tags:
-                    #raise RuntimeError("KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
-                    #print("Warning: KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
-                    tags["fixme"] = "could not resolve highway tag"
-                else:
-                    klass = int(way.tags["KLASS"])
-                    if klass <= 1:
-                        tags["highway"] = "trunk"
-                    elif klass <= 2:
-                        tags["highway"] = "primary"
-                    elif klass <= 4:
-                        tags["highway"] = "secondary"
-                    else:
-                        tags["highway"] = "tertiary"
-            elif "KLASS" in way.tags:
-                # KLASS (from DKFunkVagklass) on it's own is used here last as a fallback
-                # when there is no other information to rely on. KLASS is a metric on how
-                # important a road is, and it depends on context. KLASS 8 can for example
-                # be used both on forestry roads in rural areas and on living and pedestrian
-                # streets in a city.
-                #
-                # City roads should normally already been resolved by other layers, so here
-                # we apply the highway tag as best suited in rural areas.
-                #
+            elif gcmtyp == 2: # Cykelfält (C)
+                tags["highway"] = "cycleway"
+            elif gcmtyp == 3: # Cykelpassage (C)
+                tags["highway"] = "cycleway"
+                tags["cycleway"] = "crossing"
+                tags["crossing"] = "marked"
+            elif gcmtyp == 4: # Övergångsställe (C+G)
+                # note: may in some cases be marked only with traffic sign,
+                # OSM "marked" actually refers to marking on road surface
+                tags["crossing"] = "marked"
+                tags["highway"] = "path" # refined later
+                gcm_resolve_crossings.append(way)
+            elif gcmtyp == 5: # Gatupassage utan märkning (C+G)
+                tags["crossing"] = "unmarked"
+                tags["highway"] = "path" # refined later
+                gcm_resolve_crossings.append(way)
+            # elif gcmtyp == 6: not used by NVDB
+            # elif gcmtyp == 7: not used by NVDB
+            elif gcmtyp == 8: # Koppling till annat nät (C+G)
+                tags["highway"] = "path" # refined later
+                gcm_resolve_crossings.append(way)
+            elif gcmtyp == 9: # Annan cykelbar förbindelse (C)
+                tags["highway"] = "path"
+                tags["bicycle"] = "yes"
+            elif gcmtyp == 10: # Annan ej cykelbar förbindelse (C+G)
+                tags["highway"] = "path"
+            elif gcmtyp == 11: # Gångbana (G)
+                tags["highway"] = "footway"
+            elif gcmtyp == 12: # Trottoar (G)
+                tags["highway"] = "footway"
+                tags["footway"] = "sidewalk"
+            elif gcmtyp == 13: # Fortsättning i nätet (C+G)
+                # generally a logical continuation of a sidewalk broken up by a parking lot
+                tags["highway"] = "path" # refined later
+                gcm_resolve_crossings.append(way)
+            elif gcmtyp == 14: # Passage genom byggnad (G)
+                tags["highway"] = "footway"
+                tags["tunnel"] = "building_passage"
+            elif gcmtyp == 15: # Ramp (G)
+                tags["highway"] = "footway"
+                tags["incline"] = "up"
+                tags["wheelchair"] = "yes"
+                tags["fixme"] = "could not resolve incline"
+            elif gcmtyp == 16: # Perrong (G)
+                tags["highway"] = "platform"
+                tags["public_transport"] = "platform"
+                tags["railway"] = "platform"
+            elif gcmtyp == 17: # Trappa (C+G)
+                tags["highway"] = "steps"
+            elif gcmtyp == 18: # Rulltrappa (G)
+                tags["highway"] = "steps"
+                tags["conveying"] = "yes"
+            elif gcmtyp == 19: # Rullande trottoar (G)
+                tags["highway"] = "footway"
+                tags["footway"] = "sidewalk"
+                tags["conveying"] = "yes"
+            elif gcmtyp == 20: # Hiss (G)
+                tags["highway"] = "elevator"
+            elif gcmtyp == 21: # Snedbanehiss (G)
+                tags["highway"] = "elevator"
+            elif gcmtyp == 22: # Linbana (G)
+                tags["aerialway"] = "cablecar"
+            elif gcmtyp == 23: # Bergbana (G)
+                tags["railway"] = "funicular"
+            elif gcmtyp == 24: # Torg (C+G)
+                tags["highway"] = "footway"
+            elif gcmtyp == 25: # Kaj (C+G)
+                tags["highway"] = "footway"
+            elif gcmtyp == 26: # Öppen yta (C+G)
+                tags["highway"] = "path" # refined later
+                gcm_resolve_crossings.append(way)
+            elif gcmtyp == 27: # Färja (C+G)
+                tags["route"] = "ferry"
+            elif gcmtyp == 28: # Cykelpassage och övergångsställe (C+G)
+                tags["highway"] = "cycleway"
+                tags["cycleway"] = "crossing"
+                tags["crossing"] = "marked"
+            elif gcmtyp == 29: # Cykelbana ej lämplig för gång (C)
+                tags["highway"] = "cycleway"
+                tags["foot"] = "no"
+            else:
+                raise RuntimeError("Unknown GCM-typ %s" % gcmtyp)
+
+        elif "NVDB_cykelvagkat" in way.tags:
+            # value is one of "Regional cykelväg", "Huvudcykelväg", "Lokal cykelväg", we tag all the same
+            tags["highway"] = "cycleway"
+        elif "NVDB_gagata" in way.tags:
+            # We ignore NVDB_gagata_side, from investigations it doesn't seem to provide any valuable information
+            tags["highway"] = "pedestrian"
+            if way.tags.get("width", 1000) < 3:
+                # JOSM doesn't like pedestrian roads narrower than 3 meters
+                tags["highway"] = "cycleway"
+                way.tags.pop("maxspeed", None) # cycleways shouldn't have maxspeed
+        elif "NVDB_gangfartsomrode" in way.tags:
+            # We ignore NVDB_gangfartsomrode_side, from investigations it seems that even if
+            # on only one side the speed limit is set to 5 km/h.
+            tags["highway"] = "living_street"
+        elif "NVDB_motorvag" in way.tags:
+            tags["highway"] = "motorway"
+        elif "NVDB_motortrafikled" in way.tags:
+            tags["highway"] = "trunk"
+            tags["motorroad"] = "yes"
+        elif "NVDB_gatutyp" in way.tags and way.tags["NVDB_gatutyp"] != "Övergripande länk":
+            gatutyp = way.tags["NVDB_gatutyp"]
+            if gatutyp == "Övergripande länk":
+                raise RuntimeError() # should already be handled
+            if gatutyp == "Huvudgata":
+                tags["highway"] = "residential"
+            elif gatutyp == "Lokalgata stor":
+                tags["highway"] = "residential"
+            elif gatutyp == "Lokalgata liten":
+                tags["highway"] = "residential"
+            elif gatutyp == "Kvartersväg":
+                tags["highway"] = "service"
+            elif gatutyp == "Parkeringsområdesväg":
+                tags["highway"] = "service"
+                tags["service"] = "parking_aisle"
+            elif gatutyp == "Infartsväg/Utfartsväg":
+                tags["highway"] = "service"
+            elif gatutyp == "Leveransväg":
+                tags["highway"] = "unclassified"
+            elif gatutyp == "Småväg":
+                tags["highway"] = "unclassified"
+            else:
+                raise RuntimeError("Unknown gatutyp %s" % gatutyp)
+        elif "NVDB_vagnummer" in way.tags:
+            if not "KLASS" in way.tags:
+                #raise RuntimeError("KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
+                #print("Warning: KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
+                tags["fixme"] = "could not resolve highway tag"
+            else:
                 klass = int(way.tags["KLASS"])
-                if way.tags.get("route", "") == "ferry":
-                    # Special case for ferry routes (shouldn't have a highway tag, but is
-                    # in NVDB classified with importance and thus have a KLASS tag, so we
-                    # need to ignore it)
-                    pass
-                elif klass <= 1:
+                if klass <= 1:
                     tags["highway"] = "trunk"
                 elif klass <= 2:
                     tags["highway"] = "primary"
                 elif klass <= 4:
                     tags["highway"] = "secondary"
-                elif klass <= 6:
-                    tags["highway"] = "tertiary"
-                elif klass <= 8:
-                    tags["highway"] = "unclassified"
                 else:
-                    tags["highway"] = "track"
+                    tags["highway"] = "tertiary"
+        elif "KLASS" in way.tags:
+            # KLASS (from DKFunkVagklass) on it's own is used here last as a fallback
+            # when there is no other information to rely on. KLASS is a metric on how
+            # important a road is, and it depends on context. KLASS 8 can for example
+            # be used both on forestry roads in rural areas and on living and pedestrian
+            # streets in a city.
+            #
+            # City roads should normally already been resolved by other layers, so here
+            # we apply the highway tag as best suited in rural areas.
+            #
+            klass = int(way.tags["KLASS"])
+            if way.tags.get("route", "") == "ferry":
+                # Special case for ferry routes (shouldn't have a highway tag, but is
+                # in NVDB classified with importance and thus have a KLASS tag, so we
+                # need to ignore it)
+                pass
+            elif klass <= 1:
+                tags["highway"] = "trunk"
+            elif klass <= 2:
+                tags["highway"] = "primary"
+            elif klass <= 4:
+                tags["highway"] = "secondary"
+            elif klass <= 6:
+                tags["highway"] = "tertiary"
+            elif klass <= 8:
+                tags["highway"] = "unclassified"
             else:
-                #print("Warning: information missing to resolve highway tag for RLID %s, adding fixme tag" % way.rlid)
-                tags["fixme"] = "could not resolve highway tag"
+                tags["highway"] = "track"
+        else:
+            #print("Warning: information missing to resolve highway tag for RLID %s, adding fixme tag" % way.rlid)
+            tags["fixme"] = "could not resolve highway tag"
 
-            if "fixme" in tags:
-                fixme_count += 1
-            merge_translated_tags(way, tags)
+        if "fixme" in tags:
+            fixme_count += 1
+        merge_translated_tags(way, tags)
 
-            # convert tags
-            if "NVDB_vagnummer" in way.tags:
-                refs = way.tags["NVDB_vagnummer"]
-                if isinstance(refs, list):
-                    refs.sort(key=cmp_to_key(compare_vagnummer))
-                way.tags["ref"] = refs
+        # convert tags
+        if "NVDB_vagnummer" in way.tags:
+            refs = way.tags["NVDB_vagnummer"]
+            if isinstance(refs, list):
+                refs.sort(key=cmp_to_key(compare_vagnummer))
+            way.tags["ref"] = refs
 
 
     # Second pass for things we couldn't resolve in the first pass
@@ -677,35 +670,34 @@ def resolve_highways(way_db):
 def simplify_speed_limits(way_db):
 
     print("Simplify speed limits...", end='', flush=True)
-    for ways in way_db.way_db.values():
-        for way in ways:
-            ms_f = way.tags.get("maxspeed:forward", None)
-            ms_b = way.tags.get("maxspeed:backward", None)
-            ms = way.tags.get("maxspeed", None)
-            if ms is None and ms_f is None and ms_b is None:
-                continue
-            same_speeds = True
-            speed = None
-            speed_tags = [ms_f, ms_b, ms]
-            for tag in speed_tags:
-                if tag is not None:
-                    if speed is None:
-                        speed = tag
-                    elif tag != speed:
-                        same_speeds = False
-                    break
-            if same_speeds:
-                way.tags.pop("maxspeed:forward", None)
-                way.tags.pop("maxspeed:backward", None)
-                way.tags["maxspeed"] = speed
-            elif ms_f is not None and ms_b is not None and ms is not None:
-                merge_translated_tags(way, {"fixme": "too many maxspeeds"})
-            elif ms is not None:
-                if ms_b is not None:
-                    way.tags["maxspeed:forward"] = ms
-                else:
-                    way.tags["maxspeed:backward"] = ms
-                way.tags.pop("maxspeed", None)
+    for way in way_db:
+        ms_f = way.tags.get("maxspeed:forward", None)
+        ms_b = way.tags.get("maxspeed:backward", None)
+        ms = way.tags.get("maxspeed", None)
+        if ms is None and ms_f is None and ms_b is None:
+            continue
+        same_speeds = True
+        speed = None
+        speed_tags = [ms_f, ms_b, ms]
+        for tag in speed_tags:
+            if tag is not None:
+                if speed is None:
+                    speed = tag
+                elif tag != speed:
+                    same_speeds = False
+                break
+        if same_speeds:
+            way.tags.pop("maxspeed:forward", None)
+            way.tags.pop("maxspeed:backward", None)
+            way.tags["maxspeed"] = speed
+        elif ms_f is not None and ms_b is not None and ms is not None:
+            merge_translated_tags(way, {"fixme": "too many maxspeeds"})
+        elif ms is not None:
+            if ms_b is not None:
+                way.tags["maxspeed:forward"] = ms
+            else:
+                way.tags["maxspeed:backward"] = ms
+            way.tags.pop("maxspeed", None)
 
     print("done", flush=True)
 
@@ -715,53 +707,52 @@ def simplify_speed_limits(way_db):
 #
 def simplify_oneway(way_db):
     print("Simplify tags for oneway roads...", end='', flush=True)
-    for ways in way_db.way_db.values():
-        for way in ways:
+    for way in way_db:
 
-            # merge :backward/:forward into one key when applicable
-            for k, v in list(way.tags.items()):
-                if ":forward" in k and not "lanes:" in k:
-                    bw_key = k.replace(":forward", ":backward")
-                    plain_key = k.replace(":forward", "")
-                    if bw_key in way.tags and way.tags[bw_key] == v and way.tags.get(plain_key, v) == v:
-                        del way.tags[k]
-                        del way.tags[bw_key]
-                        way.tags[plain_key] = v
-
-            if not "oneway" in way.tags:
-                continue
-
-            # reverse oneway if necessary to avoid oneway=-1 tag which JOSM doesn't like
-            oneway = way.tags["oneway"]
-            if oneway == -1:
-                oneway = "yes"
-                way.way = list(reversed(way.way))
-                way.tags["oneway"] = "yes"
-                direction = ":backward"
-                opposite_direction = ":forward"
-                new_tags = {}
-                for k, v in way.tags.items():
-                    if direction in k:
-                        k = k.replace(direction, opposite_direction)
-                    elif opposite_direction in k:
-                        k = k.replace(opposite_direction, direction)
-                    new_tags[k] = v
-                way.tags = new_tags
-
-            if oneway != "yes":
-                continue
-
-            for k, v in list(way.tags.items()):
-                #  Removing direction if it's the same as oneway, except for lanes
-                if ":forward" in k and not "lanes:" in k:
+        # merge :backward/:forward into one key when applicable
+        for k, v in list(way.tags.items()):
+            if ":forward" in k and not "lanes:" in k:
+                bw_key = k.replace(":forward", ":backward")
+                plain_key = k.replace(":forward", "")
+                if bw_key in way.tags and way.tags[bw_key] == v and way.tags.get(plain_key, v) == v:
                     del way.tags[k]
-                    k = k.replace(":forward", "")
-                    way.tags[k] = v
+                    del way.tags[bw_key]
+                    way.tags[plain_key] = v
 
-                # Remove redundant backward vehicle restriction
-                k_split = k.split(":backward")
-                if len(k_split) > 1 and k_split[0] in ALL_VEHICLES and v == "no":
-                    del way.tags[k]
+        if not "oneway" in way.tags:
+            continue
+
+        # reverse oneway if necessary to avoid oneway=-1 tag which JOSM doesn't like
+        oneway = way.tags["oneway"]
+        if oneway == -1:
+            oneway = "yes"
+            way.way = list(reversed(way.way))
+            way.tags["oneway"] = "yes"
+            direction = ":backward"
+            opposite_direction = ":forward"
+            new_tags = {}
+            for k, v in way.tags.items():
+                if direction in k:
+                    k = k.replace(direction, opposite_direction)
+                elif opposite_direction in k:
+                    k = k.replace(opposite_direction, direction)
+                new_tags[k] = v
+            way.tags = new_tags
+
+        if oneway != "yes":
+            continue
+
+        for k, v in list(way.tags.items()):
+            #  Removing direction if it's the same as oneway, except for lanes
+            if ":forward" in k and not "lanes:" in k:
+                del way.tags[k]
+                k = k.replace(":forward", "")
+                way.tags[k] = v
+
+            # Remove redundant backward vehicle restriction
+            k_split = k.split(":backward")
+            if len(k_split) > 1 and k_split[0] in ALL_VEHICLES and v == "no":
+                del way.tags[k]
 
     print("done", flush=True)
 
@@ -813,7 +804,7 @@ def postprocess_miscellaneous_tags(tags):
 #
 # Remove all tags that have been used when resolving various things
 #
-def cleanup_used_nvdb_tags(way_db, in_use):
+def cleanup_used_nvdb_tags(way_db_ways, in_use):
     used_keys = [
         "NVDB_vagnummer",
         "NVDB_gagata",
@@ -831,7 +822,7 @@ def cleanup_used_nvdb_tags(way_db, in_use):
         "KONTRUTION",
         "OEPNINSBAR"
     ]
-    for ways in way_db.values():
+    for ways in way_db_ways.values():
         for way in ways:
             for key in used_keys:
                 way.tags.pop(key, None)
