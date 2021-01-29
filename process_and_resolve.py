@@ -550,8 +550,20 @@ def resolve_highways(way_db):
                     else:
                         tags["highway"] = "tertiary"
             elif "KLASS" in way.tags:
+                # KLASS (from DKFunkVagklass) on it's own is used here last as a fallback
+                # when there is no other information to rely on. KLASS is a metric on how
+                # important a road is, and it depends on context. KLASS 8 can for example
+                # be used both on forestry roads in rural areas and on living and pedestrian
+                # streets in a city.
+                #
+                # City roads should normally already been resolved by other layers, so here
+                # we apply the highway tag as best suited in rural areas.
+                #
                 klass = int(way.tags["KLASS"])
                 if way.tags.get("route", "") == "ferry":
+                    # Special case for ferry routes (shouldn't have a highway tag, but is
+                    # in NVDB classified with importance and thus have a KLASS tag, so we
+                    # need to ignore it)
                     pass
                 elif klass <= 1:
                     tags["highway"] = "trunk"
