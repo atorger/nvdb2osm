@@ -99,6 +99,10 @@
 # NVDB_DKVandmojlighet             - turning_circle
 
 from nvdb_ti import parse_time_interval_tags, parse_range_date
+import logging
+
+_log = logging.getLogger("translations")
+
 
 # append_fixme_value()
 #
@@ -108,6 +112,7 @@ def append_fixme_value(tags, fixme_value):
     else:
         tags["fixme"] = tags["fixme"] + "; " + fixme_value
 
+
 # tag_translation_expect_unset_time_intervals()
 #
 def tag_translation_expect_unset_time_intervals(tags):
@@ -116,8 +121,9 @@ def tag_translation_expect_unset_time_intervals(tags):
         append_fixme_value(tags, "time interval parse failure")
     elif time_intervals is not None:
         # if this happens, we probably need to implement some code to handle time intervals for that given type
-        print("Warning: unexpected time interval (not implemented) RLID %s" % tags["RLID"])
+        _log.warning(f"unexpected time interval (not implemented) RLID {tags['RLID']}")
         append_fixme_value(tags, "Warning: time interval handling not implemented)")
+
 
 # add_extra_nodes_tag()
 #
@@ -152,7 +158,7 @@ def parse_speed_limit(tags, key):
     if speed == "gångfart":
         speed = 5
     elif not isinstance(speed, int):
-        print("Warning: unexpected speed value %s %s (RLID %s)" % (key, speed, tags["RLID"]))
+        _log.warning(f"unexpected speed value {key} {speed} (RLID {tags['RLID']})")
         append_fixme_value(tags, "Bad %s speed value" % key)
         speed = 5
     elif speed >= 1000: # observed to be used as undefined value in some cases
@@ -173,7 +179,7 @@ def parse_direction(tags):
         dir_str = ":backward"
     else:
         dir_str = ""
-        print("Warning: invalid value of RIKTNING %s (RLID %s)" % (tags["RIKTNING"], tags["RLID"]))
+        _log.warning(f"invalid value of RIKTNING {tags['RIKTNING']} (RLID {tags['RLID']})")
         append_fixme_value(tags, "Bad RIKTNING value")
     tags.pop("RIKTNING", None)
     return dir_str
@@ -199,13 +205,13 @@ def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
                 if purpose_list is not None:
                     purpose_list.append(v.split()[1])
                 else:
-                    print("Warning: %s contains conditional element (RLID %s)" % (key_base, tags["RLID"]))
+                    _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
                     append_fixme_value(tags, "%s contains conditional element" % key_base)
             elif v.startswith("USER"):
                 if user_list is not None:
                     user_list.append(v.split()[1])
                 else:
-                    print("Warning: %s contains conditional element (RLID %s)" % (key_base, tags["RLID"]))
+                    _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
                     append_fixme_value(tags, "%s contains conditional element" % key_base)
             else:
                 vtypes.append(v)
@@ -294,6 +300,7 @@ VEHICLES_AND_ROAD_USERS_TRANSLATIONS = {
     "släpvagn":              "trailer"
 }
 
+
 # tag_translation_fordon_trafikant()
 #
 # Translate NVDB vehicles and road users into OSM tags. Note that in this case OSM tags are
@@ -337,11 +344,11 @@ def tag_translation_fordon_trafikant(tag, rlid):
         }
         tag = trans_number.get(tag, "okänt")
 
-
     if not tag in VEHICLES_AND_ROAD_USERS_TRANSLATIONS:
-        print("Warning: unexpected NVDB fordon-trafikant tag '%s' (RLID %s)" % (tag, rlid))
+        _log.warning(f"unexpected NVDB fordon-trafikant tag '{tag}' (RLID {rlid})")
         return "FIXME"
     return VEHICLES_AND_ROAD_USERS_TRANSLATIONS[tag]
+
 
 # tag_translation_single_value_with_time_interval()
 #
@@ -485,7 +492,7 @@ def tag_translation_DKForbudTrafik(tags):
     for k, v in list(tags.items()):
         if v is None:
             del tags[k]
-    print("DKForbudTrafik input", tags, ti)
+    _log.debug(f"DKForbudTrafik input: {tags} {ti}")
 
     forbidden_ti = ti["/"]
     exemption_ti = ti["GE/"]
@@ -513,7 +520,7 @@ def tag_translation_DKForbudTrafik(tags):
         if v in exemption_vtypes:
             # This can happen when NVDB tag is more specific than the translated OSM tag
             # We then remove the exemption and keep the generic OSM
-            print("Warning: vehicle overlap with exemption for restrictions (%s) (RLID %s)" % (v, rlid))
+            _log.warning(f"vehicle overlap with exemption for restrictions ({v}) (RLID {rlid})")
             exemption_vtypes.remove(v)
 
     # remove duplicates
@@ -581,7 +588,8 @@ def tag_translation_DKForbudTrafik(tags):
         idx += 1
     _ = [tags.pop(key, None) for key in ["BESKRGFART", "BSEKR_GEJ1", "GENOMFART", "TOTALVIKT"]]
 
-    print("DKForbudTrafik output", tags)
+    _log.debug(f"DKForbudTrafik output {tags}")
+
 
 # tag_translation_DKHastighetsgrans()
 #
@@ -603,12 +611,12 @@ def tag_translation_DKHastighetsgrans(tags):
     doesnt_apply_to_these_vehicles = tags["HAVGIE1"] == 1
     if len(vtypes) > 0 and tags["HAVGIE1"] == -1:
         append_fixme_value(tags, "DKHastighetsgrans: got vehicles but applies-to not set")
-        print("Warning: DKHastighetsgrans: got vehicles without applies-to set RLID %s" % tags["RLID"])
+        _log.warning(f"DKHastighetsgrans: got vehicles without applies-to set RLID {tags['RLID']}")
         only_applies_to_these_vehicles = True # guess
 
     if (only_applies_to_these_vehicles or doesnt_apply_to_these_vehicles) and len(vtypes) == 0:
         append_fixme_value(tags, "DKHastighetsgrans: got applies-to but no vehicles")
-        print("Warning: DKHastighetsgrans: got applies-to without vehicles RLID %s" % tags["RLID"])
+        _log.warning(f"DKHastighetsgrans: got applies-to without vehicles RLID {tags['RLID']}")
         only_applies_to_these_vehicles = False
         doesnt_apply_to_these_vehicles = False
 
@@ -624,7 +632,7 @@ def tag_translation_DKHastighetsgrans(tags):
 
     if (cond_str != "" or len(vtypes) > 0) and (alt_maxspeed < 0 or alt_maxspeed == maxspeed):
         append_fixme_value(tags, "DKHastighetsgrans: conditions without alternate speed")
-        print("Warning: DKHastighetsgrans: conditions without alternate speed %s (RLID %s)" % (tags, tags["RLID"]))
+        _log.warning(f"DKHastighetsgrans: conditions without alternate speed {tags} (RLID {tags['RLID']})")
         cond_str = ""
 
     if only_applies_to_these_vehicles:
@@ -657,7 +665,7 @@ def tag_translation_DKInskrTranspFarligtGods(tags):
     may_not = tags["FARINTE"]
     # we translate all values to hazmat=no
     if may_not not in ("föras", "stannas", "parkeras", "stannas eller parkeras"):
-        print("Warning: unknown FARINTE value %s (RLID %s)" % (tags, tags["RLID"]))
+        _log.warning(f"unknown FARINTE value {tags} (RLID {tags['RLID']})")
         append_fixme_value(tags, "DKInskrTranspFarligtGods: unknown FARINTE value")
 
     time_intervals = parse_time_interval_tags(tags)
@@ -764,7 +772,7 @@ def tag_translation_DKP_ficka(tags):
     elif tags["SIDA"] == "Vänster":
         tags["layby"] = "left"
     else:
-        print("Warning: unknown SIDA %s (RLID %s)" % (tags, tags["RLID"]))
+        _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
         append_fixme_value(tags, "DKP_ficka: unknown SIDA value")
 
     del_keys = [
@@ -965,7 +973,7 @@ def tag_translation_DKVaghinder(tags):
         tags["barrier"] = "yes"
     else:
         append_fixme_value(tags, "DKVaghinder: unknown hindertyp")
-        print("Warning: unknown hindertyp %s (RLID %s)" % (hindertyp, tags["RLID"]))
+        _log.warning(f"unknown hindertyp {hindertyp} (RLID {tags['RLID']})")
 
     del tags["PASSBREDD"]
     del tags["HINDERTYP"]

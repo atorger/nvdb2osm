@@ -1,13 +1,14 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
+import argparse
+import logging
+import pathlib
 import zipfile
 import glob
 import os
-import sys
 import geopandas
 from sortedcontainers import SortedDict
 
-from geometry_basics import *
 from process_and_resolve import *
 from tag_translations import TAG_TRANSLATIONS, process_tag_translations
 from nvdb_segment import NvdbSegment, NVDB_GEOMETRY_TAGS
@@ -16,11 +17,15 @@ from waydb import WayDatabase, print_progress
 from osmxml import waydb2osmxml, write_osmxml
 from nvdb_ti import time_interval_strings
 
+_log = logging.getLogger("nvdb2osm")
+
+
 # read_nvdb_shapefile()
 #
 # Read a NVDB shapefile and apply tag translations.
 #
 def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
+    _log = logging.getLogger("nvdb2osm")
     if zipfile.is_zipfile(directory_or_zip):
         zf = zipfile.ZipFile(directory_or_zip)
         files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp")]
@@ -33,17 +38,17 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
         files = glob.glob(pattern)
         filename = files[0]
         gdf_filename = files[0]
-    print("Reading file %s..." % filename, end='', flush=True)
+    _log.info(f"Reading file {filename}")
     gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
-    print("done (%s segments)" % len(gdf), flush=True)
+    _log.info(f"done ({len(gdf)} segments)")
     assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
     ways = []
-    print("Parsing %s segments..." % len(gdf), end='', flush=True)
+    _log.info(f"Parsing {len(gdf)} segments...")
     skip_count = 0
     last_print = 0
     for index, row in gdf.iterrows():
         if len(gdf) > 50:
-            last_print = print_progress(last_print, index, len(gdf))
+            last_print = print_progress(last_print, index, len(gdf), progress_text=f"Parsing {len(gdf)} segments")
         way = row.to_dict()
 
         way.pop("TILL_DATUM", None)
@@ -56,7 +61,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
         del way["geometry"]
 
         if geometry is None:
-            print("Skipping segment without geometry RLID %s" % way["RLID"])
+            _log.info(f"Skipping segment without geometry RLID {way['RLID']}")
             skip_count += 1
             continue
 
@@ -67,7 +72,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
         else:
             points = shapely_linestring_to_way(geometry)
             if len(points) == 1:
-                print("Skipping geometry (reduced) to one point %s" % way)
+                _log.info(f"Skipping geometry (reduced) to one point {way}")
                 skip_count += 1
                 continue
 
@@ -77,35 +82,33 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
         nvdbseg.way_id = index
         ways.append(nvdbseg)
     if skip_count == 0:
-        print("done", flush=True)
+        _log.info("done")
     else:
-        print("done (%s segments kept, %s skipped)" % (len(ways), skip_count), flush=True)
+        _log.info(f"done ({len(ways)} segments kept, {skip_count} skipped)")
     return ways
+
 
 # insert_rlid_elements()
 #
 # Wrapper to insert a read NVDB layer into the database, logging progress.
 #
 def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None):
-    print("Merging %s segments..." % len(ways), end='', flush=True)
+    _log.info(f"Merging {len(ways)} segments...")
     last_print = 0
     for idx, way in enumerate(ways):
         if len(ways) > 50:
-            last_print = print_progress(last_print, idx, len(ways))
+            last_print = print_progress(last_print, idx, len(ways), progress_text=f"Merging {len(ways)} segments...")
         if isinstance(way.way, list):
             way_db.insert_rlid_way(way, data_src_name, debug_ways)
         else:
             did_snap = way_db.insert_rlid_node(way, data_src_name)
             if not did_snap:
                 append_fixme_value(way.tags, "no nearby reference geometry to snap to")
-    print("done", flush=True)
+    _log.info("done merging")
 
-# main()
-#
-# The main function, entry point of the program.
-#
+
 def main():
-
+    """The main function, entry point of the program."""
     master_geometry_name = "NVDB_DKReflinjetillkomst"
 
     # Note the order how the layers are merged is in part important, see comments
@@ -162,14 +165,37 @@ def main():
         "VIS_DKP_ficka",
         "VIS_DKRastplats",
     ]
+    parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
+    parser.add_argument('--dump_layers', action='store_true')
+    parser.add_argument(
+        '-d', '--debug',
+        help="Print lots of debugging statements",
+        action="store_const", dest="loglevel", const=logging.DEBUG,
+        default=logging.WARNING,
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        help="Be verbose",
+        action="store_const", dest="loglevel", const=logging.INFO,
+    )
+    parser.add_argument('shape_file', type=pathlib.Path,
+                        help="zip or dir with NVDB *.shp files")
+    parser.add_argument('osm_file', type=pathlib.Path,
+                        help="filename of OSM XML output")
+    args = parser.parse_args()
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=args.loglevel)
+    _log = logging.getLogger("nvdb2osm")
+    # When we turn on logging fiona gets a bit talkative
+    logging.getLogger("fiona.env").setLevel(logging.WARNING)
+    logging.getLogger("fiona._env").setLevel(logging.WARNING)
+    logging.getLogger("fiona._shim").setLevel(logging.WARNING)
+    logging.getLogger("fiona.ogrext").setLevel(logging.WARNING)
+    logging.getLogger("fiona.collection").setLevel(logging.WARNING)
+    _log.debug(f"args are {args}")
 
-    if len(sys.argv) != 3:
-        print("Usage: %s <zip or dir with NVDB *.shp files> <filename of OSM XML output>" % sys.argv[0])
-        sys.exit(1)
-
-    debug_dump_layers = False
-    directory = sys.argv[1]
-    output_filename = sys.argv[2]
+    debug_dump_layers = args.dump_layers
+    directory = args.shape_file
+    output_filename = args.osm_file
 
     # First setup a complete master geometry and refine it so we have a good geometry to merge the rest of the data with
     name = master_geometry_name
@@ -209,7 +235,7 @@ def main():
         if debug_ways is not None:
             write_osmxml(debug_ways, [], name + "-adapted.osm")
         layer_idx += 1
-        print("Merged %s of %s line geometry layers" % (layer_idx, layer_count))
+        _log.info("Merged %s of %s line geometry layers" % (layer_idx, layer_count))
 
     way_db.setup_geometry_search()
 
@@ -228,7 +254,7 @@ def main():
 
         insert_rlid_elements(way_db, points, name)
         layer_idx += 1
-        print("Merged %s of %s point layers" % (layer_idx, layer_count))
+        _log.debug("Merged %s of %s point layers" % (layer_idx, layer_count))
 
     if debug_dump_layers:
         waydb2osmxml(way_db, "pre-resolve.osm")
@@ -251,16 +277,16 @@ def main():
     cleanup_used_nvdb_tags(way_db.point_db, used_keys)
 
     log_used_and_leftover_keys(used_keys)
-    print("Time intervals used:")
+    _log.info("Time intervals used:")
     for str1 in time_interval_strings:
-        print("  '%s'" % str1)
+        _log.info("  '%s'" % str1)
 
     way_db.join_segments_with_same_tags()
 
     way_db.simplify_geometry(way_to_simplify_epsilon)
-    print("Writing output to %s..." % output_filename, end='', flush=True)
+    _log.info(f"Writing output to {output_filename}")
     waydb2osmxml(way_db, output_filename)
-    print("done", flush=True)
+    _log.info("done writing output")
 
     print("Conversion is complete. NVDB data is not 100% perfect/complete: remember\n"
           "to validate the OSM file (JOSM validator) and check any fixme tags.\n"

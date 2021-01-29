@@ -1,5 +1,9 @@
 from nvdb_segment import *
 from geometry_basics import calc_way_length
+import logging
+
+_log = logging.getLogger("tags")
+
 
 def merge_tags(seg, src, data_src_name):
     way = seg.way
@@ -151,7 +155,7 @@ def merge_tags(seg, src, data_src_name):
         else:
             res_str = "Resolved, using %s (%s)" % (dst[k], solution)
         if fixme or solution != "list":
-            print("Conflicting value for key '%s' ('%s' and '%s', RLID %s). %s" % (k, v, ov, seg.rlid, res_str))
+            _log.warning("Conflicting value for key '%s' ('%s' and '%s', RLID %s). %s" % (k, v, ov, seg.rlid, res_str))
 
         if dst[k] == v and seg.tag_src[k][1] < src_date:
             seg.tag_src[k] = (data_src_name, src_date)
@@ -159,10 +163,12 @@ def merge_tags(seg, src, data_src_name):
     for v in fixmes:
         append_fixme_value(dst, v)
 
+
 def append_fixme_value(tags, fixme_value):
     if "fixme" not in tags:
         fixme_value = "NVDB import: " + fixme_value
     append_tag_value(tags, "fixme", fixme_value)
+
 
 def append_tag_value(tags, k, v):
     if k not in tags:
