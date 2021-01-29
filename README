@@ -31,7 +31,7 @@ installera med pip install -r requirements.txt
 För generell Python-användning och installation får man Googla :-)
 
 
-Tips for Windows 10-installation
+Tips för Windows 10-installation
 --------------------------------
 
 Anaconda för python gör det enklare.
@@ -556,6 +556,3 @@ Rondeller har ofta namn. I de kartor som bygger på NVDB-datat så
 använder man i regel gatunamn även i rondeller, men skriptet lägger
 dit rondellnamnet istället, medan gatunamnen (ofta fler än ett) hamnar
 i "alt_name"-fältet.
-
-Undernummer läggs inte till på vägnummer än så länge. Men det kanske
-man vill ha med?
