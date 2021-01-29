@@ -39,7 +39,8 @@
 # VIS_DKViltpassage_i_plan               o not translated
 # VIS_DKViltstangsel                     o not translated (wildlife fence, but not mapped at fence but rather on road)
 # VIS_DKViltuthopp                       o not translated
-# VIS_DKVinter2003                       o not relevant
+# VIS_DKVinter2003                       o not translated (winter_service=yes, but only covering the large roads,
+#                                                          ie not all roads that actually have winter service)
 # VIS_DKVVIS                             o not relevant (weather stations)
 
 #
