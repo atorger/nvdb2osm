@@ -132,6 +132,7 @@ def main():
         "NVDB_DKForbjudenFardriktning",
         "NVDB_DKForbudTrafik",
         "NVDB_DKGagata",
+        "NVDB_DKGangfartsomrade",
         "NVDB_DKGatunamn",
         "NVDB_DKGatutyp",
         "NVDB_DKGCM_belyst",

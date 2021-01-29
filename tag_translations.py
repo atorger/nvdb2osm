@@ -64,7 +64,7 @@
 # NVDB_DKFramkFordonskomb          o not translated (rare tag, possibility for trucks etc to get through)
 # NVDB_DKFunkVagklass              - used to resolve highway
 # NVDB_DKGagata                    - used to resolve highway
-# NVDB_DKGangfartsomrade           o redundant (DKHastighetsgrans used instead, note: maxspeed=walk is an OSM proposal)
+# NVDB_DKGangfartsomrade           o used to resolve highway
 # NVDB_DKGatunamn                  - street names
 # NVDB_DKGatutyp                   - used to resolve highway
 # NVDB_DKGCM_belyst                - lit=yes
@@ -144,6 +144,10 @@ def add_extra_nodes_tag(tags, extra_nodes):
 #
 def parse_speed_limit(tags, key):
     speed = tags[key]
+    # text "gångfart" is very rare (forgot which dataset it was seen in)
+    # we use DKGangfartsomrade rather than this to resolve living_street
+    # This could probably be used also on pedestrian streets (gågata) which
+    # is not the same as living street.
     if speed == "gångfart":
         speed = 5
     elif not isinstance(speed, int):
@@ -1075,6 +1079,12 @@ TAG_TRANSLATIONS = {
         "SIDA Vänster": "NVDB_gagata_side left",
         "SIDA Höger": "NVDB_gagata_side right",
         "SIDA Vänster och höger": "NVDB_gagata_side both"
+    },
+    "NVDB_DKGangfartsomrade": {
+        "add_keys_and_values": "NVDB_gangfartsomrode yes",
+        "SIDA Vänster": "NVDB_gangfartsomrode_side left",
+        "SIDA Höger": "NVDB_gangfartsomrode_side right",
+        "SIDA Vänster och höger": "NVDB_gangfartsomrode_side both"
     },
     "NVDB_DKGatunamn": {
         "NAMN": "name",

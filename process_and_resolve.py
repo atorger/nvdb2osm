@@ -502,6 +502,10 @@ def resolve_highways(way_db):
                     # JOSM doesn't like pedestrian roads narrower than 3 meters
                     tags["highway"] = "cycleway"
                     way.tags.pop("maxspeed", None) # cycleways shouldn't have maxspeed
+            elif "NVDB_gangfartsomrode" in way.tags:
+                # We ignore NVDB_gangfartsomrode_side, from investigations it seems that even if
+                # on only one side the speed limit is set to 5 km/h.
+                tags["highway"] = "living_street"
             elif "NVDB_motorvag" in way.tags:
                 tags["highway"] = "motorway"
             elif "NVDB_motortrafikled" in way.tags:
@@ -801,6 +805,8 @@ def cleanup_used_nvdb_tags(way_db, in_use):
     used_keys = [
         "NVDB_vagnummer",
         "NVDB_gagata",
+        "NVDB_gangfartsomrode",
+        "NVDB_gangfartsomrode_side",
         "NVDB_gatutyp",
         "NVDB_motorvag",
         "NVDB_motortrafikled",
