@@ -235,7 +235,7 @@ def main():
         if debug_ways is not None:
             write_osmxml(debug_ways, [], name + "-adapted.osm")
         layer_idx += 1
-        _log.info("Merged %s of %s line geometry layers" % (layer_idx, layer_count))
+        _log.info(f"Merged {layer_idx} of {layer_count} line geometry layers")
 
     way_db.setup_geometry_search()
 
@@ -254,7 +254,7 @@ def main():
 
         insert_rlid_elements(way_db, points, name)
         layer_idx += 1
-        _log.debug("Merged %s of %s point layers" % (layer_idx, layer_count))
+        _log.debug(f"Merged {layer_idx} of {layer_count} point layers")
 
     if debug_dump_layers:
         waydb2osmxml(way_db, "pre-resolve.osm")
@@ -279,7 +279,7 @@ def main():
     log_used_and_leftover_keys(used_keys)
     _log.info("Time intervals used:")
     for str1 in time_interval_strings:
-        _log.info("  '%s'" % str1)
+        _log.info(f"  '{str1}'")
 
     way_db.join_segments_with_same_tags()
 

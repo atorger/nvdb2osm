@@ -1,7 +1,7 @@
-from geometry_basics import *
-from twodimsearch import TwoDimSearch
 import logging
 
+from geometry_basics import *
+from twodimsearch import TwoDimSearch
 
 _log = logging.getLogger("geometry")
 
@@ -221,7 +221,7 @@ class GeometrySearch:
             for w in ref_set:
                 if w.rlid == ref_way.rlid:
                     update_set.add(w)
-        _log.info(f"Update set: {update_set}")
+        _log.debug(f"Update set: {update_set}")
         update_map = {}
         if self._use_dist:
             del self._rlid2startdist[ref_way.rlid]
@@ -231,7 +231,7 @@ class GeometrySearch:
                         for p1 in w.way:
                             if p1 == p and p1.dist == p.dist:
                                 update_map[(seg, idx)] = p1
-        _log.info(f"Update map: {update_map}")
+        _log.debug(f"Update map: {update_map}")
         for w in update_set:
             for p in w.way:
                 p.dist = -1
@@ -241,9 +241,9 @@ class GeometrySearch:
             idx = k[1]
             assert p.dist != -1
             if seg.way[idx].dist != p.dist:
-                _log.info(f"dist {seg.way[idx].dist} => {p.dist}")
+                _log.debug(f"dist {seg.way[idx].dist} => {p.dist}")
             else:
-                _log.info("no change in dist %s" % p.dist)
+                _log.debug(f"no change in dist {p.dist}")
             seg.way[idx].dist = p.dist
 
     def _test_way_dist(self, way):

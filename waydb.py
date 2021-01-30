@@ -73,8 +73,8 @@ def remove_short_segments_and_redundant_points(way, min_seg_len, point_keepers=N
                             return [ way[0] ]
                         if not way[0] in point_keepers:
                             return [ way[-1] ]
-                    logging.info("way", way)
-                    logging.info("new_way", new_way)
+                    logging.error(f"way {way}")
+                    logging.error(f"new_way {new_way}")
                     raise RuntimeError("Keeper points closer than minimum segment length %s < %s" % (dist2d(new_way[-1], p), min_seg_len))
                 del new_way[-1]
             new_way.append(p)
@@ -111,7 +111,8 @@ def join_ways_using_nvdb_tags(ways, snap_dist):
     it = iter(ways)
     pw = next(it)
     for w in it:
-        logging.info("pw, w", pw.way, w.way)
+        logging.debug(f"pw {pw.way}")
+        logging.debug(f"w {w.way}")
         if pw.tags["SLUTAVST"] < w.tags["STARTAVST"]:
             new_ways.append(pw)
         elif pw.tags["SLUTAVST"] == w.tags["STARTAVST"]:
@@ -161,7 +162,7 @@ def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
             shapelen_sum = ways[i+0].tags["SHAPE_LEN"] + ways[i+1].tags["SHAPE_LEN"]
             avst_diff = ways[i+1].tags["STARTAVST"] - ways[i+0].tags["SLUTAVST"]
             shape_dist = shapelen_sum * avst_diff
-            logging.warning("a suspiciously small gap was found in RLID %s (%.2fm), segments where joined (total SHAPE_LEN %.2fm, AVST diff %gm => TAG gap %.2fm)" % (ways[i].rlid, dist, shapelen_sum, avst_diff, shape_dist))
+            logging.warning(f"a suspiciously small gap was found in RLID {ways[i].rlid} ({dist}m), segments where joined (total SHAPE_LEN {shapelen_sum}m, AVST diff {avst_diff}m => TAG gap {shape_dist}m)")
             # keep the most connected point
             r1 = len(endpoints.find_all_within(ways[i+1].way[0], search_dist))
             r2 = len(endpoints.find_all_within(ways[i].way[-1], search_dist))
@@ -354,7 +355,6 @@ class WayDatabase:
         ep_count = 0
         uc_count = 0
         second_pass = []
-        first_print = True
         midpoints = TwoDimSearch()
         for ways in rlid_ways.values():
             for way in ways:
@@ -396,7 +396,7 @@ class WayDatabase:
                 way.way[way_idx] = Point(p.x, p.y)
                 ep_count += 1
 
-        _log.info("done (snapped %s endpoints, %s still unconnected)" % (ep_count, uc_count - ep_count))
+        _log.info(f"done (snapped {ep_count} endpoints, {uc_count - ep_count} still unconnected)")
         if ep_count > 0:
             _log.warning("extend snaps typically means that there are gaps in the data source's geometry")
 
@@ -798,14 +798,14 @@ class WayDatabase:
             if snapped[len(snapped) - 1 - idx]:
                 last_snap = len(snapped) - 1 - idx
                 break
-        _log.info("snapped", snapped)
-        _log.info("snappoints", first_snap, last_snap)
+        _log.debug(f"snapped {snapped}")
+        _log.debug(f"snappoints {first_snap} {last_snap}")
         for way_idx, point in enumerate(way.way):
             if way_idx <= first_snap or way_idx >= last_snap:
                 continue
             if not snapped[way_idx]:
                 # this means snap failure in the middle too not just an extension problem
-                _log.info("Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+                _log.info(f"Way with RLID {way.rlid} could not be snapped to reference geometry")
                 return False
         extend_way_start = []
         extend_way_end = []

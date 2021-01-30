@@ -4,9 +4,10 @@
 # parse to a "time interval" class and then work on that rather than just work directly on
 # strings
 #
+import logging
+
 from sortedcontainers import SortedDict
 from scanf import scanf
-import logging
 
 _log = logging.getLogger("nvdb")
 time_interval_strings = set()

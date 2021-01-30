@@ -248,7 +248,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
 
     _log.info('done')
     if len(convert_to_tunnels) > 0:
-        _log.warning("%s under-passages was converted to tunnel and the related %s short bridges were removed" % (len(convert_to_tunnels), len(delete_bridges)))
+        _log.warning(f"{len(convert_to_tunnels)} under-passages was converted to tunnel and the related {len(delete_bridges)} short bridges were removed")
 
     _log.info(f"Processing {len(bridges)} bridge segments...")
     fixme_count = 0
@@ -273,7 +273,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
         all_lcs = GeometrySearch(GEO_FILL_LENGTH)
         all_lcs.insert_waydb(way_db.way_db)
         _log.info("done")
-    _log.info("Processing %s tunnel segments..." % len(tunnels))
+    _log.info(f"Processing {len(tunnels)} tunnel segments...")
     fixme_count = 0
     for way in tunnels:
         tags = {}

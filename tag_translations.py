@@ -98,8 +98,9 @@
 # NVDB_DKVajningsplikt             - highway=give_way
 # NVDB_DKVandmojlighet             - turning_circle
 
-from nvdb_ti import parse_time_interval_tags, parse_range_date
 import logging
+
+from nvdb_ti import parse_time_interval_tags, parse_range_date
 
 _log = logging.getLogger("translations")
 
