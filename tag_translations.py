@@ -776,9 +776,16 @@ def tag_translation_DKP_ficka(tags):
         _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
         append_fixme_value(tags, "DKP_ficka: unknown SIDA value")
 
+    # "Uppställbar längd", that is the number of meters that can be used for parking,
+    # specified for about 1/3 of the laybys. There is no established OSM key for this
+    # particular purpose, we use 'maxlength'here.
+    length = tags.get("UPPTAELBGD", -1)
+    if length > 0:
+        tags["maxlength"] = length
+
     del_keys = [
         "PLACERING", # "Längs vägen" or "Avskild från vägen, still close enough for layby
-        "UPPTAELBGD", # Uppställbar längd
+        "UPPTAELBGD",
         "SIDA",
         "XKOORDINAT",
         "YKOORDINAT"
