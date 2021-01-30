@@ -184,6 +184,16 @@ def remove_DKReflinjetillkomst_overlaps(ways, snap_dist):
     if len(ways) == 1:
         return ways
 
+    # remove segments that have been snapped to zero length
+    filtered_ways = []
+    for w in ways:
+        if len(w.way) > 2 or w.way[0] != w.way[-1]:
+            filtered_ways.append(w)
+    ways = filtered_ways
+
+    if len(ways) == 1:
+        return ways
+
     def startavst(w):
         return w.tags["STARTAVST"]
 
@@ -193,7 +203,7 @@ def remove_DKReflinjetillkomst_overlaps(ways, snap_dist):
     prev_way = ways[0]
     for way in ways[1:]:
         if prev_way.tags["SLUTAVST"] > way.tags["STARTAVST"]:
-            logging.warning(f"overlapping segment for RLID {way.rlid}.")
+            logging.warning(f"overlapping segment for RLID {way.rlid} ({prev_way.tags['SLUTAVST']} > {way.tags['STARTAVST']}).")
             has_overlap = True
             break
         prev_way = way
