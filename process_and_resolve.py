@@ -372,41 +372,56 @@ def process_street_crossings(points, way_db, data_src_name):
     return crossings
 
 
+# parse_road_number()
+#
+# Split text road numbers into components
+#
+def parse_road_number(rn):
+    rn = str(rn)
+    if rn[0].isalpha():
+        rns = rn.split(' ')
+        prefix = rns[0]
+        rest = rns[1]
+    else:
+        prefix = ""
+        rest = rn
+    rns = rest.split('.')
+    main_nr = int(rns[0])
+    if len(rns) > 1:
+        sub_nr = int(rns[1])
+    else:
+        sub_nr = 0
+    # E is also "Östergötlands län"
+    is_e_road = prefix == 'E' and main_nr < 500
+    return prefix, main_nr, sub_nr, is_e_road
+
+
 # compare_vagnummer()
 #
 # Sort function for road numbers, used when there is more than one road number on the same road segment.
 #
 def compare_vagnummer(r1, r2):
-    r1 = str(r1)
-    r2 = str(r2)
-    r1_is_e = r1[0] == 'E'
-    r2_is_e = r2[0] == 'E'
+    p1, n1, u1, r1_is_e = parse_road_number(r1)
+    p2, n2, u2, r2_is_e = parse_road_number(r2)
+
     # E roads get sorted first
     if r1_is_e != r2_is_e:
         if r1_is_e:
             return -1
         return 1
-    r1 = r1.split(".") # under number separator
-    r2 = r2.split(".")
-    if r1_is_e:
-        num1 = int(r1[0][1:])
-        num2 = int(r2[0][1:])
-    else:
-        num1 = int(r1[0])
-        num2 = int(r2[0])
-    if num1 != num2:
-        return num1 - num2
 
-    # under number
-    if len(r1) > 1:
-        num1 = int(r1[1])
-    else:
-        num1 = 0
-    if len(r2) > 1:
-        num2 = int(r2[1])
-    else:
-        num2 = 0
-    return num1 - num2
+    # Sort on länsbokstav
+    if p1 > p2:
+        return 1
+    elif p1 < p2:
+        return -1
+
+    # Sort on main number
+    if n1 != n2:
+        return n1 - n2
+
+    # Sort on under number
+    return u1 - u2
 
 # resolve_highways()
 #

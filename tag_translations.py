@@ -934,16 +934,51 @@ def tag_translation_DKRastplats(tags):
 # resolve function.
 #
 def tag_translation_DKVagnummer(tags):
+    huvudnr = tags["HUVUDNR"]
     undernr = tags.get("UNDERNR", None)
     if undernr <= 0 or undernr is None:
-        undernr = ""
+        undernr_str = ""
     else:
-        undernr = "." + str(undernr)
+        undernr_str = "." + str(undernr)
     if tags["EUROPAVÄG"] == -1:
-        tags["NVDB_vagnummer"] = "E" + str(tags["HUVUDNR"]) + undernr
+        # E road number with space (eg "E 4" instead of "E4") is not Swedish standard,
+        # but we need to follow the standard used in OSM over Europe which is using
+        # a space.
+        tags["NVDB_vagnummer"] = "E " + str(huvudnr) + undernr_str
     else:
-        tags["NVDB_vagnummer"] = str(tags["HUVUDNR"]) + undernr
-    _ = [tags.pop(key, None) for key in ["HUVUDNR", "UNDERNR", "EUROPAVÄG"]]
+        if huvudnr > 499:
+            lan_str_tab = {
+                1:  "AB", # Stockholms län
+                3:  "C",  # Uppsala län
+                4:  "D",  # Södermanlands län
+                5:  "E",  # Östergötlands län
+                6:  "F",  # Jönköpings län
+                7:  "G",  # Kronobergs län
+                8:  "H",  # Kalmar län
+                9:  "I",  # Gotlands län
+                10: "K",  # Blekinge län
+                11: "L",  # (f.d. Kristianstads län)
+                12: "M",  # Skåne län (f.d. Malmöhus län)
+                13: "N",  # Hallands län
+                14: "O",  # Västra Götalands län (f.d. Götebors- och Bohus län)
+                15: "P",  # (f.d. Älvsborgs län)
+                16: "R",  # (f.d. Skaraborgs län)
+                17: "S",  # Värmlands län
+                18: "T",  # Örebro län
+                19: "U",  # Västmanlands län
+                20: "W",  # Dalarnas län (f.d. Kopparbergs län)
+                21: "X",  # Gävleborgs län
+                22: "Y",  # Västernorrlands län
+                23: "Z",  # Jämtlands län
+                24: "AC", # Västerbottens län
+                25: "BD"  # Norrbottens län
+            }
+            lan_str = lan_str_tab[tags["LÄN"]] + " "
+        else:
+            lan_str = ""
+        tags["NVDB_vagnummer"] = lan_str + str(huvudnr) + undernr_str
+
+    _ = [tags.pop(key, None) for key in ["HUVUDNR", "UNDERNR", "EUROPAVÄG", "LÄN"]]
 
 # tag_translation_DKVaghinder()
 #
@@ -1189,7 +1224,6 @@ TAG_TRANSLATIONS = {
         "ORDNING": None,
         "ROLL": None,
         "VARD": None,
-        "LÄN": None
     },
     "VIS_DKOmkorningsforbud": {
         "RIKTNING=Med":         "overtaking:forward=no",

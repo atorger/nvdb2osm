@@ -346,13 +346,19 @@ Exempel på vanliga Validator-varningar, med kommentarer:
 
 Vägnummer:
 
-Existerande vägar i OSM använder ofta ett äldre skrivsätt för
-vägnummer med länskoder (AC 1100 istället för bara 1100) och
-mellanslag mellan E och nummer för europavägar (E 4 istället för
-E4). Det här skriptet använder det nyare sättet utan länskod och utan
-mellanslag för Europavägar. Det är rekommenderat att uppdatera äldre
-namn (glöm inte relations-objekt om de finns för vägen) till att
-använda dessa nya.
+I Sverige är vi vana att europavägar skrivs utan mellanslag, "E4"
+istället för "E 4". För att hålla en OSM-standard över hela Europa så
+genererar skriptet dock "E 4", och detta bör behållas. Länsvägar
+100-499 är unika och skrivs utan länsbokstav. Länsvägar över 500 är
+inte unika och därtill läggs länsbokstav (exempel "AC 1100" istället
+för bara "1100"). I officiella sammanhang används länsbokstav endast
+om det är nödvändigt för att undvika sammanblandning. Eftersom det ska
+gå att söka i OSM-datat är det viktigt att taggar är unika därför ska
+länsbokstaven vara med här.
+
+Undernummer används sällan i olika kartor, men det finns med i OSM nu
+och skriptet tar därför med dem läggs på efter huvudnumret separerat
+med en punkt, exempel ("E 4.20").
 
 Vägbommar:
 
