@@ -32,7 +32,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
         if len(files) == 0:
             raise RuntimeError(f"No file name *{name}.shp in {directory_or_zip}")
         filename = files[0]
-        gdf_filename = "zip://" + directory_or_zip + "!" + filename
+        gdf_filename = "zip://" + str(directory_or_zip) + "!" + filename
     else:
         pattern = os.path.join(directory_or_zip, "*" + name + ".shp")
         files = glob.glob(pattern)
@@ -194,12 +194,12 @@ def main():
     _log.debug(f"args are {args}")
 
     debug_dump_layers = args.dump_layers
-    directory = args.shape_file
+    directory_or_zip = args.shape_file
     output_filename = args.osm_file
 
     # First setup a complete master geometry and refine it so we have a good geometry to merge the rest of the data with
     name = master_geometry_name
-    ref_ways = read_nvdb_shapefile(directory, name, TAG_TRANSLATIONS[name])
+    ref_ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
     if debug_dump_layers:
         write_osmxml(ref_ways, [], "raw_reference_geometry.osm")
     ref_ways = find_overlapping_and_remove_duplicates(name, ref_ways)
@@ -214,7 +214,7 @@ def main():
     for name in all_line_names:
         if name is None:
             break
-        ways = read_nvdb_shapefile(directory, name, TAG_TRANSLATIONS[name])
+        ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
         ways = find_overlapping_and_remove_duplicates(name, ways)
         did_insert_new_ref_geometry = way_db.insert_missing_reference_geometry_if_any(ways)
 
@@ -244,7 +244,7 @@ def main():
     for name in point_names:
         if name is None:
             break
-        points = read_nvdb_shapefile(directory, name, TAG_TRANSLATIONS[name])
+        points = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
         points = find_overlapping_and_remove_duplicates(name, points)
 
         if name == "NVDB_DKGCM_passage":
