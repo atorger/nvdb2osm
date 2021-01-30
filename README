@@ -13,7 +13,9 @@ Exempel:
 
 nvdb2osm.py Vilhelmina_kommun_Shape_TNE__9343.zip vilhelmina.osm
 
-Det tar cirka 15 minuter att tugga igenom en kommun. Arkiven med
+Kör kommandot utan argument för att se vilka flaggor man kan sätta.
+
+Det tar cirka en kvart att tugga igenom en kommun. Arkiven med
 shape-filer laddas ner från Trafikverket. Man går till
 https://lastkajen.trafikverket.se/ om man inte har ett konto finns det
 knapp att registrera sig där.
@@ -341,6 +343,18 @@ Exempel på vanliga Validator-varningar, med kommentarer:
 
 Övrigt att tänka på
 -------------------
+
+Vägnummer:
+
+Existerande vägar i OSM använder ofta ett äldre skrivsätt för
+vägnummer med länskoder (AC 1100 istället för bara 1100) och
+mellanslag mellan E och nummer för europavägar (E 4 istället för
+E4). Det här skriptet använder det nyare sättet utan länskod och utan
+mellanslag för Europavägar. Det är rekommenderat att uppdatera äldre
+namn (glöm inte relations-objekt om de finns för vägen) till att
+använda dessa nya.
+
+Vägbommar:
 
 Bommar som NVDB markerat med "låst grind eller bom" sätts till
 barrier=gate med access=permissive. Det betyder att bommen är
