@@ -6,8 +6,11 @@
 #
 from sortedcontainers import SortedDict
 from scanf import scanf
+import logging
 
+_log = logging.getLogger("nvdb")
 time_interval_strings = set()
+
 
 # parse_time_interval_tags()
 #
@@ -52,7 +55,7 @@ def parse_time_interval_tags(tags):
                     prefix = split[0] + "/"
                     suffix = split[-1]
                     if str(int(suffix)) != suffix or len(split) > 2:
-                        print("Warning: unexpected time interval key %s (RLID %s)" % (k, tags["RLID"]))
+                        _log.warning(f"unexpected time interval key {k} (RLID {tags['RLID']})")
                         return -1
                     if not prefix is max_suffix_len or len(suffix) > max_suffix_len[prefix]:
                         max_suffix_len[prefix] = len(suffix)
@@ -84,7 +87,8 @@ def parse_time_interval_tags(tags):
                     # exemption: day interval can be specified without SLDAG if it only specifies a single weekday
                     pass
                 else:
-                    print("Warning: mixed used and not used values in time interval keys %s (RLID %s)" % (item["keys"], tags["RLID"]))
+                    _log.warning(f"mixed used and not used values in time interval keys {item['keys']}"
+                                 f" (RLID {tags['RLID']})")
                     return -1
             output_key = item["output_key"]
             if len(suffix) == max_suffix_len[prefix]:
@@ -112,11 +116,12 @@ def parse_time_interval_tags(tags):
         return output_map["/"]
     return output_map
 
+
 def merge_time_intervals(ti, rlid):
     hourmin_int1 = ti.get("hourmin_interval1", None)
     hourmin_int2 = ti.get("hourmin_interval2", None)
     if hourmin_int1 is None and hourmin_int2 is not None:
-        print("Warning: bad hourmin interval combination (RLID %s)" % rlid)
+        _log.warning(f"bad hourmin interval combination (RLID {rlid})")
         return -1
     if hourmin_int1 is not None and hourmin_int2 is not None:
         hourmin_int = hourmin_int1 + "," + hourmin_int2
@@ -131,7 +136,7 @@ def merge_time_intervals(ti, rlid):
         merge_str = "00:00-24:00"
     if day_type is not None:
         if day_interval is not None and day_type != "vardag":
-            print("Warning: day_interval (%s) and day_type (%s) set at the same time (RLID %s)" % (day_interval, day_type, rlid))
+            _log.warning(f"day_interval ({day_interval}) and day_type ({day_type}) set at the same time (RLID {rlid})")
             return -1
         if day_type == "vardag":
             if day_interval is not None:
@@ -147,7 +152,7 @@ def merge_time_intervals(ti, rlid):
         elif day_type == "sön- och helgdag":
             merge_str = "Su %s; PH %s" % (merge_str, merge_str)
         else:
-            print("Warning: unknown day type %s (RLID %s)" % (day_type, rlid))
+            _log.warning(f"unknown day type {day_type} (RLID {rlid})")
             return -1
     if day_interval is not None:
         merge_str = day_interval + " " + merge_str
@@ -157,6 +162,7 @@ def merge_time_intervals(ti, rlid):
         return None
     time_interval_strings.add(merge_str)
     return merge_str
+
 
 # This is not fully generic, in only can merge time intervals
 # merge_time_intervals() is expected to produce

@@ -1,8 +1,10 @@
 import html
-
+import logging
 from geometry_basics import *
 from proj_xy import sweref99_transformer, latlon_str
 from shapely_utils import way_is_self_crossing, split_self_crossing_way
+
+_log = logging.getLogger("waydb")
 
 
 def waydb2osmxml(way_db, filename):
@@ -33,8 +35,8 @@ def write_osmxml(way_list, point_list, filename):
             self_crossing.add(seg)
             self_crossing_rlids.add(seg.rlid)
     if len(self_crossing) > 0:
-        print("Warning: data contains self-crossing ways, these will be split to support OSM XML format")
-        print(f"These are the RLIDs for the self-crossing ways: {self_crossing_rlids}")
+        _log.warning("data contains self-crossing ways, these will be split to support OSM XML format")
+        _log.warning(f"These are the RLIDs for the self-crossing ways: {self_crossing_rlids}")
 
     unique_id = 1
     points = {}

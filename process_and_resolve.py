@@ -1,3 +1,5 @@
+
+import logging
 from functools import cmp_to_key
 
 from geometry_basics import *
@@ -7,6 +9,10 @@ from nvdb_segment import *
 from proj_xy import latlon_str
 from waydb import GEO_FILL_LENGTH
 from tag_translations import ALL_VEHICLES
+
+
+_log = logging.getLogger("process")
+
 
 # merge_translated_tags()
 #
@@ -72,18 +78,18 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
                     pointpairs[pp] = way
                 else:
                     way2 = pointpairs[pp]
-                    print("Self-overlapping segment between %s-%s:" % (latlon_str(pp[0]), latlon_str(pp[1])))
-                    print("  Segment 1: %s tags=%s (%s points, index %s)" % (way, way.tags, len(way.way), way.way_id))
-                    print("  Segment 2: %s tags=%s (%s points, index %s)" % (way2, way2.tags, len(way2.way), way2.way_id))
+                    _log.warning(f"Self-overlapping segment between {latlon_str(pp[0])}-{latlon_str(pp[1])}:")
+                    _log.warning(f"  Segment 1: {way} tags={way.tags} ({len(way.way)} points, index {way.way_id})")
+                    _log.warning(f"  Segment 2: {way2} tags={way2.tags} ({len(way2.way)} points, index {way2.way_id})")
                     overlap = True
                     break
         new_ways.append(way)
 
     if len(new_ways) < len(ways):
-        print("%s has duplicate elements. Only one copy of each was kept" % data_src_name)
+        _log.warning(f"{data_src_name} has duplicate elements. Only one copy of each was kept")
 
     if overlap:
-        print("%s has overlapping segments." % data_src_name)
+        _log.warning(f"{data_src_name} has overlapping segments.")
 
     return new_ways
 
@@ -103,7 +109,7 @@ def preprocess_footcycleway_crossings(points, way_db):
                 return True
         return False
 
-    print("Preprocess footway/cycleway crossings...", end='', flush=True)
+    _log.info("Preprocess footway/cycleway crossings...")
     crossings = []
     unconnected_count = 0
     connected_count = 0
@@ -138,7 +144,7 @@ def preprocess_footcycleway_crossings(points, way_db):
                 node.way = min_p
                 connected_count += 1
         crossings.append(node)
-    print("done (%s attached to a way crossing, %s without)" % (connected_count, unconnected_count), flush=True)
+    _log.info(f"done ({connected_count} attached to a way crossing, {unconnected_count} without)")
     return crossings
 
 # preprocess_bridges_and_tunnels()
@@ -207,7 +213,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
             raise RuntimeError("Unhandled tag name %s" % konst)
 
     # First go through under passages, and convert to tunnel if needed.
-    print("Checking %s under-passages relation to %s bridge segments..." % (len(underways), len(bridges)), end='', flush=True)
+    _log.info(f"Checking {len(underways)} under-passages relation to {len(bridges)} bridge segments...")
     SHORT_BRIDGE_LENGTH = 12
     delete_bridges = set()
     convert_to_tunnels = []
@@ -240,11 +246,11 @@ def preprocess_bridges_and_tunnels(ways, way_db):
             nbridges.append(way)
     bridges = nbridges
 
-    print('done', flush=True)
+    _log.info('done')
     if len(convert_to_tunnels) > 0:
-        print("%s under-passages was converted to tunnel and the related %s short bridges were removed" % (len(convert_to_tunnels), len(delete_bridges)))
+        _log.warning("%s under-passages was converted to tunnel and the related %s short bridges were removed" % (len(convert_to_tunnels), len(delete_bridges)))
 
-    print("Processing %s bridge segments..." % len(bridges), end='', flush=True)
+    _log.info(f"Processing {len(bridges)} bridge segments...")
     fixme_count = 0
     for way in bridges:
         tags = {}
@@ -258,16 +264,16 @@ def preprocess_bridges_and_tunnels(ways, way_db):
             tags["fixme"] = "could not resolve layer"
             fixme_count += 1
         merge_translated_tags(way, tags)
-    print('done', flush=True)
+    _log.info('done')
     if fixme_count > 0:
-        print("Warning: %s bridge segments crosses other bridges, cannot resolve layers, fixme tags added" % fixme_count)
+        _log.warning(f"{fixme_count} bridge segments crosses other bridges, cannot resolve layers, fixme tags added")
 
     if len(tunnels) > 0:
-        print("Setting up search datastructure for crossing lines...", end='', flush=True)
+        _log.info("Setting up search datastructure for crossing lines...")
         all_lcs = GeometrySearch(GEO_FILL_LENGTH)
         all_lcs.insert_waydb(way_db.way_db)
-        print("done", flush=True)
-    print("Processing %s tunnel segments..." % len(tunnels), end='', flush=True)
+        _log.info("done")
+    _log.info("Processing %s tunnel segments..." % len(tunnels))
     fixme_count = 0
     for way in tunnels:
         tags = {}
@@ -284,11 +290,12 @@ def preprocess_bridges_and_tunnels(ways, way_db):
                 tags["layer"] = -1
 
         merge_translated_tags(way, tags)
-    print('done', flush=True)
+    _log.info('done')
     if fixme_count > 0:
-        print("Warning: %s tunnel segments crosses other tunnel, cannot resolve layers, fixme tags added" % fixme_count)
+        _log.warning(f"{fixme_count} tunnel segments crosses other tunnel, cannot resolve layers, fixme tags added")
 
     return bridges + tunnels + convert_to_tunnels
+
 
 # process_street_crossings()
 #
@@ -297,7 +304,6 @@ def preprocess_bridges_and_tunnels(ways, way_db):
 # line geometry.
 #
 def process_street_crossings(points, way_db, data_src_name):
-
     def get_roundabout_ways(point_on_roundabout, way_db):
         ways = way_db.gs.find_all_connecting_ways(point_on_roundabout)
         rbw = set()
@@ -362,8 +368,9 @@ def process_street_crossings(points, way_db, data_src_name):
             del node.tags["name"]
             crossings.append(node)
     if fixme_count > 0:
-        print("Warning: did not find any way crossing for %s street crossings, fixme tags added" % fixme_count)
+        _log.warning(f"did not find any way crossing for {fixme_count} street crossings, fixme tags added")
     return crossings
+
 
 # compare_vagnummer()
 #
@@ -407,7 +414,7 @@ def compare_vagnummer(r1, r2):
 #
 def resolve_highways(way_db):
 
-    print("Resolve highway tags...", end='', flush=True)
+    _log.info("Resolve highway tags...")
     fixme_count = 0
     gcm_resolve_crossings = []
     for way in way_db:
@@ -670,12 +677,12 @@ def resolve_highways(way_db):
             gcm_resolve_crossings = unconnected
 
             if len(unconnected) > 0:
-                print("%s unconnected crossings, making an additional pass" % len(unconnected))
+                _log.warning(f"{len(unconnected)} unconnected crossings, making an additional pass")
 
     if fixme_count > 0:
-        print("Warning: could not resolve tags for %s highway segments, added fixme tags" % fixme_count)
+        _log.warning(f"could not resolve tags for {fixme_count} highway segments, added fixme tags")
 
-    print("done", flush=True)
+    _log.info("done")
 
 # simplify_speed_limits()
 #
@@ -685,7 +692,7 @@ def resolve_highways(way_db):
 #
 def simplify_speed_limits(way_db):
 
-    print("Simplify speed limits...", end='', flush=True)
+    _log.info("Simplify speed limits...")
     for way in way_db:
         ms_f = way.tags.get("maxspeed:forward", None)
         ms_b = way.tags.get("maxspeed:backward", None)
@@ -715,14 +722,15 @@ def simplify_speed_limits(way_db):
                 way.tags["maxspeed:backward"] = ms
             way.tags.pop("maxspeed", None)
 
-    print("done", flush=True)
+    _log.info("done")
+
 
 # simplify_oneway()
 #
 # Turn around oneways=-1 and remove redundant backward/forward prefixes
 #
 def simplify_oneway(way_db):
-    print("Simplify tags for oneway roads...", end='', flush=True)
+    _log.info("Simplify tags for oneway roads...")
     for way in way_db:
 
         # merge :backward/:forward into one key when applicable
@@ -769,8 +777,8 @@ def simplify_oneway(way_db):
             k_split = k.split(":backward")
             if len(k_split) > 1 and k_split[0] in ALL_VEHICLES and v == "no":
                 del way.tags[k]
+    _log.info("done")
 
-    print("done", flush=True)
 
 # postprocess_miscellaneous_tags()
 #
@@ -851,16 +859,18 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
                     in_use[key] += 1
     return in_use
 
+
 # log_used_and_leftover_keys()
 #
 # Log all the keys we have used, and warn if there are keys left that haven't been translated.
 #
 def log_used_and_leftover_keys(in_use):
-    print("Current keys in use:")
+    _log.info("Current keys in use:")
     for k, v in in_use.items():
-        print("  '%s': %s" % (k, v))
+        _log.info(f"  '{k}': {v}")
         if k[0].isupper() and k != "NVDB:RLID" and k != "NVDB_extra_nodes":
-            print("Warning: key %s was not parsed" % k)
+            _log.warning(f"key {k} was not parsed")
+
 
 # way_to_simplify_epsilon()
 #

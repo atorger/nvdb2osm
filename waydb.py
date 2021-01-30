@@ -1,3 +1,4 @@
+import logging
 from functools import cmp_to_key
 
 from twodimsearch import TwoDimSearch
@@ -9,6 +10,8 @@ from shapely_utils import *
 from osmxml import *
 
 GEO_FILL_LENGTH = 50
+
+_log = logging.getLogger("waydb")
 
 # join_ways()
 #
@@ -70,8 +73,8 @@ def remove_short_segments_and_redundant_points(way, min_seg_len, point_keepers=N
                             return [ way[0] ]
                         if not way[0] in point_keepers:
                             return [ way[-1] ]
-                    print("way", way)
-                    print("new_way", new_way)
+                    logging.info("way", way)
+                    logging.info("new_way", new_way)
                     raise RuntimeError("Keeper points closer than minimum segment length %s < %s" % (dist2d(new_way[-1], p), min_seg_len))
                 del new_way[-1]
             new_way.append(p)
@@ -108,7 +111,7 @@ def join_ways_using_nvdb_tags(ways, snap_dist):
     it = iter(ways)
     pw = next(it)
     for w in it:
-        print("pw, w", pw.way, w.way)
+        logging.info("pw, w", pw.way, w.way)
         if pw.tags["SLUTAVST"] < w.tags["STARTAVST"]:
             new_ways.append(pw)
         elif pw.tags["SLUTAVST"] == w.tags["STARTAVST"]:
@@ -158,7 +161,7 @@ def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
             shapelen_sum = ways[i+0].tags["SHAPE_LEN"] + ways[i+1].tags["SHAPE_LEN"]
             avst_diff = ways[i+1].tags["STARTAVST"] - ways[i+0].tags["SLUTAVST"]
             shape_dist = shapelen_sum * avst_diff
-            print("Warning: a suspiciously small gap was found in RLID %s (%.2fm), segments where joined (total SHAPE_LEN %.2fm, AVST diff %gm => TAG gap %.2fm)" % (ways[i].rlid, dist, shapelen_sum, avst_diff, shape_dist))
+            logging.warning("a suspiciously small gap was found in RLID %s (%.2fm), segments where joined (total SHAPE_LEN %.2fm, AVST diff %gm => TAG gap %.2fm)" % (ways[i].rlid, dist, shapelen_sum, avst_diff, shape_dist))
             # keep the most connected point
             r1 = len(endpoints.find_all_within(ways[i+1].way[0], search_dist))
             r2 = len(endpoints.find_all_within(ways[i].way[-1], search_dist))
@@ -189,7 +192,7 @@ def remove_DKReflinjetillkomst_overlaps(ways, snap_dist):
     prev_way = ways[0]
     for way in ways[1:]:
         if prev_way.tags["SLUTAVST"] > way.tags["STARTAVST"]:
-            print(f"Warning: overlapping segment for RLID {way.rlid}.")
+            logging.warning(f"overlapping segment for RLID {way.rlid}.")
             has_overlap = True
             break
         prev_way = way
@@ -197,29 +200,31 @@ def remove_DKReflinjetillkomst_overlaps(ways, snap_dist):
         return join_ways_using_nvdb_tags(ways, snap_dist)
     return ways
 
+
 # print_progress()
 #
 # print progress 10%...20%... etc
 #
-def print_progress(last_print, idx, data_len):
+def print_progress(last_print, idx, data_len, progress_text="work"):
     if data_len <= 1:
         return last_print
     progress = int(100 * idx / (data_len-1))
     if progress % 10 == 0 and progress != last_print:
         last_print = progress
-        print("%i%%..." % progress, end='', flush=True)
+        _log.info(f"{progress_text}: {progress}%")
     return last_print
+
 
 def test_self_connections(way):
     # this will not trigger a warning for connected endpoints (closed loop), as that is normal
     points = set()
     for i, p in enumerate(way.way):
         if p in points and (i != len(way.way) - 1 or p != way.way[0]):
-            print("Warning: RLID %s connects to itself at %s" % (way.rlid, latlon_str(p)))
+            _log.warning(f"RLID {way.rlid} connects to itself at {latlon_str(p)}")
         points.add(p)
 
-def extend_and_snap(way, is_start, snappoints, snappoints_extra, snap_dist, ext_dist):
 
+def extend_and_snap(way, is_start, snappoints, snappoints_extra, snap_dist, ext_dist):
     # get last line segment bast->tip and ignore duplicated points
     base = None
     if is_start:
@@ -295,7 +300,7 @@ class WayDatabase:
 
     def __init__(self, reference_geometry):
 
-        print("Setting up way database and cleaning reference geometry...", flush=True)
+        _log.info("Setting up way database and cleaning reference geometry...")
 
         self.way_db = {}
         self.point_db = {}
@@ -325,9 +330,10 @@ class WayDatabase:
         endpoints = TwoDimSearch()
         point_count = 0
         last_print = 0
-        print("  Setting up endpoint 2D search data structures...", end='', flush=True)
+        _log.info("Setting up endpoint 2D search data structures...")
         for idx, way in enumerate(reference_geometry):
-            last_print = print_progress(last_print, idx, len(reference_geometry))
+            last_print = print_progress(last_print, idx, len(reference_geometry),
+                                        progress_text="endpoint 2D search data structures")
             for ep in (way.way[0], way.way[-1]):
                 endpoints.insert(ep, way)
             point_count += len(way.way)
@@ -335,16 +341,16 @@ class WayDatabase:
                 rlid_ways[way.rlid].append(way)
             else:
                 rlid_ways[way.rlid] = [way]
-        print("done (%s endpoints of %s total points)" % (len(endpoints), point_count), flush=True)
+        _log.info(f"({len(endpoints)} endpoints of {point_count} total points)")
 
-        print("  Snap points to nearby endpoints...", end='', flush=True)
+        _log.info("Snap points to nearby endpoints.")
         # Due to snapping we may introduce duplicate points in the ways, which is ok as we
         # remove them later.
         ep_count, mp_count = self._snap_points_to_nearby_endpoints(rlid_ways, endpoints)
-        print("done (snapped %s endpoints and %s midpoints)" % (ep_count, mp_count), flush=True)
+        _log.info(f"done (snapped {ep_count} endpoints and {mp_count} midpoints)")
 
         # In rare cases DKReflinjetillkomst has lines cut short, we try to connect those
-        print("  Snap still unconnected endpoints to nearby points by extension...", end='', flush=True)
+        _log.info("Snap still unconnected endpoints to nearby points by extension...")
         ep_count = 0
         uc_count = 0
         second_pass = []
@@ -370,10 +376,8 @@ class WayDatabase:
                         # keep very tight limit on first pass so we extend in the right order
                         second_pass.append(way)
                         continue
-                    if first_print:
-                        print("")
-                        first_print = False
-                    print("    extend snap ext:%g dev:%g for RLID %s at %s" % (min_ext_dist, min_dev_dist, way.rlid, latlon_str(p)))
+                    _log.info(f"extend snap ext:{min_ext_dist:g} dev:{min_dev_dist:g} for RLID {way.rlid}"
+                              f" at {latlon_str(p)}")
                     endpoints.remove(way.way[way_idx], way)
                     endpoints.insert(p, way)
                     way.way[way_idx] = Point(p.x, p.y)
@@ -386,20 +390,15 @@ class WayDatabase:
                 min_ext_dist, min_dev_dist, p = extend_and_snap(way.way, way_idx == 0, endpoints, midpoints, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE)
                 if p is None:
                     continue
-                if first_print:
-                    print("")
-                    first_print = False
-                print("    extend snap ext:%g dev:%g for RLID %s at %s" % (min_ext_dist, min_dev_dist, way.rlid, latlon_str(p)))
+                _log.info(f"extend snap ext:{min_ext_dist:g} dev:{min_dev_dist:g} for RLID {way.rlid} at {latlon_str(p)}")
                 endpoints.remove_set(way.way[way_idx])
                 endpoints.insert(p, way)
                 way.way[way_idx] = Point(p.x, p.y)
                 ep_count += 1
 
-        if not first_print:
-            print("  ", end='')
-        print("done (snapped %s endpoints, %s still unconnected)" % (ep_count, uc_count - ep_count), flush=True)
+        _log.info("done (snapped %s endpoints, %s still unconnected)" % (ep_count, uc_count - ep_count))
         if ep_count > 0:
-            print("  Warning: extend snaps typically means that there are gaps in the data source's geometry")
+            _log.warning("extend snaps typically means that there are gaps in the data source's geometry")
 
         self_check = False
         if self_check:
@@ -408,13 +407,12 @@ class WayDatabase:
                     for ep in [ way.way[0], way.way[-1] ]:
                         dist, new_point, _ = endpoints.find_nearest_within(ep, self.POINT_SNAP_DISTANCE, exclude_self=True)
                         if new_point is not None:
-                            print(dist, ep, new_point)
+                            _log.error(f"endpoints placed too closely together: {dist}, {ep}, {new_point}")
                             raise RuntimeError("endpoints placed too closely together")
 
-        print("  Join segments with same RLID and insert to search data structure...", end='', flush=True)
+        _log.info("Join segments with same RLID and insert to search data structure...")
         self._insert_into_reference_geometry(rlid_ways, endpoints)
-        print("done", flush=True)
-        print("done", flush=True)
+        _log.info("done")
 
     def __iter__(self):
         self._way_db_iter = iter(self.way_db.values())
@@ -494,7 +492,7 @@ class WayDatabase:
         last_print = 0
         for idx, ways in enumerate(rlid_ways.values()):
             if len(rlid_ways) > 50:
-                last_print = print_progress(last_print, idx, len(rlid_ways))
+                last_print = print_progress(last_print, idx, len(rlid_ways), progress_text="Join segments")
             # make longest possible ways of RLID segments
             joined_ways = join_ways(ways)
             joined_ways = join_DKReflinjetillkomst_gaps(joined_ways, endpoints, self.POINT_SNAP_DISTANCE)
@@ -539,7 +537,7 @@ class WayDatabase:
         # snap endpoints to self
         endpoints = TwoDimSearch()
         for ways in list(missing_ways.values()):
-            print("Warning: RLID %s is not in reference geometry, inserting it." % ways[0].rlid)
+            _log.warning(f"RLID {ways[0].rlid} is not in reference geometry, inserting it.")
 
             # this type of geometry may have overlaps, so we pre-join using NVDB tags
             ways = join_ways_using_nvdb_tags(ways, self.POINT_SNAP_DISTANCE)
@@ -555,11 +553,12 @@ class WayDatabase:
         did_snap = True
         dist, p, snap_way = self._ref_gs.snap_point_into_geometry(node.way, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE)
         if p is None:
-            print("Warning: node with RLID %s %s in %s has no existing geometry within %s meters" % (node.rlid, latlon_str(node.way), data_src_name, self.MAX_SNAP_DISTANCE))
+            _log.warning(f"node with RLID {node.rlid} {latlon_str(node.way)} in {data_src_name} has no"
+                         f" existing geometry within {self.MAX_SNAP_DISTANCE} meters")
             did_snap = False
         else:
             if dist > self.POINT_SNAP_DISTANCE:
-                print("Node %s snap distance %s", node.rlid, dist)
+                _log.info("Node %s snap distance %s", node.rlid, dist)
             node.way.x = p[0]
             node.way.y = p[1]
         if node.way in self.point_db:
@@ -567,7 +566,8 @@ class WayDatabase:
             if current.rlid != node.rlid:
                 # This can happen for some data in crossings for example
                 #raise RuntimeError("Node with RLID %s and position %s already exists in the database (%s, %s)" % (node.rlid, latlon_str(node.way), current, node))
-                print("Node with RLID %s and position %s already exists in the database (%s, %s)" % (node.rlid, latlon_str(node.way), current, node))
+                _log.warning(f"Node with RLID {node.rlid} and position {latlon_str(node.way)} already"
+                                f" exists in the database ({current}, {node})")
             merge_tags(current, node.tags, data_src_name)
         else:
             self.point_db[node.way] = [ node ]
@@ -587,7 +587,7 @@ class WayDatabase:
                     point.dist = seg.way[idx-1].dist + dist2d(seg.way[idx-1], point)
                     seg.way.insert(idx, point)
                     return
-        print("Warning: node %s not found in any way segment for RLID %s" % (latlon_str(point), rlid))
+        _log.warning(f"node {latlon_str(point)} not found in any way segment for RLID {rlid}")
 
     def _split_and_merge(self, way, data_src_name):
 
@@ -713,22 +713,22 @@ class WayDatabase:
                 if prev is not None:
                     dist = dist2d(prev, p)
                     if dist < self.POINT_SNAP_DISTANCE:
-                        print("ref.way", ref_way.way)
-                        print("seg.way", seg.way)
-                        print("ref_way", ref_way)
-                        print("seg    ", seg)
+                        _log.error(f"ref.way: {ref_way.way}")
+                        _log.error(f"seg.way: {seg.way}")
+                        _log.error(f"ref_way: {ref_way}")
+                        _log.error(f"seg    : {seg}")
                         raise RuntimeError("Point closer placed than snap distance %s" % dist)
                 if ref_idx == len(ref_way.way):
-                    print("ref.way", ref_way.way)
-                    print("seg.way", seg.way)
-                    print("ref_way", ref_way)
-                    print("seg    ", seg)
+                    _log.error(f"ref.way: {ref_way.way}")
+                    _log.error(f"seg.way: {seg.way}")
+                    _log.error(f"ref_way: {ref_way}")
+                    _log.error(f"seg    : {seg}")
                     raise RuntimeError("More points in segment than in reference way")
                 if p.dist != ref_way.way[ref_idx].dist:
-                    print("ref.way", ref_way.way)
-                    print("seg.way", seg.way)
-                    print("ref_way", ref_way)
-                    print("seg    ", seg)
+                    _log.error(f"ref.way: {ref_way.way}")
+                    _log.error(f"seg.way: {seg.way}")
+                    _log.error(f"ref_way: {ref_way}")
+                    _log.error(f"seg    : {seg}")
                     raise RuntimeError("Dist mismatch got %s expected %s (ref_idx %s)" % (p.dist, ref_way.way[ref_idx].dist, ref_idx))
                 ref_idx += 1
                 prev = p
@@ -743,23 +743,22 @@ class WayDatabase:
             assert ref_dist >= 0
         for p in it:
             if prev == p:
-                print(way.way)
-                print(way)
+                _log.info(f"{way.way}")
+                _log.info(f"{way}")
                 raise RuntimeError("Duplicate point %s" % p)
             dist = dist2d(prev, p)
             if dist < self.POINT_SNAP_DISTANCE:
-                print(way.way)
-                print(way)
+                _log.info(f"{way.way}")
+                _log.info(f"{way}")
                 raise RuntimeError("Point closer placed than snap distance at %s in ref_way %s" % (p, dist))
             ref_dist += dist
             if (not allow_unset or p.dist != -1) and abs(p.dist - ref_dist) > 1e-6:
-                print(way.way)
-                print(way)
+                _log.info(f"{way.way}")
+                _log.info(f"{way}")
                 raise RuntimeError("Bad dist in ref_way %s (expected %s got %s)" % (p, ref_dist, p.dist))
             if p.dist != -1:
                 ref_dist = p.dist
             prev = p
-
 
     def _retry_adapt_way_extending_reference_geometry(self, way):
         # will not work for closed loops, or self-crossing stuff
@@ -783,11 +782,12 @@ class WayDatabase:
                     new_way.append(point)
                 snapped.append(False) # only count points snap to self RLID
         if ref_way is None:
-            print("Warning: Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+            _log.warning(f"Way with RLID {way.rlid} could not be snapped to reference geometry")
             return False
         assert ref_way.rlid == way.rlid
 
-        print("Warning: must extend reference geometry for RLID %s (only %s of %s points could be snapped)" % (way.rlid, snap_count, len(way.way)))
+        _log.warning(f"must extend reference geometry for RLID {way.rlid} (only {snap_count} "
+                        f"of {len(way.way)} points could be snapped)")
         first_snap = 0
         for idx, is_snap in enumerate(snapped):
             if is_snap:
@@ -798,14 +798,14 @@ class WayDatabase:
             if snapped[len(snapped) - 1 - idx]:
                 last_snap = len(snapped) - 1 - idx
                 break
-        print("snapped", snapped)
-        print("snappoints", first_snap, last_snap)
+        _log.info("snapped", snapped)
+        _log.info("snappoints", first_snap, last_snap)
         for way_idx, point in enumerate(way.way):
             if way_idx <= first_snap or way_idx >= last_snap:
                 continue
             if not snapped[way_idx]:
                 # this means snap failure in the middle too not just an extension problem
-                print("Way with RLID %s could not be snapped to reference geometry" % way.rlid)
+                _log.info("Way with RLID %s could not be snapped to reference geometry" % way.rlid)
                 return False
         extend_way_start = []
         extend_way_end = []
@@ -829,7 +829,7 @@ class WayDatabase:
         # first snap each point of the way into the existing geometry
         way.way = remove_short_segments_and_redundant_points(way.way, self.POINT_SNAP_DISTANCE)
         if len(way.way) == 1:
-            #print("RLID %s reduced to a point" % way.rlid)
+            #_log.info("RLID %s reduced to a point" % way.rlid)
             return None, [ way ]
         new_way = []
         prev = None
@@ -857,10 +857,11 @@ class WayDatabase:
             prev = p
 
         if max_snap_distance == self.EMERGENCY_SNAP_DISTANCE:
-            print("Warning: had to use emergency snap distance (%sm) for %s to get it to match reference geometry" % (max_snap_distance, way.rlid))
+            _log.warning(f"had to use emergency snap distance ({max_snap_distance}m) for {way.rlid} to get it "
+                            f"to match reference geometry")
         way.way = new_way
         if len(way.way) == 1:
-            #print("RLID %s reduced to a point" % way.rlid)
+            #_log.info("RLID %s reduced to a point" % way.rlid)
             return ref_way, [ way ]
 
         if ref_way.way[0] == ref_way.way[-1]:
@@ -911,7 +912,7 @@ class WayDatabase:
         elif len(way.way) > 2 and way.way[-1] == ref_way.way[-1] and way.way[-1].dist < way.way[-2].dist:
             # P-shaped loop, ie endpoint attaches to midpoint on the own way.
             # Very rare (seen in Stockholm dataset), and sort of illegal
-            print("Warning: endpoint attaches to own midpoint for RLID %s" % way.rlid)
+            _log.warning(f"endpoint attaches to own midpoint for RLID {way.rlid}")
             way.way[-1].dist = ref_way.way[-1].dist
             self._test_way_dist(way)
 
@@ -930,9 +931,9 @@ class WayDatabase:
                 raise RuntimeError("Could not find start %s of way %s in reference geometry (does it extend reference geometry?)" % (latlon_str(way.way[0]), way.rlid)) from stop_iteration
         assert ref_p == way.way[0]
         new_way = []
-        #print(way.rlid)
-        #print("ref_way", ref_way.way)
-        #print("way.way", way.way)
+        #_log.info(way.rlid)
+        #_log.info("ref_way", ref_way.way)
+        #_log.info("way.way", way.way)
         for p in way.way:
             while ref_p != p:
                 assert p.dist >= 0
@@ -944,13 +945,13 @@ class WayDatabase:
             except StopIteration:
                 assert ref_p == p
         if len(new_way) > len(way.way):
-            #print("Added points to way of RLID %s (%s => %s)" % (way.rlid, len(way.way), len(new_way)))
+            #_log.info("Added points to way of RLID %s (%s => %s)" % (way.rlid, len(way.way), len(new_way)))
             way.way = new_way
 
         return ref_way, [ way ]
 
     def remove_short_sub_segments(self, keep_stub_function):
-        print("Removing short sub-segments...", end='', flush=True)
+        _log.info("Removing short sub-segments...")
         # "Remove" in this context means merging with neighbor segment
         remove_count = 0
         for segs in list(self.way_db.values()):
@@ -970,9 +971,9 @@ class WayDatabase:
                 if prev_length == 0 and next_length == 0:
                     # unconnected short segment (hopefully rare)
                     if len(segs) == 1:
-                        print("RLID %s is an alone short segment (%g), must be kept" % (seg.rlid, length))
+                        _log.warning(f"RLID {seg.rlid} is an alone short segment ({length:g}), must be kept")
                     else:
-                        print("RLID %s has a short unconnected segment (%g), must be kept" % (seg.rlid, length))
+                        _log.warning(f"RLID {seg.rlid} has a short unconnected segment ({length:g}), must be kept")
                     new_segs.append(seg)
                     continue
                 if length > 2.0:
@@ -995,7 +996,7 @@ class WayDatabase:
                 else:
                     self.way_db[segs[0].rlid] = new_segs
 
-        print("done (%s short sub-segments were removed)" % remove_count, flush=True)
+        _log.info(f"done ({remove_count} short sub-segments were removed)")
 
         self.join_segments_with_same_tags()
 
@@ -1012,10 +1013,10 @@ class WayDatabase:
             self._test_segment(segs)
 
     def setup_geometry_search(self):
-        print("Setting up search data structure for all geometry...", end='', flush=True)
+        _log.info("Setting up search data structure for all geometry...")
         self.gs = GeometrySearch(GEO_FILL_LENGTH)
         self.gs.insert_waydb(self.way_db)
-        print("done", flush=True)
+        _log.info("done")
 
     def get_endpoint_map(self):
         endpoints = {}
@@ -1029,7 +1030,7 @@ class WayDatabase:
         return endpoints
 
     def join_segments_with_same_tags(self):
-        print("Joining RLID segments with same tags...", end='', flush=True)
+        _log.info("Joining RLID segments with same tags...")
         join_count = 0
         for segs in self.way_db.values():
             it = iter(segs)
@@ -1050,10 +1051,10 @@ class WayDatabase:
                 prev = seg
             if len(nsegs) < len(segs):
                 self.way_db[segs[0].rlid] = nsegs
-        print("done (%s joined)" % join_count, flush=True)
+        _log.info(f"done ({join_count} joined)")
 
     def simplify_geometry(self, way_to_epsilon):
-        print("Simplifying geometry...", end='', flush=True)
+        _log.info("Simplifying geometry...")
         old_point_count = 0
         new_point_count = 0
 
@@ -1079,4 +1080,4 @@ class WayDatabase:
                 old_point_count += len(seg.way)
                 new_point_count += len(nway)
                 seg.way = nway
-        print("done (%s => %s points)" % (old_point_count, new_point_count), flush=True)
+        _log.info(f"done ({old_point_count} => {new_point_count} points)")
