@@ -360,6 +360,19 @@ Undernummer används sällan i olika kartor, men det finns med i OSM nu
 och skriptet tar därför med dem läggs på efter huvudnumret separerat
 med en punkt, exempel ("E 4.20").
 
+Vägbeläggning:
+
+NVDB specar endast "belagd" eller "grus" för kommunala och enskilda
+vägar (mer detaljerat för statligt underhållna vägar). "Grus" är ett
+antagande och hamnar även på jordvägar mm, därför sätter skriptet
+"surface=unpaved" för dessa vägar. För "belagd" är sannolikheten så
+hög att det är någon form av asfalt att surface=asphalt används. För
+kullersten mm får man således ändra manuellt.
+
+(I OSM idag är "surface=gravel" vanlig som beteckning på grusvägar,
+men enligt OSM-wiki avser det knytnävsstora stenar, så egentligen inte
+rätt. Bättre är då "surface=fine_gravel".)
+
 Vägbommar:
 
 Bommar som NVDB markerat med "låst grind eller bom" sätts till

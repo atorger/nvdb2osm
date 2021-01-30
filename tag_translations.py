@@ -28,7 +28,7 @@
 # VIS_DKRaffla                           o not translated (rare, no existing OSM tag, not important)
 # VIS_DKRastplats                        - amenity=parking etc, requires manual splitting to multiple nodes/areas (fixme tag added)
 # VIS_DKSidoanlaggningsvag               o redundant
-# VIS_DKSlitlager                        o redundant (NVDB_DKSlitlager same information)
+# VIS_DKSlitlager                        - detailed road surface for government managed roads (complements NVDB_Slitlager)
 # VIS_DKStamvag                          o redundant
 # VIS_DKStigningsfalt                    o not translated (rare, generally covered by increase of lanes)
 # VIS_DKStorstadsvag                     o redundant
@@ -1218,8 +1218,10 @@ TAG_TRANSLATIONS = {
     "NVDB_DKSlitlager": {
         # note: surface=paved would be more correct, but asphalt is so dominant in Sweden that we use that
         "TYP=belagd": "surface=asphalt",
-        # note: gravel de facto dominant in Scandinavia, while OSM wiki points at fine_gravel
-        "TYP=grus":   "surface=gravel"
+
+        # Note 1: NVDB's "grus" is more specific than it should be, "obelagd"/unpaved would be more correct as
+        # grus is used for all roads that are not paved.
+        "TYP=grus":   "surface=unpaved"
     },
     "NVDB_DKVagbredd": {
         "BREDD": "width",
@@ -1236,6 +1238,16 @@ TAG_TRANSLATIONS = {
         "RIKTNING=Med":         "overtaking:forward=no",
         "RIKTNING=Mot":         "overtaking:backward=no",
         "RIKTNING=Med och mot": "overtaking=no",
+    },
+    "VIS_DKSlitlager": {
+        "TYP=0": None,                  # Uppgift saknas
+        "TYP=1": "surface=asphalt",     # Bituminös
+        "TYP=2": "surface=asphalt",     # Oljegrus
+        "TYP=3": "surface=fine_gravel", # Grus
+        "TYP=4": "surface=gravel",      # Sten
+        "TYP=5": "surface=concrete",    # Betong
+        "TYP=6": "surface=asphalt",     # Y1G
+        "TYP=7": "surface=asphalt"      # Förseglat grus
     },
 
     "NVDB_DKFarthinder": {

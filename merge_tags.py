@@ -66,8 +66,20 @@ def merge_tags(seg, src, data_src_name):
             resolved = True
             fixmes.append("Could not resolve key %s, alt value %s" % (k, v))
 
+
+        # go through things we want to resolve before we look at the date
         if not resolved:
-            # resolve by date
+            if data_src_name == "VIS_DKSlitlager" and seg.tag_src[k][0] == "NVDB_DKSlitlager":
+                dst[k] = v
+                seg.tag_src[k] = (data_src_name, src_date)
+                solution = "prioritized layer"
+                resolved = True
+            elif seg.tag_src[k][0] == "VIS_DKSlitlager" and data_src_name == "NVDB_DKSlitlager":
+                solution = "prioritized layer"
+                resolved = True
+
+        # resolve by date, if possible
+        if not resolved:
             if seg.tag_src[k][1] != src_date:
                 if seg.tag_src[k][1] < src_date:
                     dst[k] = v
@@ -75,6 +87,7 @@ def merge_tags(seg, src, data_src_name):
                 solution = "date"
                 resolved = True
 
+        # look at specific data sources and keys
         if not resolved:
             if data_src_name == "NVDB_DKGatutyp":
                 if k == "NVDB_gatutyp":

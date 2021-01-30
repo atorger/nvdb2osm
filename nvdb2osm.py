@@ -150,7 +150,8 @@ def main():
         "NVDB_DKSlitlager",
         "NVDB_DKVagbredd",
         "NVDB_DKVagnummer",
-        "VIS_DKOmkorningsforbud"
+        "VIS_DKOmkorningsforbud",
+        "VIS_DKSlitlager"
     ]
 
     point_names = [
