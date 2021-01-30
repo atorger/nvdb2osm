@@ -97,7 +97,7 @@ def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None):
     last_print = 0
     for idx, way in enumerate(ways):
         if len(ways) > 50:
-            last_print = print_progress(last_print, idx, len(ways), progress_text=f"Merging {len(ways)} segments...")
+            last_print = print_progress(last_print, idx, len(ways), progress_text=f"Merging {len(ways)} segments")
         if isinstance(way.way, list):
             way_db.insert_rlid_way(way, data_src_name, debug_ways)
         else:
