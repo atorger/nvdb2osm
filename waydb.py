@@ -187,8 +187,16 @@ def remove_DKReflinjetillkomst_overlaps(ways, snap_dist):
     # remove segments that have been snapped to zero length
     filtered_ways = []
     for w in ways:
-        if len(w.way) > 2 or w.way[0] != w.way[-1]:
+        if w.way[0] != w.way[-1]:
             filtered_ways.append(w)
+        else:
+            all_same = True
+            for p in w.way[1:]:
+                if p != w.way[0]:
+                    all_same = False
+                    break
+            if not all_same:
+                filtered_ways.append(w)
     ways = filtered_ways
 
     if len(ways) == 1:
