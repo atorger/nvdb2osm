@@ -11,9 +11,10 @@ nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>
 
 Exempel:
 
-nvdb2osm.py Vilhelmina_kommun_Shape_TNE__9343.zip vilhelmina.osm
+nvdb2osm.py -v Vilhelmina_kommun_Shape_TNE__9343.zip vilhelmina.osm
 
-Kör kommandot utan argument för att se vilka flaggor man kan sätta.
+Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
+exemplet används "-v" för att visa INFO-loggar.
 
 Det tar cirka en kvart att tugga igenom en kommun. Arkiven med
 shape-filer laddas ner från Trafikverket. Man går till
@@ -380,6 +381,19 @@ barrier=gate med access=permissive. Det betyder att bommen är
 generellt sett öppen, men den kanske inte är det. Om man vet att
 bommen är i regel låst kan man ändra taggen till access=private (det
 finns också locked=yes, men den taggen är mindre använd).
+
+Geometriförenkling:
+
+NVDB:s geometri har väldigt många punkter för att göra så mjuka kurvor
+som möjligt. I OSM är det mesta handritat och därför är det
+traditionellt färre punkter. Många punkter gör det också besvärligare
+att göra manuell uppdatering och långsammare att jobba i de verktyg
+som finns. Därför förenklas geometrin innan den sparas för att mer
+efterlikna OSM:s tradition. Det är inte samma nivå av förenkling
+överallt, fler punkter behålls i rondeller än på landsväg till
+exempel. Vill man se hur geometrin ser ut före förenkling kan man
+använda --dump_layers-flaggan och kika på debug-lagren skriptet då
+sparar.
 
 
 Hålla datat uppdaterat
