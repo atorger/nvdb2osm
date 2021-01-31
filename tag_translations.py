@@ -1294,7 +1294,7 @@ TAG_TRANSLATIONS = {
         "PASSAGETYP=planskild passage underfart": None,
         "PASSAGETYP=planskild passage överfart": None,
         "PASSAGETYP=signalreglerat övergångsställe och/eller signalreg": [ "highway=crossing", "crossing=traffic_signals" ],
-        "PASSAGETYP=övergångsställe och/eller cykelpassage/cykelöverfa": None
+        "PASSAGETYP=övergångsställe och/eller cykelpassage/cykelöverfa": [ "highway=crossing", "crossing=marked" ],
     },
     "NVDB_DKHojdhinder45dm": {
         "FRIHOJD": "maxheight",
