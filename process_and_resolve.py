@@ -3,7 +3,7 @@ import logging
 from functools import cmp_to_key
 
 from geometry_basics import *
-from geometry_search import GeometrySearch
+from geometry_search import GeometrySearch, snap_to_closest_way
 from merge_tags import merge_tags, append_fixme_value
 from nvdb_segment import *
 from proj_xy import latlon_str
@@ -92,6 +92,40 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
         _log.warning(f"{data_src_name} has overlapping segments.")
 
     return new_ways
+
+# preprocess_laybys
+#
+# OSM tradition is to map layby parkings as unattached nodes beside the road rather than on it,
+# (even if that makes routing difficult).
+#
+# Here we move the layby nodes parallel to the road
+#
+def preprocess_laybys(points, way_db):
+
+    LAYBY_OFFSET = 10
+
+    for node in points:
+        ways = way_db.gs.find_all_nearby_ways(node.way)
+        _, snap, way = snap_to_closest_way(ways, node.way)
+        for idx, p in enumerate(way.way):
+            if idx == 0:
+                continue
+            prev = way.way[idx-1]
+            is_between, _ = point_between_points(snap, prev, p, 1e-6)
+            if not is_between:
+                continue
+            prev, p = rotate_90deg(prev, p)
+            oldlen = dist2d(prev, p)
+            xd = (p.x - prev.x) / oldlen * LAYBY_OFFSET
+            yd = (p.y - prev.y) / oldlen * LAYBY_OFFSET
+            if node.tags["NVDB_layby_side"] == "right":
+                node.way.x = snap.x - xd
+                node.way.y = snap.y - yd
+            else:
+                node.way.x = snap.x + xd
+                node.way.y = snap.y + yd
+            break
+    return points
 
 # preprocess_footcycleway_crossings
 #
@@ -950,6 +984,7 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
         "NVDB_cykelvagkat",
         "NVDB_guess_lanes",
         "NVDB_gagata_side",
+        "NVDB_layby_side",
         "KLASS",
         "GCMTYP",
         "KONTRUTION",

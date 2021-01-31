@@ -92,7 +92,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
 #
 # Wrapper to insert a read NVDB layer into the database, logging progress.
 #
-def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None):
+def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None, do_snap=True):
     _log.info(f"Merging {len(ways)} segments...")
     last_print = 0
     for idx, way in enumerate(ways):
@@ -101,7 +101,7 @@ def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None):
         if isinstance(way.way, list):
             way_db.insert_rlid_way(way, data_src_name, debug_ways)
         else:
-            did_snap = way_db.insert_rlid_node(way, data_src_name)
+            did_snap = way_db.insert_rlid_node(way, data_src_name, do_snap)
             if not did_snap:
                 append_fixme_value(way.tags, "no nearby reference geometry to snap to")
     _log.info("done merging")
@@ -231,7 +231,7 @@ def main():
                 write_osmxml(ways, [], name + "-preproc.osm")
                 debug_ways = []
 
-        insert_rlid_elements(way_db, ways, name, debug_ways)
+        insert_rlid_elements(way_db, ways, name, debug_ways=debug_ways)
         way_db.test_segments()
         if debug_ways is not None:
             write_osmxml(debug_ways, [], name + "-adapted.osm")
@@ -248,12 +248,16 @@ def main():
         points = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
         points = find_overlapping_and_remove_duplicates(name, points)
 
+        do_snap = True
         if name == "NVDB_DKGCM_passage":
             points = preprocess_footcycleway_crossings(points, way_db)
         elif name == "NVDB_DKKorsning":
             points = process_street_crossings(points, way_db, name)
+        elif name == "VIS_DKP_ficka":
+            points = preprocess_laybys(points, way_db)
+            do_snap = False
 
-        insert_rlid_elements(way_db, points, name)
+        insert_rlid_elements(way_db, points, name, do_snap=do_snap)
         layer_idx += 1
         _log.debug(f"Merged {layer_idx} of {layer_count} point layers")
 

@@ -145,12 +145,6 @@ def merge_tags(seg, src, data_src_name):
                         dst[k] = v
                         solution = "prefer other value over choker"
                         resolved = True
-            elif data_src_name == "VIS_DKP_ficka":
-                if k == "layby":
-                    if (ov == "left" and v == "right") or (ov == "right" and v == "left"):
-                        dst[k] = "both"
-                        solution = "merged to 'both'"
-                        resolved = True
 
         if not resolved and isinstance(way, list):
             dist, _ = calc_way_length(way)
@@ -168,7 +162,7 @@ def merge_tags(seg, src, data_src_name):
             res_str = "Warning: not resolved, added fixme tag"
         else:
             res_str = "Resolved, using %s (%s)" % (dst[k], solution)
-        if fixme or (solution != "list" and solution != "prioritized layer"):
+        if fixme or solution not in ("list", "prioritized layer"):
             _log.warning(f"Conflicting value for key '{k}' ('{v}' and '{ov}', RLID {seg.rlid}). {res_str}")
 
         if dst[k] == v and seg.tag_src[k][1] < src_date:

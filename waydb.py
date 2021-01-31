@@ -567,18 +567,19 @@ class WayDatabase:
         self._insert_into_reference_geometry(missing_ways, endpoints)
         return True
 
-    def insert_rlid_node(self, node, data_src_name):
-        did_snap = True
-        dist, p, snap_way = self._ref_gs.snap_point_into_geometry(node.way, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE)
-        if p is None:
-            _log.warning(f"node with RLID {node.rlid} {latlon_str(node.way)} in {data_src_name} has no"
-                         f" existing geometry within {self.MAX_SNAP_DISTANCE} meters")
-            did_snap = False
-        else:
-            if dist > self.POINT_SNAP_DISTANCE:
-                _log.info("Node %s snap distance %s", node.rlid, dist)
-            node.way.x = p[0]
-            node.way.y = p[1]
+    def insert_rlid_node(self, node, data_src_name, do_snap=True):
+        did_snap = False
+        if do_snap:
+            dist, p, snap_way = self._ref_gs.snap_point_into_geometry(node.way, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE)
+            if p is None:
+                _log.warning(f"node with RLID {node.rlid} {latlon_str(node.way)} in {data_src_name} has no"
+                             f" existing geometry within {self.MAX_SNAP_DISTANCE} meters")
+            else:
+                did_snap = True
+                if dist > self.POINT_SNAP_DISTANCE:
+                    _log.info("Node %s snap distance %s", node.rlid, dist)
+                node.way.x = p[0]
+                node.way.y = p[1]
         if node.way in self.point_db:
             current = self.point_db[node.way][0]
             if current.rlid != node.rlid:
@@ -590,7 +591,7 @@ class WayDatabase:
         else:
             self.point_db[node.way] = [ node ]
 
-        if snap_way is not None:
+        if do_snap and snap_way is not None:
             self._add_node_into_way(snap_way.rlid, p)
         return did_snap
 

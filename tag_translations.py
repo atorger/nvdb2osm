@@ -756,23 +756,14 @@ def tag_translation_DKKollektivkorfalt(tags):
 # tag_translation_DKP_ficka()
 #
 # Layby parkings
-#  - OSM is more designed to map parkings as areas forming the outline of the actual parking,
-#    but nodes are allowed and NVDB provides parkings as nodes.
-#  - At the time of writing layby parkings as nodes exist in UK but are quite rarely used in
-#    the map as layby parkings is not that common internationally. In UK left/right placement
-#    is decided by putting the node beside the road, detached.
-#  - Here we introduce a new custom tag "layby=right/left/both" and keep the node in the road
-#    as NVDB does.
-#      - The rationale is that for routing information it's much better to have the parking
-#        node attached to the road than laying on the side.
 #
 def tag_translation_DKP_ficka(tags):
     tags["amenity"] = "parking"
     tags["parking"] = "layby"
     if tags["SIDA"] == "Höger":
-        tags["layby"] = "right"
+        tags["NVDB_layby_side"] = "right"
     elif tags["SIDA"] == "Vänster":
-        tags["layby"] = "left"
+        tags["NVDB_layby_side"] = "left"
     else:
         _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
         append_fixme_value(tags, "DKP_ficka: unknown SIDA value")

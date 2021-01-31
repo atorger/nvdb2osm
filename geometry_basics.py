@@ -88,6 +88,22 @@ def point_between_points(tp, p1, p2, tolerance):
         return p1.y <= tp.y and tp.y <= p2.y, cross
     return p2.y <= tp.y and tp.y <= p1.y, cross
 
+def rotate_90deg(np1, np2):
+    p1 = Point(np1.x, np1.y)
+    p2 = Point(np2.x, np2.y)
+
+    xtemp = p1.x
+    ytemp = p1.y
+    p1.x = -ytemp
+    p1.y = xtemp
+
+    xtemp = p2.x
+    ytemp = p2.y
+    p2.x = -ytemp
+    p2.y = xtemp
+
+    return p1, p2
+
 def calc_way_length(points):
     if not isinstance(points, list) or len(points) < 2:
         return 0, 0
