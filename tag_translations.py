@@ -13,7 +13,7 @@
 # VIS_DKDriftomrade                      o not relevant
 # VIS_DKDriftvandplats                   o not relevant (operating turning point can be routed in road network)
 # VIS_DKFPV_*                            o not relevant (prioritized roads for certain uses)
-# VIS_DKFunktionellt_priovagnat          o redundant (NVDB_DKFunkVagklass has more detailed information)
+# VIS_DKFunktionellt_priovagnat          - for resolving highway (a less detailed NVDB_DKFunkVagklass)
 # VIS_DKHallplatslage                    o not translated (suitably used separately when mapping bus lines)
 # VIS_DKHallplats                        o not translated (suitably used separately when mapping bus lines)
 # VIS_DKJarnvagskorsning                 o not translated (poor alignment, would require railway to snap in place)
@@ -1043,8 +1043,17 @@ def preprocess_name(name):
 # tag_translation_*() function
 #
 def process_tag_translations(tags, tag_translations):
+
     if not bool(tag_translations):
         return
+
+    if "NAMN" in tags:
+        name = tags["NAMN"]
+        new_name = preprocess_name(name)
+        if new_name != name:
+            _log.info(f"Changed name: '{name}' => '{new_name}'")
+            tags["NAMN"] = new_name
+
     if "translator_function" in tag_translations:
         tag_translations["translator_function"](tags)
     if tag_translations.get("expect_unset_time_intervals", False):
@@ -1061,12 +1070,6 @@ def process_tag_translations(tags, tag_translations):
                 raise RuntimeError("Bad item in add_keys_and_values %s" % item)
             new_items[kv[0].strip()] = kv[1].strip()
     for k, v in tags.items():
-        if k == "NAMN":
-            new_name = preprocess_name(v)
-            if new_name != v:
-                _log.info(f"Changed name: '{v}' => '{new_name}'")
-                tags[k] = new_name
-
         if k in tag_translations:
             sub = tag_translations[k]
             # replace key with new key name (or remove it)
@@ -1255,6 +1258,7 @@ TAG_TRANSLATIONS = {
         "ROLL": None,
         "VARD": None,
     },
+    "VIS_DKFunktionellt_priovagnat": {},
     "VIS_DKOmkorningsforbud": {
         "RIKTNING=Med":         "overtaking:forward=no",
         "RIKTNING=Mot":         "overtaking:backward=no",
