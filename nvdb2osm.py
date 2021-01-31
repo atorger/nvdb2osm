@@ -263,6 +263,7 @@ def main():
     way_db.join_segments_with_same_tags()
     way_db.remove_short_sub_segments(keep_end_stub)
 
+    sort_multiple_road_names(way_db)
     resolve_highways(way_db)
     simplify_speed_limits(way_db)
 

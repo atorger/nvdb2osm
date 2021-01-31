@@ -413,7 +413,7 @@ def compare_vagnummer(r1, r2):
     # Sort on länsbokstav
     if p1 > p2:
         return 1
-    elif p1 < p2:
+    if p1 < p2:
         return -1
 
     # Sort on main number
@@ -696,6 +696,104 @@ def resolve_highways(way_db):
 
     if fixme_count > 0:
         _log.warning(f"could not resolve tags for {fixme_count} highway segments, added fixme tags")
+
+    _log.info("done")
+
+# sort_multiple_road_names()
+#
+# Sort road/street road names for segments that have more than one name.
+# The sorting try to figure out which name is more prominent by assuming the lower KLASS number
+# (from NVDB_DKFunkVagklass) is more prominent, and if that is the same, the longer way is used
+#
+# For roundabouts it is assumed that the main name is correct (as we set that before this is called),
+# and then only the alt_name list is sorted
+#
+def sort_multiple_road_names(way_db):
+
+    def get_all_names(way):
+        name = way.tags.get("name", None)
+        if name is None:
+            return []
+        alt_names = way.tags.get("alt_name", None)
+        if alt_names is None:
+            return [ name ]
+        if not isinstance(alt_names, list):
+            alt_names = [ alt_names ]
+        return [ name ] + alt_names
+
+    def any_in(list1, list2):
+        for item in list1:
+            if item in list2:
+                return True
+        return False
+
+    def follow_road_name(way_db, way, name, other_names):
+        len_sum, _ = calc_way_length(way.way)
+        min_klass = way.tags.get("KLASS", 1000)
+        if any_in(other_names, get_all_names(way)):
+            min_klass = 1000
+        match_set = set({ way })
+        tried_set = set({ way })
+        while len(match_set) > 0:
+            new_match_set = set()
+            for w in match_set:
+                for ep in (w.way[0], w.way[-1]):
+                    ways = way_db.gs.find_all_connecting_ways(ep)
+                    for w1 in ways:
+                        if w1 in tried_set:
+                            continue
+                        names = get_all_names(w1)
+                        if name in names:
+                            length, _ = calc_way_length(w1.way)
+                            len_sum += length
+                            new_match_set.add(w1)
+
+                            # only consider KLASS if none of the other names is in this segment
+                            if not any_in(names, other_names):
+                                klass = int(w1.tags.get("KLASS", 1000))
+                                if klass < min_klass:
+                                    min_klass = klass
+                        tried_set.add(w1)
+            match_set = new_match_set
+        return len_sum, min_klass
+
+    def compare_nl_item(i1, i2):
+        if i1[2] != i2[2]: # sort on KLASS, lowest number first
+            return i1[2] - i2[2]
+        if i1[1] != i2[1]: # sort on length, longest length first
+            if i1[1] > i2[1]:
+                return -1
+            return 1
+        # sort on name
+        if i1[0] != i2[0]:
+            if i1[0] > i2[0]:
+                return 1
+            return -1
+        return 0
+
+    _log.info("Sorting road/street names for those with multiple names...")
+    sorted_names = []
+    for way in way_db:
+        names = get_all_names(way)
+        if len(names) <= 1:
+            continue
+        orig_first_name = names[0]
+        name_list = []
+        for name in names:
+            len_sum, min_klass = follow_road_name(way_db, way, name, [n for n in names if n != name])
+            name_list.append((name, len_sum, min_klass))
+        name_list.sort(key=cmp_to_key(compare_nl_item))
+        sorted_names = [item[0] for item in name_list]
+        if way.tags.get("junction", "") == "roundabout":
+            # exemption for roundabouts, the main name should already be set for those
+            sorted_names = [ orig_first_name ] + [n for n in sorted_names if n != orig_first_name]
+        if names == sorted_names:
+            continue
+        way.tags["name"] = sorted_names[0]
+        if len(sorted_names) > 2:
+            way.tags["alt_name"] = sorted_names[1:]
+        else:
+            way.tags["alt_name"] = sorted_names[1]
 
     _log.info("done")
 
