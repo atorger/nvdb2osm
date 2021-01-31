@@ -468,6 +468,13 @@ def resolve_highways(way_db):
     gcm_resolve_crossings = []
     for way in way_db:
 
+        # convert tags
+        if "NVDB_vagnummer" in way.tags:
+            refs = way.tags["NVDB_vagnummer"]
+            if isinstance(refs, list):
+                refs.sort(key=cmp_to_key(compare_vagnummer))
+            way.tags["ref"] = refs
+
         tags = {}
         if "GCMTYP" in way.tags:
             gcmtyp = way.tags["GCMTYP"]
@@ -599,21 +606,45 @@ def resolve_highways(way_db):
                 tags["highway"] = "unclassified"
             else:
                 raise RuntimeError("Unknown gatutyp %s" % gatutyp)
-        elif "NVDB_vagnummer" in way.tags:
+        elif "ref" in way.tags: # road number
+
+            # Note that even if a road has a road number (and is officially for example "Primär Länsväg") we
+            # still use KLASS instead of road number to set primary/secondary/tertiary. It's common that
+            # functional class changes even if the road number is the same (as the road gets into more rural areas,
+            # functional class is often lowered)
+            #
+            # There is a less detailed function road class, FPVKLASS, which matches better to what is currently
+            # mapped in OSM, so that is used when it results in a higher level than KLASS.
+            #
+            # A road with road number will not get worse than tertiary.
+            #
             if not "KLASS" in way.tags:
                 #raise RuntimeError("KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
                 #print("Warning: KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
                 tags["fixme"] = "could not resolve highway tag"
             else:
+                fpvklass = int(way.tags.get("FPVKLASS", -1))
+                if fpvklass in (1,2,3):
+                    # secondary, primary or trunk.
+                    fpv_level = fpvklass - 1
+                else:
+                    fpv_level = 1000
+
                 klass = int(way.tags["KLASS"])
                 if klass <= 1:
-                    tags["highway"] = "trunk"
+                    k_level = 0 # trunk
                 elif klass <= 2:
-                    tags["highway"] = "primary"
+                    k_level = 1 # primary
                 elif klass <= 4:
-                    tags["highway"] = "secondary"
+                    k_level = 2 # secondary
                 else:
-                    tags["highway"] = "tertiary"
+                    k_level = 3 # tertiary
+
+                if fpv_level < k_level:
+                    k_level = fpv_level
+
+                levels = [ "trunk", "primary", "secondary", "tertiary" ]
+                tags["highway"] = levels[k_level]
         elif "KLASS" in way.tags:
             # KLASS (from DKFunkVagklass) on it's own is used here last as a fallback
             # when there is no other information to rely on. KLASS is a metric on how
@@ -649,14 +680,6 @@ def resolve_highways(way_db):
         if "fixme" in tags:
             fixme_count += 1
         merge_translated_tags(way, tags)
-
-        # convert tags
-        if "NVDB_vagnummer" in way.tags:
-            refs = way.tags["NVDB_vagnummer"]
-            if isinstance(refs, list):
-                refs.sort(key=cmp_to_key(compare_vagnummer))
-            way.tags["ref"] = refs
-
 
     # Second pass for things we couldn't resolve in the first pass
     if len(gcm_resolve_crossings) > 0:
@@ -986,6 +1009,7 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
         "NVDB_gagata_side",
         "NVDB_layby_side",
         "KLASS",
+        "FPVKLASS",
         "GCMTYP",
         "KONTRUTION",
         "OEPNINSBAR"

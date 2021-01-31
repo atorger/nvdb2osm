@@ -150,6 +150,7 @@ def main():
         "NVDB_DKSlitlager",
         "NVDB_DKVagbredd",
         "NVDB_DKVagnummer",
+        "VIS_DKFunktionellt_priovagnat",
         "VIS_DKOmkorningsforbud",
         "VIS_DKSlitlager"
     ]
@@ -294,9 +295,8 @@ def main():
     waydb2osmxml(way_db, output_filename)
     _log.info("done writing output")
 
-    print("Conversion is complete. NVDB data is not 100% perfect/complete: remember\n"
-          "to validate the OSM file (JOSM validator) and check any fixme tags.\n"
-          "Merge responsibly!")
+    _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete: remember to validate the OSM file (JOSM validator) and check any fixme tags.")
+    _log.info("Have fun and merge responsibly!")
 
 if __name__ == "__main__":
     main()
