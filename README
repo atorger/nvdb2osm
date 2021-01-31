@@ -190,8 +190,21 @@ Att sammanfoga ett nytt OSM-lager som detta skript genererar med
 existerande kartdata i OSM är en ganska avancerad uppgift, och det
 hjälper om man är van att använda JOSM innan man försöker.
 
+Tipsen på arbetsflöde som ges här utgår från att man går igenom "allt"
+inom ett visst område. Men man behöver inte uppdatera all geometri om
+man inte vill förstås, man kan plocka ut mindre delar. Det handlar
+dock inte bara om geometrin, NVDB-lagret innehåller väldigt mycket
+taggar, hastighetsgränser, trafikförbud med tidsintervall osv osv ofta
+mycket mer än vad som finns kartlagt sedan tidigare, åtminstone på
+landsbygden. Därför kan det vara värdefullt att uppdatera vägar även
+om de redan finns och ligger någorlunda rätt positionerade.
+
+Förbehandling:
+
 Förbehandla översatt OSM-lager först. Gå igenom alla fixme-taggar och
 kör JOSM-validatorn. Tips om detta finns under separat rubrik.
+
+Välj ut område att jobba i:
 
 Vissa delar i Sverige, exempelvis Stockholm, är redan idag mycket väl
 uppdaterad i OSM. Välj ut delar som har större behov av uppdatering
@@ -212,58 +225,6 @@ just nu. Försök också jobba i mindre bitar så du kan ladda upp samma
 dag som du laddade ned för att redigera, ju kortare tid mellan ned-
 och uppladdning desto mindre risk för kollisioner med andras arbete.
 
-Vissa delar av kartan är senast uppdaterad när positionsdatat i
-tillgängligt källmaterial var mindre exakt, man kan därför hitta stora
-områden som är ganska detaljerade men som har ett offset på ett antal
-tiotals meter. I sådana fall måste man först korrigera offset på det
-gamla datat innan man börjar arbeta med att sammanfoga, annars kommer
-de exakta NDVB-vägarna gå rakt över lantbruk, sjöar och byggnader
-osv. Gör då offset-korrigeringen i en separat förändring och ladda upp
-innan du börjar jobba med importen.
-
-För att underlätta för framtida uppdateringar av NVDB-datat så bör man
-inte modifiera NVDB-geometrin om det inte är nödvändigt. Om vägarna
-ändrar form blir det svårare för ett uppdateringsskript att
-matcha. Ibland måste man ändra för att spegla vad som faktiskt hänt i
-verkligheten och det är okej förstås. Att lägga till noder i vägar
-eller dela upp dem i kortare segment gör mindre i fråga om att matcha
-vid uppdatering. Det är när man flyttar på noder så vägarna ändrar
-form som gör det svårare, men som sagt ibland kan det vara nödvändigt
-när vägen faktiskt byggts om i verkligheten.
-
-När man väl börjar med sammanfogningen så slår man antingen ihop
-de två lagren (dvs import-lagret och existerande OSM-karta), eller så
-gör man copy/paste mellan lagren.
-
-JOSM:s validator-funktion (som körs automatiskt när man laddar upp) är
-bra på att upptäcka saker man glömt, som att man har två likadana
-vägar nästan ovanpå varandra, okopplade segment mm, därför kan det
-vara ett effektivare arbetsflöde att börja med att slå ihop lagren
-direkt även om det blir lite grötigt och är svårare att hålla reda på
-vilka vägar man gått igenom och inte.
-
-Om du inte redan installerat "utilsplugin2" i JOSM så gör det, för du
-behöver verktyget "replace geometry". Gör select på existerande
-vägsegment och motsvarande i NVDB-datat och välj "replace
-geometry". Då kommer verktyget ersätta den gamla geometrin med
-modify-operationer (dvs det ser ut som man manuellt flyttat och lagt
-till noder i den gamla vägen så att den exakt matchar den nya). Detta
-gör att historyn av vägsegmentet behålls vilket är viktigt för att
-kunna spåra förändringar, och visar respekt mot de kartläggare som
-ritat vägen innan.
-
-Var uppmärksam på tidigare taggar. I vissa fall kan det vara så att
-tidigare kartläggning har en högre detaljnivå på taggningen än vad
-importerade datat har. Red ut dessa efter eget omdöme, ibland kan man
-behöva behålla det som redan finns, och kanske dela upp NVDB-datat i
-fler segment för att matcha.
-
-Det här import-skriptet skapar inga relations-objekt. Busslinjer,
-landsvägar etc finns ofta redan inlagda som relationer, se till att
-dessa behålls och kopplas ihop korrekt. Genom att använda replace
-geometry där gammal geometri ersätts istället för delete/insert så
-behålls länkar till relationer automatiskt.
-
 Tidigare taggar ger också information om import redan skett, dvs om du
 kan se att NVDB är källa och det finns ett RLID på
 vägsegmenten.
@@ -271,6 +232,113 @@ vägsegmenten.
 Man kan använda webb-verktyget http://overpass-turbo.eu för att göra
 taggsökningar, exempelvis på "NVDB:RLID=*" och/eller source=NVDB för
 att se var i kartan import gjorts.
+
+Kontrollera positionen av existerande data:
+
+Vissa delar av kartan är senast uppdaterad när positionsdatat i
+tillgängligt källmaterial var mindre exakt, man kan därför hitta stora
+områden som är ganska detaljerade men som har ett offset på ett antal
+tiotals meter. I vissa fall är positionsfelet så stort att man först
+måste korrigera det innan man börjar arbeta med att sammanfoga, annars
+kommer de exakta NDVB-vägarna gå rakt över lantbruk, sjöar och
+byggnader osv. Gör då offset-korrigeringen i en separat förändring och
+ladda upp innan du börjar jobba med importen.
+
+Modifiera inte geometrin i onödan, men gör det om du måste:
+
+För att underlätta för framtida uppdateringar av NVDB-datat så bör man
+inte modifiera NVDB-geometrin om det inte är nödvändigt. Om vägarna
+ändrar form blir det svårare för ett uppdateringsskript att
+matcha. Ibland måste man ändra för att spegla vad som faktiskt hänt i
+verkligheten och det är okej förstås. Då det gäller specifikt broar så
+ligger de ofta lite fel i NVDB och då måste man ju flytta dem.
+
+Välj ut en lagom stor area och sammanfoga:
+
+Man översätter typiskt en kommun i taget med skriptet, men även en hel
+kommun kan bli mycket att jobba med. Man kan därför vilja dela upp
+den, genom lite copy/paste mellan lager. Att aktivera ett nodfilter
+kan göra copy/paste mellan lager enklare.
+
+När du sen har ett lagomt stort NVDB-lager laddar du ner tillräckligt
+mycket karta från OSM så hela NVDB-lagret är täckt. Därefter
+sammanfogar du NVDB-lagret på det nedladdade datat (det kan vara smart
+att behålla en kopia av NVDB-lagret som referens).
+
+Det man nu har är en enda röra :-), två kartlager på varandra, det som
+finns i OSM-databasen nu, plus NVDB-lagret. Det går ta bara en väg åt
+gången om man känner sig mer bekväm med det, men detta sätt är i regel
+effektivare. Ju mer man jobbar desto duktigare blir man på se skillnad
+mellan gammal och ny geometri och det blir mindre förvirrande att
+jobba, men i början kommer det vara lite grötigt.
+
+JOSM har en bra validator som upptäcker om man har vägar som ligger
+ovanpå eller nästan ovanpå varandra, det gör att det är mycket låg
+risk att man glömmer jobba igenom och sammanfoga över hela kartan.
+
+Använd replace geometry för att uppdatera geometri:
+
+Om du inte redan installerat "utilsplugin2" i JOSM så gör det, för du
+behöver verktyget "replace geometry". För ett uppdatera en gammal väg
+med ny NVDB-geometri, gör så här:
+
+0. Grundprincipen att följa är att varenda segment i NVDB-vägen måste
+   göras replace geometry mot ett motsvarande segment i gamla
+   vägen. Om inte riskerar man att bli av med taggar som fanns i gamla
+   vägen för vissa segment. I de flesta fall har gamla vägen färre
+   segment (saknas broar, färre taggar osv), och då måste man dela upp
+   gamla vägen i motsvarande segment.
+1. Markera NVDB-vägen och se hur långt segmentet är, markera
+   motsvarande segment i gamla vägen.
+2. Om den gamla vägen har ett mycket längre segment (perfekt passning
+   inte nödvändigt), klipp upp den. OBS: klipp av på existerande nod,
+   lägger man till en ny nod blir "replace geometry"-verktyget
+   förvirrat (i skrivande stund åtminstone).
+    - Var uppmärksam när du närmar dig slutet av vägen så inte segment
+      i gamla vägen tar slut innan du gjort replace geometry med alla
+      NVDB-segment.
+    - Om den gamla vägen istället har fler segment, dela upp
+      NVDB-segmentet på motsvarande vis. Om möjligt gör join på
+      vägarna efter replace geometry gjorts (dvs om taggarna är precis
+      samma i båda segmenten).
+    - Var speciellt uppmärksam på broar (och tunnlar), NVDB har
+      ganska ofta precisionsproblem i placeringen av dessa så man kan
+      behöva justera dem manuellt.
+3. Gör replace geometry, och lös eventuella tag-konflikter i dialogen
+   som kommer upp.
+    - Ibland har gamla vägen en relation (större vägar har oftast
+      det), dessa ska behållas.
+4. Upprepa segment för segment tills hela vägen är ersatt.
+
+"Replace geometry" gör att ersättningen av den gamla geometrin görs
+med modify-operationer (dvs det ser ut som man manuellt flyttat och
+lagt till noder i den gamla vägen så att den exakt matchar den
+nya). Detta gör att historyn av vägsegmentet behålls vilket är viktigt
+för att kunna spåra förändringar, och visar respekt mot de kartläggare
+som ritat vägen innan.
+
+Om vägen man ersätter innehåller noder med taggar, som till exempel
+övergångsställe osv, så går det inte göra replace. Man måste då
+kopiera över dessa nodtaggar. Därefter går det att göra replace
+geometry som vanligt. Ofta finns noderna redan representerade i
+NVDB-vägen, om det är övergångsställen till exempel, men då det gäller
+exempelvis vändplaner (highway=turning_circle) saknas de ofta i NVDB.
+
+Var upmärksam på tidigare taggar och relationer:
+
+I vissa fall kan det vara så att tidigare kartläggning har en högre
+detaljnivå på taggningen än vad importerade datat har. Red ut dessa
+efter eget omdöme, ibland kan man behöva behålla det som redan finns,
+och kanske dela upp NVDB-datat i fler segment för att matcha. Följ
+replace-geometry-metoden ovan så går man automatiskt igenom alla
+segment.
+
+Det här import-skriptet skapar inga relations-objekt. Busslinjer,
+landsvägar etc finns ofta redan inlagda som relationer, se till att
+dessa behålls och kopplas ihop korrekt. Genom att använda replace
+geometry-arbetsflödet så sköts det automatiskt.
+
+Hantera kanter:
 
 När man konverterar en del i taget så kommer förstås vägar längs
 kanterna på området man jobbar med vara avhuggna. Det kan vara
@@ -280,6 +348,14 @@ uppladdat till OSM se till att koppla ihop vägarna längs kanterna med
 existerande vägar (om de finns). Justera de existerande vägarna
 istället för NVDB-vägarna, så när man tar in nästa del passar de
 ihop.
+
+Var uppmärksam på vägtyper, modifiera vid behov:
+
+För stora vägar har NVDB bra information, men för kommunal och enskild
+väg är den mer begränsad. I industrisammanhang kanske en väg blir
+residential fastän den hellre borde vara t ex service. Småvägar till
+sommarstugor ute på landsbygden blir ofta "highway=track" baserat på
+NVDB-datat, en del väljer kartlägga dessa som service eller liknande.
 
 
 FIXME-taggar och JOSM Validator
