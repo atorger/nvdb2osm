@@ -901,10 +901,6 @@ def postprocess_miscellaneous_tags(tags):
     spec_lane_count = 0
     for k, v in list(tags.items()):
 
-        # strip leading/trailing whitespace in name (rare, but happens)
-        if k == "name":
-            tags[k] = v.strip()
-
         # count how many lanes that are specified
         if "lanes:" in k:
             if isinstance(v, int):

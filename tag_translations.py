@@ -99,6 +99,7 @@
 # NVDB_DKVandmojlighet             - turning_circle
 
 import logging
+import string
 
 from nvdb_ti import parse_time_interval_tags, parse_range_date
 
@@ -1021,6 +1022,29 @@ def tag_translation_DKVaghinder(tags):
     del tags["PASSBREDD"]
     del tags["HINDERTYP"]
 
+# preprocess_name()
+#
+# NVDB has some quirks in its name (NAMN) tags sometimes, like all uppercase etc. This is
+# cleaned up here.
+#
+def preprocess_name(name):
+
+    if not isinstance(name, str):
+        # sometimes NAMN is set to None
+        return name
+
+    # strip leading/trailing whitespace in name (rare, but happens)
+    name = name.strip()
+
+    # if it's an all uppercase name, capitalize it
+    if name.isupper():
+        name = string.capwords(name)
+
+    # ';' not compatible with OSM, for example "G;a" instead of "G:a" as abbreviation of "Gamla" has been observed
+    name = name.replace(";", ":")
+
+    return name
+
 # process_tag_translations()
 #
 # Translate tags for a layer using provided matching entry from TAG_TRANSLATIONS,
@@ -1046,6 +1070,12 @@ def process_tag_translations(tags, tag_translations):
                 raise RuntimeError("Bad item in add_keys_and_values %s" % item)
             new_items[kv[0].strip()] = kv[1].strip()
     for k, v in tags.items():
+        if k == "NAMN":
+            new_name = preprocess_name(v)
+            if new_name != v:
+                _log.info(f"Changed name: '{v}' => '{new_name}'")
+                tags[k] = new_name
+
         if k in tag_translations:
             sub = tag_translations[k]
             # replace key with new key name (or remove it)
