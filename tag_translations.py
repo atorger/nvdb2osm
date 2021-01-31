@@ -1,6 +1,6 @@
 
 # AGGREGATLevkval_DoU_2017               o not relevant (leveranskvalitetsklass)
-# AGGREGATVagkategori                    o redundant (aggregate road types)
+# AGGREGATVagkategori                    o redundant (aggregate road types, government roads only)
 # ATKATK_Matplats                        o not relevant (measurement place, not food place)
 # BATMAN_*                               o redundant (bridges and tunnels, doesn't add relevat info over NVDB_DKBro_och_tunnel)
 # Miljö_Landskap*                        o not relevant
@@ -35,7 +35,7 @@
 # VIS_DKStrateg_VN_tyngretranspo         o not relevant
 # VIS_DKTEN_T_Vagnat                     o redundant
 # VIS_DKVagnybyggnad_2009                o not relevant
-# VIS_DKVagtyp                           o redundant
+# VIS_DKVagtyp                           o redundant (government roads only)
 # VIS_DKViltpassage_i_plan               o not translated
 # VIS_DKViltstangsel                     o not translated (wildlife fence, but not mapped at fence but rather on road)
 # VIS_DKViltuthopp                       o not translated
@@ -65,7 +65,7 @@
 # NVDB_DKFramkFordonskomb          o not translated (rare tag, possibility for trucks etc to get through)
 # NVDB_DKFunkVagklass              - used to resolve highway
 # NVDB_DKGagata                    - used to resolve highway
-# NVDB_DKGangfartsomrade           o used to resolve highway
+# NVDB_DKGangfartsomrade           - used to resolve highway
 # NVDB_DKGatunamn                  - street names
 # NVDB_DKGatutyp                   - used to resolve highway
 # NVDB_DKGCM_belyst                - lit=yes
