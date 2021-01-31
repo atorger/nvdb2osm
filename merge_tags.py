@@ -168,7 +168,7 @@ def merge_tags(seg, src, data_src_name):
             res_str = "Warning: not resolved, added fixme tag"
         else:
             res_str = "Resolved, using %s (%s)" % (dst[k], solution)
-        if fixme or solution != "list":
+        if fixme or (solution != "list" and solution != "prioritized layer"):
             _log.warning(f"Conflicting value for key '{k}' ('{v}' and '{ov}', RLID {seg.rlid}). {res_str}")
 
         if dst[k] == v and seg.tag_src[k][1] < src_date:
