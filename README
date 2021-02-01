@@ -160,27 +160,36 @@ I ett flertal fall finns det olika tänkbara översättningslösningar,
 för att se hur skriptet gör får man läsa koden.
 
 
-NVDB:RLID - länk till källdatat
--------------------------------
+Kommentar om NVDB:s RLID och segmentlängd
+-----------------------------------------
 
-För att länka till källinformationen taggar skriptet varje väg med
-source=NVDB och lägger till en custom-tagg "NVDB:RLID" med motsvarande
-unikt RLID som finns i NVDB. Varje bit väg i NVDB har ett sådant
-ID-nummer.
+NVDB:s geometri har globalt unika identifierare "RLID". Dessa är
+statiska och förändras inte, så man kan spåra vad som hänt med en
+väg. I tidiga versioner av det här skriptet så fördes dessa
+över. Vägsegmenten med ett RLID är emellertid i många fall korta,
+vilket gör att vägarna blir upphuggna i små bitar. Ofta sammanfaller
+det med broar, ändring av hastighetsgränser osv (som gör att det blir
+uppdelning även i OSM) så i många fall blir det ändå inte fler bitar
+än vad det skulle vara annars.
 
-I vissa fall är dessa ganska korta vägstumpar, särskilt där vägar
-byggts om. De kan inte slås ihop eftersom de har olika RLID (=olika
-värden för samma tag => kräver olika segment). Man skulle förvisso
-kunna ha flera RLID på NVDB:RLID-taggen separerade med semikolon, och
-använda originaldatat från NVDB för att avgöra vilken del av vägen som
-hör till vilket RLID. Överlag är det dock så att andra taggar (vägtyp
-etc) delar upp minst lika mycket så har så långt inte sett någon
-verklig vinning av att slå ihop segment.
+Testing visade dock att det är tillräckligt ofta en väg blir upphuggen
+i småbitar enbart pga av RLID så därför har vi plockat bort
+det. Skriptet genererar nu så långa segment som möjligt, dvs så länge
+vägen inte ändrar taggar sitter det ihop i ett segment.
 
-Att behålla en länk till källdatat gör det enklare att se var i kartan
-import är gjord, och i framtiden uppdatera datat, det går också enkelt
-att göra sökningar på specifika RLID om man manuellt vill jämföra
-OSM-datat och NVDB-datat.
+Trots detta blir segmenten ofta kortare än vad som finns inne i OSM nu
+eftersom NVDB-skriptet har ofta högre detaljnivå (broar, ändrade
+hastighetsgränser mm) som gör att taggar byts och vägarna måste delas
+upp av den anledningen.
+
+Att RLID inte förs över innebär vissa nackdelar när man ska göra
+framtida uppdatering av datat. Ett uppdateringsskript måste emellertid
+oavsett RLID eller ej gå in och jämföra geometrin med avancerade
+algoritmer eftersom datat lever tillsammans med manuellt ritad
+geometri och andra datakällor, så RLID gör inte mycket till eller från
+i praktiken. I vissa specialfall hade det förvisso varit en bonus att
+ha RLID kvar, men vi har gjort bedömningen att det är viktigare att
+göra så långa segment som möjligt.
 
 
 Tips för att sammanfoga med existerande data
@@ -198,6 +207,10 @@ taggar, hastighetsgränser, trafikförbud med tidsintervall osv osv ofta
 mycket mer än vad som finns kartlagt sedan tidigare, åtminstone på
 landsbygden. Därför kan det vara värdefullt att uppdatera vägar även
 om de redan finns och ligger någorlunda rätt positionerade.
+
+Det är också väldigt vanligt att vägar kan vara väl positionerade på
+ett ställe, och på ett annat ställe längs samma väg ligger den 50
+meter fel, så det kan löna sig att gå igenom hela vägsträckan.
 
 Förbehandling:
 
@@ -225,13 +238,9 @@ just nu. Försök också jobba i mindre bitar så du kan ladda upp samma
 dag som du laddade ned för att redigera, ju kortare tid mellan ned-
 och uppladdning desto mindre risk för kollisioner med andras arbete.
 
-Tidigare taggar ger också information om import redan skett, dvs om du
-kan se att NVDB är källa och det finns ett RLID på
-vägsegmenten.
-
 Man kan använda webb-verktyget http://overpass-turbo.eu för att göra
-taggsökningar, exempelvis på "NVDB:RLID=*" och/eller source=NVDB för
-att se var i kartan import gjorts.
+taggsökningar, exempelvis på "source=NVDB" för att se var i kartan
+NVDB-information använts.
 
 Kontrollera positionen av existerande data:
 
@@ -395,10 +404,9 @@ Exempel på vanliga Validator-varningar, med kommentarer:
       någon information om hur många filer som går i vardera
       riktning. Det går i regel lista ut från flygfoto.
  - Stub end:
-    - Skriptet städar upp stumpar, så de som ändå blir kvar bör man i
-      regel lämna orörda. Ofta rör det sig om en faktisk kort vägstump
-      med ett unikt RLID, och för att enklare koppla ihop med NVDB i
-      framtida uppdateringar bör man låta den vara kvar.
+    - Skriptet städar upp stumpar genom att länka ihop segment så
+      långa som möjligt och ta bort små glapp, så de som ändå blir
+      kvar bör man i regel lämna orörda.
  - Suspicious tag combination oneway=yes with lanes:bus:forward:
     - Felakting varning(?), att ange riktning på lanes även om vägen
       är enkelriktad verkar vara okej enligt OSM-wiki
@@ -497,16 +505,6 @@ Detta nya skript blir troligen ganska svårt att skriva eftersom man
 helst vill att det ska kunna filtrera bort justeringar i datat som
 inte är faktiska förändringar utan bara förfiningar eller tillägg till
 NVDB-datat, för att göra skillnadsfilen så liten som möjligt.
-
-För att underlätta för ett uppdateringsskript är det önskvärt att
-kartläggare ser till att behålla NVDB:RLID-taggarna så det går
-snabbare att matcha ihop element och upptäcka skillnader.
-
-I fallet man bara behöver uppdatera taggar utan att ändra geometrin,
-till exempel när tidsintervall på förbud ändrats, blir det ganska
-enkelt så länge NVDB:RLID-taggarna hålls intakta. Då behöver skriptet
-inte jämföra geometri utan bara söka fram väg med matchande RLID och
-jämföra taggarna.
 
 
 Information om koden
@@ -668,8 +666,6 @@ Här är en lista:
 
  - hästrastgård => amenity=horse_exercise_area sällsynt tagg för
      rastplatser
- - layby=left/right/both, tag för att visa vilken sida av vägen en
-     parkeringsficka ligger
  - miljözon-klass 1/2/3 => environmental_zone:sv=1/2/3
  - beskickningsfordon => diplomatic (i samma klass som permit_holder,
      disabled etc)

@@ -7,6 +7,7 @@ from geometry_basics import *
 from merge_tags import merge_tags
 from proj_xy import latlon_str
 from shapely_utils import *
+from nseg_tools import *
 from osmxml import *
 
 GEO_FILL_LENGTH = 50
@@ -969,7 +970,7 @@ class WayDatabase:
 
         return ref_way, [ way ]
 
-    def remove_short_sub_segments(self, keep_stub_function):
+    def remove_short_sub_segments(self):
         _log.info("Removing short sub-segments...")
         # "Remove" in this context means merging with neighbor segment
         remove_count = 0
@@ -999,7 +1000,7 @@ class WayDatabase:
                     # for longer stubs, we only remove them if they are on the start/end and
                     # only if only two points. This metric is based on what is seen in NVDB
                     # data.
-                    if (prev_length != 0 and next_length != 0) or len(seg.way) > 2 or keep_stub_function(seg):
+                    if (prev_length != 0 and next_length != 0) or len(seg.way) > 2 or keep_end_stub(seg):
                         new_segs.append(seg)
                         continue
                 # we can mess up dist value of points here for closed loops, but since
@@ -1048,8 +1049,142 @@ class WayDatabase:
                         endpoints[p] = [ seg ]
         return endpoints
 
-    def join_segments_with_same_tags(self):
-        _log.info("Joining RLID segments with same tags...")
+    @staticmethod
+    def _join_rlid_pick_best_matching_ways(ep, endpoints):
+        ways = endpoints[ep]
+        if len(ways) == 1:
+            # no connections
+            return None, None
+        max_angle = -1
+        best_way = None
+        for w1 in ways:
+            if w1.way[0] == ep:
+                p1 = w1.way[1]
+                w1_start = True
+            else:
+                p1 = w1.way[-2]
+                w1_start = False
+            for w2 in ways:
+                if w1 == w2 or w1.tags != w2.tags:
+                    continue
+                if w2.way[0] == ep:
+                    p3 = w2.way[1]
+                    w2_start = True
+                else:
+                    p3 = w2.way[-2]
+                    w2_start = False
+                if w1_start == w2_start and not way_may_be_reversed(w1) and not way_may_be_reversed(w2):
+                    # one way must be reversed, but none can be reversed
+                    continue
+                # calculate angle between p1 and p2
+                xa = p1.x - ep.x
+                ya = p1.y - ep.y
+                xb = p3.x - ep.x
+                yb = p3.y - ep.y
+                denom = math.sqrt(xa*xa + ya*ya) * math.sqrt(xb*xb + yb*yb)
+                if denom != 0:
+                    q = (xa * xb + ya * yb) / denom
+                    if q < -1:
+                        # this can happen due to precision limitation, -1.0000000000000002 seen in tests
+                        angle = 180
+                    elif q > 1:
+                        angle = 0
+                    else:
+                        angle = math.acos((xa * xb + ya * yb) / denom) * 180 / math.pi
+                else:
+                    angle = 0
+                if angle > max_angle:
+                    max_angle = angle
+                    best_way = (w1, w2)
+        if best_way is None:
+            return None, None
+        _log.debug(f"Max angle {max_angle} for {best_way[0].rlid} to {best_way[1].rlid}")
+        return best_way[0], best_way[1]
+
+    def _remove_seg_before_join(self, seg, endpoints):
+        segs = self.way_db[seg.rlid]
+        segs.remove(seg)
+        if len(segs) == 0:
+            _log.debug(f"RLID {seg.rlid} completely removed when joining with other segment")
+            del self.way_db[seg.rlid]
+        endpoints.remove(seg.way[0], seg)
+        if seg.way[-1] != seg.way[0]: # closed loop special case
+            endpoints.remove(seg.way[-1], seg)
+
+    def _join_rlid(self, seg, endpoints):
+
+        rlid_join_count = 0
+        ep_idx = -1
+        consecutive_fails = 0
+        while consecutive_fails < 2:
+            if ep_idx == -1:
+                ep_idx = 0
+                connecting_ep_idx = -1
+            else:
+                ep_idx = -1
+                connecting_ep_idx = 0
+            ep = seg.way[ep_idx]
+            w1, w2 = self._join_rlid_pick_best_matching_ways(ep, endpoints)
+            if seg not in (w1, w2):
+                consecutive_fails += 1
+                continue
+            consecutive_fails = 0
+            if w1 == seg:
+                join_way = w2
+            else:
+                join_way = w1
+            self._remove_seg_before_join(join_way, endpoints)
+            self._remove_seg_before_join(seg, endpoints)
+            if join_way.way[connecting_ep_idx] != ep:
+                # reversing required
+                if way_may_be_reversed(seg) and way_may_be_reversed(join_way):
+                    l1, _ = calc_way_length(seg.way)
+                    l2, _ = calc_way_length(join_way.way)
+                    reverse_join_way = l1 >= l2
+                elif way_may_be_reversed(join_way):
+                    reverse_join_way = True
+                else:
+                    reverse_join_way = False
+                    assert way_may_be_reversed(seg)
+                if reverse_join_way:
+                    _log.debug(f"Reversing joining RLID {join_way.rlid}")
+                    join_way.way = list(reversed(join_way.way))
+                else:
+                    _log.debug(f"Reversing base RLID {seg.rlid}")
+                    seg.way = list(reversed(seg.way))
+                    if ep_idx == 0:
+                        ep_idx = -1
+                    else:
+                        ep_idx = 0
+
+            # create new RLID by joining the current
+            new_rlid = seg.rlid + ";" + join_way.rlid
+            rlid_join_count += 1
+            if ep_idx == 0:
+                seg.way.pop(0)
+                seg.way = join_way.way + seg.way
+            else:
+                join_way.way.pop(0)
+                seg.way += join_way.way
+            join_way.way = None
+
+            seg.rlid = new_rlid
+            if new_rlid in self.way_db:
+                self.way_db[new_rlid].append(seg)
+            else:
+                _log.debug(f"Inserted joined RLID {new_rlid}")
+                self.way_db[new_rlid] = [ seg ]
+            endpoints.insert(seg.way[0], seg)
+            endpoints.insert(seg.way[-1], seg)
+
+        return rlid_join_count
+
+    def join_segments_with_same_tags(self, join_rlid=False):
+
+        if join_rlid:
+            _log.info("Joining segments with same tags even if different RLID...")
+        else:
+            _log.info("Joining RLID segments with same tags...")
         join_count = 0
         for segs in self.way_db.values():
             it = iter(segs)
@@ -1070,9 +1205,50 @@ class WayDatabase:
                 prev = seg
             if len(nsegs) < len(segs):
                 self.way_db[segs[0].rlid] = nsegs
-        _log.info(f"done ({join_count} joined)")
 
-    def simplify_geometry(self, way_to_epsilon):
+        if join_rlid:
+
+            # Joining ways can be optimized in several ways, as there are crossings where more
+            # than two segments join at the same point and direction of segments can be swapped
+            # to either make joining possible or impossible with neighboring segment, there are
+            # many different solutions to the problem.
+            #
+            # Here we have adopted a strategy which is more advanced than the most trivial method,
+            # but still it does not attempt to reach "optimal" result (whatever that would be)
+            #
+            rlid_join_count = 0
+            endpoints = TwoDimSearch()
+            all_segs = set()
+            for segs in self.way_db.values():
+                for seg in segs:
+                    all_segs.add(seg)
+                    for ep in (seg.way[0], seg.way[-1]):
+                        endpoints.insert(ep, seg)
+
+            while True:
+                _log.debug("RLID join iteration")
+                prev_rlid_join_count = rlid_join_count
+                for seg in all_segs:
+                    if seg.way is None: # already processed
+                        continue
+                    join_count = self._join_rlid(seg, endpoints)
+                    if join_count > 0:
+                        _log.debug(f"Added {join_count} segments to {seg.rlid}")
+                        rlid_join_count += join_count
+                if prev_rlid_join_count == rlid_join_count:
+                    break
+                all_segs = set()
+                for segs in self.way_db.values():
+                    for seg in segs:
+                        assert seg.way is not None
+                        all_segs.add(seg)
+
+        if join_rlid:
+            _log.info(f"done ({join_count} joined within same RLID, and {rlid_join_count} with different RLID joined)")
+        else:
+            _log.info(f"done ({join_count} joined)")
+
+    def simplify_geometry(self):
         _log.info("Simplifying geometry...")
         old_point_count = 0
         new_point_count = 0
@@ -1088,7 +1264,7 @@ class WayDatabase:
             for seg in segs:
                 start = 0
                 nway = []
-                epsilon = way_to_epsilon(seg)
+                epsilon = way_to_simplify_epsilon(seg)
                 for idx, p in enumerate(seg.way):
                     if p in (seg.way[0], seg.way[-1]):
                         continue

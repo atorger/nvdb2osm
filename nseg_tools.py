@@ -27,6 +27,10 @@ def keep_end_stub(way):
 def way_may_be_reversed(way):
     return "oneway" not in way.tags
 
+# reverse_way()
+#
+# Reverse way, changing tags if necessary
+#
 def reverse_way(way):
     way.way = list(reversed(way.way))
     new_tags = {}

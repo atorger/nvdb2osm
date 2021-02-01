@@ -266,7 +266,7 @@ def main():
         waydb2osmxml(way_db, "pre-resolve.osm")
 
     way_db.join_segments_with_same_tags()
-    way_db.remove_short_sub_segments(keep_end_stub)
+    way_db.remove_short_sub_segments()
 
     sort_multiple_road_names(way_db)
     resolve_highways(way_db)
@@ -288,14 +288,15 @@ def main():
     for str1 in time_interval_strings:
         _log.info(f"  '{str1}'")
 
-    way_db.join_segments_with_same_tags()
+    way_db.join_segments_with_same_tags(join_rlid=True)
 
-    way_db.simplify_geometry(way_to_simplify_epsilon)
+    way_db.simplify_geometry()
     _log.info(f"Writing output to {output_filename}")
-    waydb2osmxml(way_db, output_filename)
+    waydb2osmxml(way_db, output_filename, write_rlid=False)
     _log.info("done writing output")
 
-    _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete: remember to validate the OSM file (JOSM validator) and check any fixme tags.")
+    _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete.")
+    _log.info("Remember to validate the OSM file (JOSM validator) and check any fixme tags.")
     _log.info("Have fun and merge responsibly!")
 
 if __name__ == "__main__":
