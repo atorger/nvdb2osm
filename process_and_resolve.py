@@ -86,10 +86,10 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
         new_ways.append(way)
 
     if len(new_ways) < len(ways):
-        _log.warning(f"{data_src_name} has duplicate elements. Only one copy of each was kept")
+        _log.info(f"{data_src_name} has duplicate elements. Only one copy of each was kept")
 
     if overlap:
-        _log.warning(f"{data_src_name} has overlapping segments.")
+        _log.info(f"{data_src_name} has overlapping segments.")
 
     return new_ways
 
