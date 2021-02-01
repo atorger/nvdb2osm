@@ -102,7 +102,7 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
 #
 def preprocess_laybys(points, way_db):
 
-    LAYBY_OFFSET = 10
+    LAYBY_OFFSET = 7
 
     for node in points:
         ways = way_db.gs.find_all_nearby_ways(node.way)
