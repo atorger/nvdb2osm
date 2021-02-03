@@ -366,6 +366,12 @@ residential fastän den hellre borde vara t ex service. Småvägar till
 sommarstugor ute på landsbygden blir ofta "highway=track" baserat på
 NVDB-datat, en del väljer kartlägga dessa som service eller liknande.
 
+Validatorn är din vän:
+
+Crossing highways, disconnected ways osv. Gå igenom varningarna
+ordentligt och lär dig vad de betyder. Den är bra på att upptäcka om
+du har vägdubletter eller vägar som inte är hopkopplade.
+
 
 FIXME-taggar och JOSM Validator
 -------------------------------
@@ -444,6 +450,33 @@ länsbokstaven vara med här.
 Undernummer används sällan i olika kartor, men det finns med i OSM nu
 och skriptet tar därför med dem läggs på efter huvudnumret separerat
 med en punkt, exempel ("E 4.20").
+
+Vägklass:
+
+Skriptet använder funktionell vägklass med flera lager för att räkna
+ut om en väg ska vara trunk/primary/tertiary och så vidare. Oftast
+stämmer det överens med tidigare kartlagt, men inte alltid. När det
+inte stämmer är det ofta(st) bättre att behålla det som redan är
+kartlagt, även om vägen kan vara kartlagd med begränsad precision
+innan är typen ofta rätt. På mindre vägar
+(residential/unclassified/track) saknar NVDB detaljerad information,
+så där kan man behöva manuellt ändra till service etc. För skogsvägar
+är gränsen mellan unclassified och track lite knepig. Det kan finnas
+anledning att nedgradera unclassified till track eller tvärtom på
+vissa ställen för att bättre följa OSM-kartläggningstradition (för
+skogsväg tittar funktionsklassen en del på vägkvalitet för lastbilar
+osv, medan OSM tittar mer på hur mycket vägen används för vanlig
+trafik).
+
+Betraktar man lantmäteriets rasterkarta kan man ibland se att de har
+mer information om småvägar än vad skriptet har, och det beror på att
+rasterkartan just har mer vägklassinformation än vad som publicerats
+via NVDB. Ett exempel är att rasterkartan kan göra en skogsväg
+streckad, medan NVDB sätter den till unclassified som tyder på en
+högre underhållsgrad. I det fallet bör man ändra till track, men kolla
+flygfoto och förbindelser först. Finns det en tidigare väg innan ska
+man förstås behålla dess taggar om man inte är säker på att man gör en
+bra ändring.
 
 Vägbeläggning:
 
