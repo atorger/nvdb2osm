@@ -67,7 +67,8 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
             continue
 
         # overlapping segments are quite normal, but may be interesting to print, except for some
-        # data layers when it's the norm
+        # data layers when there's always lots of overlaps (it must be for some layers, for directional speed limits
+        # for example)
         if isinstance(way.way, list) and data_src_name not in ("NVDB_DKHastighetsgrans", "NVDB_DKVagnummer"):
             it = iter(way.way)
             prev = next(it)
@@ -78,9 +79,9 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
                     pointpairs[pp] = way
                 else:
                     way2 = pointpairs[pp]
-                    _log.warning(f"Self-overlapping segment between {latlon_str(pp[0])}-{latlon_str(pp[1])}:")
-                    _log.warning(f"  Segment 1: {way} tags={way.tags} ({len(way.way)} points, index {way.way_id})")
-                    _log.warning(f"  Segment 2: {way2} tags={way2.tags} ({len(way2.way)} points, index {way2.way_id})")
+                    _log.info(f"Self-overlapping segment between {latlon_str(pp[0])}-{latlon_str(pp[1])}:")
+                    _log.info(f"  Segment 1: {way} tags={way.tags} ({len(way.way)} points, index {way.way_id})")
+                    _log.info(f"  Segment 2: {way2} tags={way2.tags} ({len(way2.way)} points, index {way2.way_id})")
                     overlap = True
                     break
         new_ways.append(way)
