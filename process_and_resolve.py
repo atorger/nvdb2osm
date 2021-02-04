@@ -282,7 +282,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
 
     _log.info('done')
     if len(convert_to_tunnels) > 0:
-        _log.warning(f"{len(convert_to_tunnels)} under-passages was converted to tunnel and the related {len(delete_bridges)} short bridges were removed")
+        _log.info(f"{len(convert_to_tunnels)} under-passages was converted to tunnel and the related {len(delete_bridges)} short bridges were removed")
 
     _log.info(f"Processing {len(bridges)} bridge segments...")
     fixme_count = 0
@@ -749,7 +749,8 @@ def resolve_highways(way_db):
             gcm_resolve_crossings = unconnected
 
             if len(unconnected) > 0:
-                _log.warning(f"{len(unconnected)} unconnected crossings, making an additional pass")
+                _log.info(f"{len(unconnected)} unconnected crossings, making an additional pass")
+        _log.info("all crossings resolved")
 
     if fixme_count > 0:
         _log.warning(f"could not resolve tags for {fixme_count} highway segments, added fixme tags")
