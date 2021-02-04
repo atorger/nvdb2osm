@@ -29,7 +29,29 @@ def simplify_way(points, epsilon):
     return shapely_linestring_to_way(ls)
 
 def way_is_self_crossing(points):
-    return not LineString(points).is_simple
+    if len(points) <= 2:
+        return False
+    ls = LineString(points)
+    if ls.is_simple:
+        return False
+
+    # Shapely considers P-shaped loops to not be simple, but these are okay according to OSM
+    # so we say that those are not self-crossing.
+    idx = None
+    for p in points[1:-1]:
+        if p == points[0]:
+            if idx is not None:
+                return True
+            idx = 0
+        elif p == points[-1]:
+            if idx is not None:
+                return True
+            idx = -1
+    if idx is None:
+        return True
+    if idx == 0:
+        return not LineString(points[1:]).is_simple
+    return not LineString(points[:-1]).is_simple
 
 def split_self_crossing_way(points):
     # very inefficient, but okay since it's used rarely
