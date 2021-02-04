@@ -169,6 +169,7 @@ def main():
     ]
     parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
     parser.add_argument('--dump_layers', action='store_true')
+    parser.add_argument('--rlid', help="Include RLID in output", action='store_true')
     parser.add_argument(
         '-d', '--debug',
         help="Print lots of debugging statements",
@@ -195,6 +196,7 @@ def main():
     logging.getLogger("fiona.collection").setLevel(logging.WARNING)
     _log.debug(f"args are {args}")
 
+    write_rlid = args.rlid
     debug_dump_layers = args.dump_layers
     directory_or_zip = args.shape_file
     output_filename = args.osm_file
@@ -289,10 +291,14 @@ def main():
         _log.info(f"  '{str1}'")
 
     way_db.join_segments_with_same_tags(join_rlid=True)
+    way_db.make_way_directions_tree_like()
+
+    if debug_dump_layers:
+        waydb2osmxml(way_db, "pre-simplify.osm")
 
     way_db.simplify_geometry()
     _log.info(f"Writing output to {output_filename}")
-    waydb2osmxml(way_db, output_filename, write_rlid=False)
+    waydb2osmxml(way_db, output_filename, write_rlid=write_rlid)
     _log.info("done writing output")
 
     _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete.")
