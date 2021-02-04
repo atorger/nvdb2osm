@@ -132,7 +132,8 @@ def join_ways_using_nvdb_tags(ways, snap_dist):
                     break
             w.tags["STARTAVST"] = pw.tags["STARTAVST"]
             w.way = nw + w.way
-            w.tags["SHAPE_LEN"] = calc_way_length(w.way)
+            length, _ = calc_way_length(w.way)
+            w.tags["SHAPE_LEN"] = length
         pw = w
     new_ways += [ pw ]
     return new_ways
@@ -991,9 +992,9 @@ class WayDatabase:
                 if prev_length == 0 and next_length == 0:
                     # unconnected short segment (hopefully rare)
                     if len(segs) == 1:
-                        _log.warning(f"RLID {seg.rlid} is an alone short segment ({length:g}), must be kept")
+                        _log.debug(f"RLID {seg.rlid} is an alone short segment ({length:g}), must be kept")
                     else:
-                        _log.warning(f"RLID {seg.rlid} has a short unconnected segment ({length:g}), must be kept")
+                        _log.debug(f"RLID {seg.rlid} has a short unconnected segment ({length:g}), must be kept")
                     new_segs.append(seg)
                     continue
                 if length > 2.0:
@@ -1148,17 +1149,20 @@ class WayDatabase:
                     assert way_may_be_reversed(seg)
                 if reverse_join_way:
                     _log.debug(f"Reversing joining RLID {join_way.rlid}")
-                    join_way.way = list(reversed(join_way.way))
+                    reverse_way(join_way)
                 else:
                     _log.debug(f"Reversing base RLID {seg.rlid}")
-                    seg.way = list(reversed(seg.way))
+                    reverse_way(seg)
                     if ep_idx == 0:
                         ep_idx = -1
                     else:
                         ep_idx = 0
 
-            # create new RLID by joining the current
-            new_rlid = seg.rlid + ";" + join_way.rlid
+            # create new RLID by joining the current, sort them to get repeatable result
+            new_rlid = seg.rlid.split(';')
+            new_rlid.append(join_way.rlid)
+            new_rlid.sort()
+            new_rlid = ";".join(new_rlid)
             rlid_join_count += 1
             if ep_idx == 0:
                 seg.way.pop(0)
@@ -1248,6 +1252,69 @@ class WayDatabase:
         else:
             _log.info(f"done ({join_count} joined)")
 
+
+    def make_way_directions_tree_like(self):
+        _log.info("Arrange way directions so the graph grows tree-like...")
+        reverse_count = 0
+        decided_count = 0
+        not_oriented = set()
+        oriented_endpoints = TwoDimSearch()
+        for segs in self.way_db.values():
+            for seg in segs:
+                decide_later = False
+                if way_may_be_reversed(seg):
+                    start_connect_count = len(self._ref_gs.find_all_connecting_ways(seg.way[0]))
+                    end_connect_count = len(self._ref_gs.find_all_connecting_ways(seg.way[-1]))
+                    if end_connect_count == 1:
+                        # already desired direction
+                        pass
+                    elif start_connect_count == 1:
+                        reverse_way(seg)
+                        reverse_count += 1
+                    else:
+                        decide_later = True
+                        not_oriented.add(seg)
+                if not decide_later:
+                    oriented_endpoints.insert(seg.way[0], seg)
+                    oriented_endpoints.insert(seg.way[-1], seg)
+                    decided_count += 1
+
+        _log.debug(f"master orientation iteration ({decided_count} decided, {reverse_count} reversed)")
+
+        last_not_oriented_len = -1
+        while len(not_oriented) != last_not_oriented_len:
+            _log.debug(f"orientation iteration ({len(not_oriented)} left)")
+            last_not_oriented_len = len(not_oriented)
+            oriented = set()
+            for seg in not_oriented:
+                max_rev_len = -1
+                max_len = -1
+                for ep_idx in (0, -1):
+                    ep = seg.way[ep_idx]
+                    if ep not in oriented_endpoints:
+                        continue
+                    ways = oriented_endpoints[ep]
+                    for w in ways:
+                        length, _ = calc_way_length(w.way)
+                        if w.way[ep_idx] == ep:
+                            if length > max_rev_len:
+                                max_rev_len = length
+                        elif length > max_len:
+                            max_len = length
+                if max_rev_len == -1 and max_len == -1:
+                    # could not decide direction in this round
+                    continue
+                if max_rev_len > max_len:
+                    reverse_way(seg)
+                    reverse_count += 1
+                oriented_endpoints.insert(seg.way[0], seg)
+                oriented_endpoints.insert(seg.way[-1], seg)
+                oriented.add(seg)
+            not_oriented -= oriented
+
+        _log.debug(f"orientation iterations complete ({len(not_oriented)} not considered, connected to midpoins etc)")
+        _log.info(f"done ({reverse_count} ways reversed)")
+
     def simplify_geometry(self):
         _log.info("Simplifying geometry...")
         old_point_count = 0
@@ -1257,7 +1324,8 @@ class WayDatabase:
         for segs in self.way_db.values():
             for seg in segs:
                 for p in seg.way[1:-1]:
-                    if len(self._ref_gs.find_all_connecting_ways(p)) > 1:
+                    # We also check if connected to self (P-shaped loops)
+                    if p == seg.way[0] or p == seg.way[-1] or len(self._ref_gs.find_all_connecting_ways(p)) > 1:
                         connected_midpoints.add(p)
 
         for segs in self.way_db.values():
@@ -1265,11 +1333,12 @@ class WayDatabase:
                 start = 0
                 nway = []
                 epsilon = way_to_simplify_epsilon(seg)
-                for idx, p in enumerate(seg.way):
-                    if p in (seg.way[0], seg.way[-1]):
-                        continue
+                for midx, p in enumerate(seg.way[1:-1]):
+                    idx = midx + 1
                     if p in self.point_db or p in connected_midpoints:
-                        nway += simplify_way(seg.way[start:idx], epsilon)
+                        sub_segment = seg.way[start:idx+1] # idx+1 to include current p as last point
+                        simplified = simplify_way(sub_segment, epsilon)
+                        nway += simplified[:-1] # skip last p to avoid overlaps with next sub-segment
                         start = idx
                 nway += simplify_way(seg.way[start:], epsilon)
                 old_point_count += len(seg.way)
