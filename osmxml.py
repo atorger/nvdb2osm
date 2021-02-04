@@ -87,7 +87,7 @@ def write_osmxml(way_list, point_list, filename, write_rlid=True):
                 stream.write(f"<way id='-{seg.way_id}' version='1'>\n")
                 for p in way:
                     stream.write(f"  <nd ref='-{p.node_id}' />\n")
-                stream.write(f"  <tag k='source' v='NVDB' />\n")
+                stream.write("  <tag k='source' v='NVDB' />\n")
                 if write_rlid:
                     stream.write(f"  <tag k='RLID' v='{seg.rlid}' />\n")
                 for k, v in seg.tags.items():
