@@ -35,8 +35,9 @@ def write_osmxml(way_list, point_list, filename, write_rlid=True):
             self_crossing.add(seg)
             self_crossing_rlids.add(seg.rlid)
     if len(self_crossing) > 0:
-        _log.warning("data contains self-crossing ways, these will be split to support OSM XML format")
-        _log.warning(f"These are the RLIDs for the self-crossing ways: {self_crossing_rlids}")
+        # since we join to as long ways as possible, it's normal to get self-crossing ways
+        _log.debug("data contains self-crossing ways, these will be split to support OSM XML format")
+        _log.debug(f"These are the RLIDs for the self-crossing ways: {self_crossing_rlids}")
 
     unique_id = 1
     points = {}
