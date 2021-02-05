@@ -264,26 +264,34 @@ ligger de ofta lite fel i NVDB och då måste man ju flytta dem.
 
 Välj ut en lagom stor area och sammanfoga:
 
-Man översätter typiskt en kommun i taget med skriptet, men även en hel
-kommun kan bli mycket att jobba med. Man kan därför vilja dela upp
-den, genom lite copy/paste mellan lager. Att aktivera ett nodfilter
-kan göra copy/paste mellan lager enklare.
+Man översätter typiskt en kommun i taget med skriptet, vilket blir
+för mycket att jobba med på en gång. Man får dela upp lagret i JOSM,
+genom lite copy/paste mellan lager. Välj en lagom stor ruta och
+gör select, håll in Alt-knappen så alla väg-segment som vidrörs också
+blir markerade. Välj copy, sen delete, skapa nytt lager och välj
+"paste at source position". Du har nu flyttat över en liten del av
+lagret till ett annat lager. Eftersom man behöver koppla ihop denna
+del med omkringliggande vägar kan det löna sig att försöka klippa ut
+delar som har så få tillkopplade vägar som möjligt. Inne i en storstad
+är det omöjligt förstås, så då får man leva med att det blir ganska
+mycket arbete runt kanterna, men ute på landsbygden går det ofta hitta
+smarta sätt att klippa ut delar på med få tillkopplade vägar.
 
-När du sen har ett lagomt stort NVDB-lager laddar du ner tillräckligt
-mycket karta från OSM så hela NVDB-lagret är täckt. Därefter
+När du nu har ett lagomt stort NVDB-lager laddar du ner tillräckligt
+mycket karta från OSM så hela det lagret är täckt. Därefter
 sammanfogar du NVDB-lagret på det nedladdade datat (det kan vara smart
 att behålla en kopia av NVDB-lagret som referens).
 
 Det man nu har är en enda röra :-), två kartlager på varandra, det som
 finns i OSM-databasen nu, plus NVDB-lagret. Det går ta bara en väg åt
-gången om man känner sig mer bekväm med det, men detta sätt är i regel
-effektivare. Ju mer man jobbar desto duktigare blir man på se skillnad
-mellan gammal och ny geometri och det blir mindre förvirrande att
-jobba, men i början kommer det vara lite grötigt.
+gången om man känner sig mer bekväm med det, men att ta allt på en
+gång är betydligt effektivare. Ju mer man jobbar desto duktigare blir
+man på se skillnad mellan gammal och ny geometri och det blir mindre
+förvirrande att jobba, men i början kommer det kännas lite stökigt.
 
-JOSM har en bra validator som upptäcker om man har vägar som ligger
-ovanpå eller nästan ovanpå varandra, det gör att det är mycket låg
-risk att man glömmer jobba igenom och sammanfoga över hela kartan.
+JOSM har en mycket bra validator som upptäcker om man har vägar som
+ligger ovanpå eller nästan ovanpå varandra, det gör att det är mycket
+låg risk att man glömmer jobba igenom och sammanfoga över hela kartan.
 
 Använd replace geometry för att uppdatera geometri:
 
@@ -301,8 +309,7 @@ med ny NVDB-geometri, gör så här:
    motsvarande segment i gamla vägen.
 2. Om den gamla vägen har ett mycket längre segment (perfekt passning
    inte nödvändigt), klipp upp den. OBS: klipp av på existerande nod,
-   lägger man till en ny nod blir "replace geometry"-verktyget
-   förvirrat (i skrivande stund åtminstone).
+   lägger man till en ny nod fungerar inte "replace geometry".
     - Var uppmärksam när du närmar dig slutet av vägen så inte segment
       i gamla vägen tar slut innan du gjort replace geometry med alla
       NVDB-segment.
@@ -324,29 +331,33 @@ med modify-operationer (dvs det ser ut som man manuellt flyttat och
 lagt till noder i den gamla vägen så att den exakt matchar den
 nya). Detta gör att historyn av vägsegmentet behålls vilket är viktigt
 för att kunna spåra förändringar, och visar respekt mot de kartläggare
-som ritat vägen innan.
+som ritat vägen innan. (Historyn hamnar dock bara på ett av segmenten
+när vägen behöver delas upp, men det är så OSM fungerar, det blir
+likadant med manuell kalkering.)
 
 Om vägen man ersätter innehåller noder med taggar, som till exempel
-övergångsställe osv, så går det inte göra replace. Man måste då
-kopiera över dessa nodtaggar. Därefter går det att göra replace
-geometry som vanligt. Ofta finns noderna redan representerade i
-NVDB-vägen, om det är övergångsställen till exempel, men då det gäller
-exempelvis vändplaner (highway=turning_circle) saknas de ofta i NVDB.
+övergångsställen och vändplaner med mera, så går det inte göra
+replace. Man måste då kopiera över dessa nodtaggar. Därefter går det
+att göra replace geometry som vanligt. Ofta finns noderna redan
+representerade i NVDB-vägen, om det är övergångsställen till exempel,
+men då det gäller exempelvis vändplaner (highway=turning_circle)
+saknas de ofta i NVDB.
 
 Vissa import-guidelines är kritiska mot replace geometry-verktyget
 eftersom en sidoeffekt blir att vägen kopplas loss från anslutande
 vägar som är i gamla geometrin. Istället rekommenderar man att manuellt
 kalkera från ett bakgrundslager med "improve way
-accuracy"-verktyget. Här tycker vi emellertid att replace geometry
-arbetsflödet beskrivet ovan ändå är bättre för att 1) manuell
+accuracy"-verktyget. Här tycker vi emellertid att arbetsflödet med
+replace geometry beskrivet ovan ändå är bättre för att 1) manuell
 kalkering är mycket långsammare, särskilt när man dessutom ska föra
 över många taggar som ofta innebär att man behöver ändra segmentlängd,
 2) manuell kalkering är inte lika precis, och det blir enklare att
-uppdatera i framtiden om man drar nytta av det väldigt precisa
-geometrin NVDB erbjuder, 3) replace geometrys nackdel med löskoppling
-kompenseras av validator-verktyget som ser till att man inte missar
-att koppla ihop vägar, 4) löskoppling är mindre problem än det först
-verkar eftersom även anslutande geometrin uppdateras i många fall.
+uppdatera i framtiden både manuellt och automatiskt om man drar nytta
+av det väldigt precisa geometrin NVDB erbjuder, 3) replace geometrys
+nackdel med löskoppling kompenseras av validator-verktyget som ser
+till att man inte missar att koppla ihop vägar, 4) löskoppling är
+mindre problem än det först verkar eftersom även anslutande geometrin
+uppdateras i många fall.
 
 Var upmärksam på tidigare taggar och relationer:
 
