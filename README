@@ -418,11 +418,6 @@ kan det vara ganska mycket som behöver manuell justering, på
 landsbyggden ibland ingenting. Bro- och tunneldatat i NVDB har en del
 begränsningar och precisionsproblem, kanske saknas en cykelbro osv.
 
-(När man håller på och bollar med lager i JOSM så slutar ibland
-Validator köra och visar istället ett gammalt resultat. För att tvinga
-den att köra om, markera alla objekt du vill verifiera och tryck på
-validator-knappen.)
-
 Exempel på vanliga Validator-varningar, med kommentarer:
 
  - Barrier=yes is unspecific:
