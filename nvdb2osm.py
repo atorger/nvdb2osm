@@ -102,7 +102,7 @@ def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None, do_snap=T
             way_db.insert_rlid_way(way, data_src_name, debug_ways)
         else:
             did_snap = way_db.insert_rlid_node(way, data_src_name, do_snap)
-            if not did_snap:
+            if not did_snap and do_snap:
                 append_fixme_value(way.tags, "no nearby reference geometry to snap to")
     _log.info("done merging")
 
