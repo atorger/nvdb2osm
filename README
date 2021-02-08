@@ -238,10 +238,6 @@ just nu. Försök också jobba i mindre bitar så du kan ladda upp samma
 dag som du laddade ned för att redigera, ju kortare tid mellan ned-
 och uppladdning desto mindre risk för kollisioner med andras arbete.
 
-Man kan använda webb-verktyget http://overpass-turbo.eu för att göra
-taggsökningar, exempelvis på "source=NVDB" för att se var i kartan
-NVDB-information använts.
-
 Kontrollera positionen av existerande data:
 
 Vissa delar av kartan är senast uppdaterad när positionsdatat i
@@ -542,6 +538,38 @@ efterlikna OSM:s tradition. Det är inte samma nivå av förenkling
 exempel. Vill man se hur geometrin ser ut före förenkling kan man
 använda --dump_layers-flaggan och kika på debug-lagren skriptet då
 sparar.
+
+
+Fel i NVDB-datat
+----------------
+
+NVDB-datat har mycket hög grad av korrekthet, men det är inte 100%
+perfekt. Detta är några fel som observerats:
+
+  - Bro-databasen har mycket fel, broarna kan vara 100 meter
+    felplacerade eller för korta för att nå över älven. Broar kan
+    saknas, särskilt för cykelvägar. Ungefär hälften av broarna
+    behöver någon slags korrigering.
+  - Broar som korsar andra vägar kan vara hopkopplade felaktigt i
+    korsningen.
+  - Gatunamn är i hög grad korrekt, men storleksordningen 1 av 1000
+    kan vara felstavat eller liknande.
+  - I enstaka fall görs anpassning av geometrin för att ge utrymme i
+    kartan, till exempel när cykelvägar går bredvid vägen inne i en
+    stad kan vägen vara lagd några meter åt sidan om verkligheten.
+  - I sällsynta fall (storleksordningen 1 ställe per kommun) kan en
+    väg ha en liten parallelförlyttning med sväng där det egentligen
+    ska vara en perfekt raksträcka.
+  - Enskild väg som är belagd kan vara markerad som grus.
+  - Vägar som slutar med återvändsgränd eller vändplan ritas oftast
+    lite väl långt, till slutet av vändplanen medan OSM-tradition är
+    att sluta vägen mitt på vändplanen.
+  - Vändplaner kan vara något felplacerade.
+  - Original-datat har en hel del småglapp här och var, som skriptet
+    reparerar för det mesta. I enstaka fall kan exempelvis en
+    skogsväg sakna sitt vägnamn över 50 meter eller så. Dessa
+    upptäcker man normalt under sammanfogningsprocessen så man kan
+    manuellt korrigera dem.
 
 
 Hålla datat uppdaterat
