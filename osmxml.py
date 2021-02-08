@@ -56,8 +56,7 @@ def write_osmxml(way_list, point_list, filename, write_rlid=True):
             unique_id += 1
             points[p] = p.node_id
             lat, lon = sweref99_transformer.transform(p.y, p.x)
-            stream.write(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}'>\n"
-                         f"  <tag k='source' v='NVDB' />\n")
+            stream.write(f"<node id='-{p.node_id}' version='1' lat='{lat}' lon='{lon}'>\n")
             if write_rlid:
                 stream.write(f"  <tag k='RLID' v='{seg.rlid}' />\n")
             for k, v in seg.tags.items():
@@ -87,7 +86,6 @@ def write_osmxml(way_list, point_list, filename, write_rlid=True):
                 stream.write(f"<way id='-{seg.way_id}' version='1'>\n")
                 for p in way:
                     stream.write(f"  <nd ref='-{p.node_id}' />\n")
-                stream.write("  <tag k='source' v='NVDB' />\n")
                 if write_rlid:
                     stream.write(f"  <tag k='RLID' v='{seg.rlid}' />\n")
                 for k, v in seg.tags.items():
