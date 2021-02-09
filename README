@@ -215,7 +215,18 @@ meter fel, så det kan löna sig att gå igenom hela vägsträckan.
 Förbehandling:
 
 Förbehandla översatt OSM-lager först. Gå igenom alla fixme-taggar och
-kör JOSM-validatorn. Tips om detta finns under separat rubrik.
+kör JOSM-validatorn. Tips om detta finns under separat
+rubrik.
+
+Rekommendation: markera alla objekt och lägg till
+source=NVDB. Observera att denna tagg ska inte laddas upp!
+Source-taggar användes i OSM historiskt men ska inte längre
+användas. Medan man håller på sammanfoga är det bra att ha dem för att
+inte blanda ihop vad som är gammalt och nytt. Dessutom finns det många
+source-taggar i existerande data och dessa ska tas bort när man
+uppdaterar geometrin. Genom att ha en egen source-tagg medan man
+redigerar är det lättare att upptäcka gamla taggar. Sen när man är
+redo att ladda upp söker man på source=NVDB och tar bort taggen.
 
 Välj ut område att jobba i:
 
