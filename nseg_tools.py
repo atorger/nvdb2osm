@@ -6,7 +6,11 @@
 def way_to_simplify_epsilon(way):
     if way.tags.get("junction", "") == "roundabout":
         return 0.25
-    if way.tags.get("highway", "") in [ "trunk","primary", "secondary", "tertiary", "unclassified", "track" ]:
+    if way.tags.get("highway", "") in [ "trunk", "motorway" ]:
+        # by some reason trunks are by tradition made with more points in OSM than
+        # other roads, at least in Sweden. We replicate that here.
+        return 1.0
+    if way.tags.get("highway", "") in [ "primary", "secondary", "tertiary", "unclassified", "track" ]:
         return 1.5
     if way.tags.get("highway", "") in [ "footway", "cycleway" ]:
         return 0.75
