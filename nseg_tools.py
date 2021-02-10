@@ -31,12 +31,35 @@ def keep_end_stub(way):
 def way_may_be_reversed(way):
     return "oneway" not in way.tags
 
+
+# get_directional_nodes()
+#
+# get a dictionary of all nodes that depend on the direction of the way it is tied to.
+#
+def get_directional_nodes(point_db):
+    directional_nodes = {}
+    for nodes in point_db.values():
+        for node in nodes:
+            if "direction" in node.tags:
+                directional_nodes[node.way] = node
+    return directional_nodes
+
 # reverse_way()
 #
 # Reverse way, changing tags if necessary
 #
-def reverse_way(way):
+def reverse_way(way, directional_nodes):
+
     way.way = list(reversed(way.way))
+
+    for p in way.way:
+        if p in directional_nodes:
+            node = directional_nodes[p]
+            if node.tags["direction"] == "backward":
+                node.tags["direction"] = "forward"
+            elif node.tags["direction"] == "forward":
+                node.tags["direction"] = "backward"
+
     new_tags = {}
     for k, v in way.tags.items():
         if k == "oneway":
@@ -46,6 +69,12 @@ def reverse_way(way):
                 v = "yes"
             else:
                 raise RuntimeError("Cannot reverse oneway")
+        elif k == "direction":
+            # direction normally used on points only, but here also check for ways to be sure
+            if v == "forward":
+                v = "backward"
+            elif v == "backward":
+                v = "forward"
         elif ":forward" in k:
             k = k.replace(":forward", ":backward")
         elif ":backward" in k:

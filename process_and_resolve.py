@@ -901,8 +901,9 @@ def simplify_speed_limits(way_db):
 #
 # Turn around oneways=-1 and remove redundant backward/forward prefixes
 #
-def simplify_oneway(way_db):
+def simplify_oneway(way_db, point_db):
     _log.info("Simplify tags for oneway roads...")
+    directional_nodes = get_directional_nodes(point_db)
     for way in way_db:
 
         # merge :backward/:forward into one key when applicable
@@ -921,7 +922,7 @@ def simplify_oneway(way_db):
         # reverse oneway if necessary to avoid oneway=-1 tag which JOSM doesn't like
         oneway = way.tags["oneway"]
         if oneway == -1:
-            reverse_way(way)
+            reverse_way(way, directional_nodes)
             oneway = "yes"
 
         if oneway != "yes":

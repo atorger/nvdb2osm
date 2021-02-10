@@ -276,7 +276,7 @@ def main():
 
     # Note: simplify_oneway() may reverse some ways, causing functions depending on that ways
     # with the same RLID is oriented in the same direction to not work
-    simplify_oneway(way_db)
+    simplify_oneway(way_db, way_db.point_db)
 
     for way in way_db:
         postprocess_miscellaneous_tags(way.tags)

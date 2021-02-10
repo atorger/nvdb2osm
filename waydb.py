@@ -1112,7 +1112,7 @@ class WayDatabase:
         if seg.way[-1] != seg.way[0]: # closed loop special case
             endpoints.remove(seg.way[-1], seg)
 
-    def _join_rlid(self, seg, endpoints):
+    def _join_rlid(self, seg, endpoints, directional_nodes):
 
         rlid_join_count = 0
         ep_idx = -1
@@ -1149,10 +1149,10 @@ class WayDatabase:
                     assert way_may_be_reversed(seg)
                 if reverse_join_way:
                     _log.debug(f"Reversing joining RLID {join_way.rlid}")
-                    reverse_way(join_way)
+                    reverse_way(join_way, directional_nodes)
                 else:
                     _log.debug(f"Reversing base RLID {seg.rlid}")
-                    reverse_way(seg)
+                    reverse_way(seg, directional_nodes)
                     if ep_idx == 0:
                         ep_idx = -1
                     else:
@@ -1220,6 +1220,7 @@ class WayDatabase:
             # Here we have adopted a strategy which is more advanced than the most trivial method,
             # but still it does not attempt to reach "optimal" result (whatever that would be)
             #
+            directional_nodes = get_directional_nodes(self.point_db)
             rlid_join_count = 0
             endpoints = TwoDimSearch()
             all_segs = set()
@@ -1235,7 +1236,7 @@ class WayDatabase:
                 for seg in all_segs:
                     if seg.way is None: # already processed
                         continue
-                    join_count = self._join_rlid(seg, endpoints)
+                    join_count = self._join_rlid(seg, endpoints, directional_nodes)
                     if join_count > 0:
                         _log.debug(f"Added {join_count} segments to {seg.rlid}")
                         rlid_join_count += join_count
@@ -1259,6 +1260,7 @@ class WayDatabase:
         decided_count = 0
         not_oriented = set()
         oriented_endpoints = TwoDimSearch()
+        directional_nodes = get_directional_nodes(self.point_db)
         for segs in self.way_db.values():
             for seg in segs:
                 decide_later = False
@@ -1269,7 +1271,7 @@ class WayDatabase:
                         # already desired direction
                         pass
                     elif start_connect_count == 1:
-                        reverse_way(seg)
+                        reverse_way(seg, directional_nodes)
                         reverse_count += 1
                     else:
                         decide_later = True
@@ -1305,7 +1307,7 @@ class WayDatabase:
                     # could not decide direction in this round
                     continue
                 if max_rev_len > max_len:
-                    reverse_way(seg)
+                    reverse_way(seg, directional_nodes)
                     reverse_count += 1
                 oriented_endpoints.insert(seg.way[0], seg)
                 oriented_endpoints.insert(seg.way[-1], seg)
