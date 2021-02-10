@@ -230,16 +230,15 @@ redo att ladda upp söker man på source=NVDB och tar bort taggen.
 
 Välj ut område att jobba i:
 
-Vissa delar i Sverige, exempelvis Stockholm, är redan idag mycket väl
-uppdaterad i OSM. Välj ut delar som har större behov av uppdatering
-först, och är du nybörjare börja med en mindre komplex geometri
-(landsbygd istället för stad). I städer behöver mer förbehandling av
-översatt OSM-lager göras, och det finns mer tolkning av hur
-kartläggning ska göras (mappa cykelvägar separat eller ej, och hur de
-exakt placeras i förhållande till intilliggande väg) och det finns mer
-av avancerade relationer att ta hänsyn till (busslinjer etc) - det är
-helt enkelt mycket gånger svårare att jobba med stadsgeometri än
-landsbygd.
+Vissa delar i Sverige, är redan idag mycket väl uppdaterade i
+OSM. Välj ut delar som har större behov av uppdatering först, och är
+du nybörjare börja med en mindre komplex geometri (landsbygd istället
+för stad). I städer behöver mer förbehandling av översatt OSM-lager
+göras, och det finns mer tolkning av hur kartläggning ska göras (mappa
+cykelvägar separat eller ej, och hur de exakt placeras i förhållande
+till intilliggande väg) och det finns mer av avancerade relationer att
+ta hänsyn till (busslinjer etc) - det är helt enkelt mycket gånger
+svårare att jobba med stadsgeometri än landsbygd.
 
 Se till att du jobbar på ett ställe på kartan där ingen annan håller
 på just nu. Det kan nämligen bli väldigt besvärligt om två personer
@@ -248,6 +247,15 @@ history-funktionen på openstreetmap.org så kan de se var folk jobbar
 just nu. Försök också jobba i mindre bitar så du kan ladda upp samma
 dag som du laddade ned för att redigera, ju kortare tid mellan ned-
 och uppladdning desto mindre risk för kollisioner med andras arbete.
+
+Tyvärr finns det ingen riktigt bra funktion i OSM för att se om någon
+annan redan gjort en uppdatering efter NVDB. Förr satte man
+source-taggar på vägarna, men det ska man inte göra nu
+längre, och changeset-source (som är där man ska ange NVDB) är bara
+sökbara i 30 dagar i existerande verktyg. Det man får göra är att
+visuellt inspektera. Om geometrin är lika välplacerad som NVDB, och
+den är rik på taggar (hastighetsgränser, vägnamn etc) så kan man anta
+att det är ett uppdaterat område.
 
 Kontrollera positionen av existerande data:
 
