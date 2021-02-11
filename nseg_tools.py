@@ -79,5 +79,9 @@ def reverse_way(way, directional_nodes):
             k = k.replace(":forward", ":backward")
         elif ":backward" in k:
             k = k.replace(":backward", ":forward")
+        elif ":left" in k:
+            k = k.replace(":left", ":right")
+        elif ":right" in k:
+            k = k.replace(":right", ":left")
         new_tags[k] = v
     way.tags = new_tags

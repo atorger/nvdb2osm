@@ -70,7 +70,7 @@
 # NVDB_DKGatutyp                   - used to resolve highway
 # NVDB_DKGCM_belyst                - lit=yes
 # NVDB_DKGCM_passage               - traffic signals for footway/cycleway
-# NVDB_DKGCM_separation            - segregated=yes, foot=designated
+# NVDB_DKGCM_separation            - cycleway separation
 # NVDB_DKGCM_vagtyp                - cycleways and footways (and some more other rare types)
 # NVDB_DKHastighetsgrans           - maxspeed, including time limits
 # NVDB_DKHojdhinder45dm            - maxheight
@@ -592,6 +592,43 @@ def tag_translation_DKForbudTrafik(tags):
 
     _log.debug(f"DKForbudTrafik output {tags}")
 
+# tag_translation_DKGCM_separation()
+#
+# At the time of writing cycleway separation is just a proposal, but quite much use in Germany
+# https://wiki.openstreetmap.org/wiki/Proposed_features/cycleway:separation
+#
+def tag_translation_DKGCM_separation(tags):
+    if tags["SIDA"] == "Höger":
+        key = "separation:right"
+        key2 = None
+    elif tags["SIDA"] == "Vänster":
+        key = "separation:left"
+        key2 = None
+    elif tags["SIDA"] == "Vänster och höger": # rare, but exists
+        key = "separation:left"
+        key2 = "separation:right"
+    else:
+        _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
+        append_fixme_value(tags, "DKGCM_separation: unknown SIDA value")
+
+    trans_separation = {
+        1: "separation_kerb", # kantsten
+        2: None, # skiljeremsa
+        3: "railing", # räcke
+        4: None, # friliggande
+        5: "solid_line", # vägmarkering
+        99: None, # okänt
+    }
+    separation = tags.pop("SEPARATION", None)
+    tags.pop("SIDA", None)
+
+    if trans_separation.get(separation, None) is not None:
+        tags[key] = trans_separation[separation]
+        if key2 is not None:
+            tags[key2] = trans_separation[separation]
+    else:
+        _log.warning(f"unknown SEPARATION {tags} (RLID {tags['RLID']})")
+        append_fixme_value(tags, "DKGCM_separation: unknown SEPARATION value")
 
 # tag_translation_DKHastighetsgrans()
 #
@@ -1185,9 +1222,7 @@ TAG_TRANSLATIONS = {
         "add_keys_and_values": "lit=yes"
     },
     "NVDB_DKGCM_separation": {
-        "add_keys_and_values": [ "segregated=yes", "foot=designated" ],
-        "SEPARATION": None,
-        "SIDA": None,
+        "translator_function": tag_translation_DKGCM_separation
     },
     "NVDB_DKGCM_vagtyp": { },
     "NVDB_DKHastighetsgrans": {
