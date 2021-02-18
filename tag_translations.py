@@ -96,7 +96,7 @@
 # NVDB_DKVagnummer                 - ref=x and used to resolve highway
 # NVDB_DKVagtrafiknat              o redundant
 # NVDB_DKVajningsplikt             - highway=give_way
-# NVDB_DKVandmojlighet             - turning_circle
+# NVDB_DKVandmojlighet             o was turning_circle, but is too often wrong so no longer used
 
 import logging
 import string
@@ -1366,11 +1366,11 @@ TAG_TRANSLATIONS = {
         "RIKTNING=Mot":         "direction=backward",
         "RIKTNING=Med och mot": None
     },
-    "NVDB_DKVandmojlighet": {
-        "add_keys_and_values": "highway=turning_circle",
-        "KLASS": None,
-        "TYP": None,
-    },
+#    "NVDB_DKVandmojlighet": {
+#        "add_keys_and_values": "highway=turning_circle",
+#        "KLASS": None,
+#        "TYP": None,
+#    },
     "VIS_DKP_ficka": {
         "translator_function": tag_translation_DKP_ficka
     },

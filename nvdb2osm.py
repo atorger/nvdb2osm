@@ -163,7 +163,6 @@ def main():
         "NVDB_DKStopplikt",
         "NVDB_DKVaghinder",
         "NVDB_DKVajningsplikt",
-        "NVDB_DKVandmojlighet",
         "VIS_DKP_ficka",
         "VIS_DKRastplats",
     ]
