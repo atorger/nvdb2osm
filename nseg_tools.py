@@ -1,20 +1,12 @@
 # way_to_simplify_epsilon()
 #
-# Depending on type of way return the precision (in meters) we want to keep when
-# geometry is simplified.
+# Return the precision (in meters) we want to keep when geometry is simplified.
 #
 def way_to_simplify_epsilon(way):
-    if way.tags.get("junction", "") == "roundabout":
-        return 0.25
-    if way.tags.get("highway", "") in [ "trunk", "motorway" ]:
-        # by some reason trunks are by tradition made with more points in OSM than
-        # other roads, at least in Sweden. We replicate that here.
-        return 1.0
-    if way.tags.get("highway", "") in [ "primary", "secondary", "tertiary", "unclassified", "track" ]:
-        return 1.5
-    if way.tags.get("highway", "") in [ "footway", "cycleway" ]:
-        return 0.75
-    return 1.0
+    # This value of 0.2 is consistent what is used in the Norweigian imports.
+    # It's a quite high detail level and will keep most points available in NVDB
+    # geometry.
+    return 0.2
 
 # keep_end_stub()
 #
