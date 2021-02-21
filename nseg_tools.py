@@ -1,13 +1,3 @@
-# way_to_simplify_epsilon()
-#
-# Return the precision (in meters) we want to keep when geometry is simplified.
-#
-def way_to_simplify_epsilon(way):
-    # This value of 0.2 is consistent what is used in the Norweigian imports.
-    # It's a quite high detail level and will keep most points available in NVDB
-    # geometry.
-    return 0.2
-
 # keep_end_stub()
 #
 # For short end stubs, return True if we want to keep them anyway depending on type

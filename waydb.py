@@ -1334,7 +1334,10 @@ class WayDatabase:
             for seg in segs:
                 start = 0
                 nway = []
-                epsilon = way_to_simplify_epsilon(seg)
+                # This value of 0.2 is consistent what is used in the Norwegian imports.
+                # It's a quite high detail level and will keep most points available in NVDB
+                # geometry.
+                epsilon = 0.2
                 for midx, p in enumerate(seg.way[1:-1]):
                     idx = midx + 1
                     if p in self.point_db or p in connected_midpoints:
