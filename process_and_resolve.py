@@ -896,6 +896,26 @@ def simplify_speed_limits(way_db):
 
     _log.info("done")
 
+# cleanup_highway_widths
+#
+# Remove way widths with are deemed not reliable / valuable
+#
+# Width on forestry roads seems to be reported only on newly made roads and includes
+# basically the ditches too. As forestry roads are not maintained as much and width
+# is spotty we just remove it. This removal will also include some private roads, but
+# the width standard is not entirely clear there either.
+#
+def cleanup_highway_widths(way_db):
+    _log.info("Cleanup highway widths...")
+    remove_count = 0
+    for way in way_db:
+        highway = way.tags.get("highway", None)
+        if (highway == "unclassified" and way.tags.get("NVDB_gatutyp", None) is None) or highway == "track":
+            w = way.tags.pop("width", None)
+            if w is not None:
+                remove_count += 1
+    _log.info(f"done (removed {remove_count} highway widths)")
+
 
 # simplify_oneway()
 #

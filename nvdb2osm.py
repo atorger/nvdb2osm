@@ -272,6 +272,7 @@ def main():
     sort_multiple_road_names(way_db)
     resolve_highways(way_db)
     simplify_speed_limits(way_db)
+    cleanup_highway_widths(way_db)
 
     # Note: simplify_oneway() may reverse some ways, causing functions depending on that ways
     # with the same RLID is oriented in the same direction to not work
