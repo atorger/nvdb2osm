@@ -608,7 +608,7 @@ def tag_translation_DKGCM_separation(tags):
         key = "separation:left"
         key2 = "separation:right"
     else:
-        _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
+        _log.warning(f"unknown SIDA {tags['SIDA']} (RLID {tags['RLID']})")
         append_fixme_value(tags, "DKGCM_separation: unknown SIDA value")
 
     trans_separation = {
@@ -622,13 +622,13 @@ def tag_translation_DKGCM_separation(tags):
     separation = tags.pop("SEPARATION", None)
     tags.pop("SIDA", None)
 
-    if trans_separation.get(separation, None) is not None:
+    if separation not in trans_separation:
+        _log.warning(f"unknown SEPARATION {separation} (RLID {tags['RLID']})")
+        append_fixme_value(tags, f"DKGCM_separation: unknown SEPARATION value {separation}")
+    elif trans_separation.get(separation, None) is not None:
         tags[key] = trans_separation[separation]
         if key2 is not None:
             tags[key2] = trans_separation[separation]
-    else:
-        _log.warning(f"unknown SEPARATION {tags} (RLID {tags['RLID']})")
-        append_fixme_value(tags, "DKGCM_separation: unknown SEPARATION value")
 
 # tag_translation_DKHastighetsgrans()
 #
