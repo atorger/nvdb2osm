@@ -160,7 +160,8 @@ def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
     i = 0
     while i + 1 < len(ways):
         dist = dist2d(ways[i+0].way[-1], ways[i+1].way[0])
-        if dist < 1.0:
+        # previous max gap was 1.0, but 2.4 meter gap was observed in Falun dataset
+        if dist < 2.5:
             shapelen_sum = ways[i+0].tags["SHAPE_LEN"] + ways[i+1].tags["SHAPE_LEN"]
             avst_diff = ways[i+1].tags["STARTAVST"] - ways[i+0].tags["SLUTAVST"]
             shape_dist = shapelen_sum * avst_diff
