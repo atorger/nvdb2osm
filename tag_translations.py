@@ -598,15 +598,17 @@ def tag_translation_DKForbudTrafik(tags):
 # https://wiki.openstreetmap.org/wiki/Proposed_features/cycleway:separation
 #
 def tag_translation_DKGCM_separation(tags):
+    key = None
+    key2 = None
     if tags["SIDA"] == "Höger":
         key = "separation:right"
-        key2 = None
     elif tags["SIDA"] == "Vänster":
         key = "separation:left"
-        key2 = None
     elif tags["SIDA"] == "Vänster och höger": # rare, but exists
         key = "separation:left"
         key2 = "separation:right"
+    elif tags["SIDA"] == "Mitt" or tags["SIDA"] is None: # rare, but exists, we ignore these
+        _log.info(f"ignoring separation with SIDA {tags['SIDA']} (RLID {tags['RLID']})")
     else:
         _log.warning(f"unknown SIDA {tags['SIDA']} (RLID {tags['RLID']})")
         append_fixme_value(tags, "DKGCM_separation: unknown SIDA value")
@@ -625,7 +627,7 @@ def tag_translation_DKGCM_separation(tags):
     if separation not in trans_separation:
         _log.warning(f"unknown SEPARATION {separation} (RLID {tags['RLID']})")
         append_fixme_value(tags, f"DKGCM_separation: unknown SEPARATION value {separation}")
-    elif trans_separation.get(separation, None) is not None:
+    elif trans_separation.get(separation, None) is not None and key is not None:
         tags[key] = trans_separation[separation]
         if key2 is not None:
             tags[key2] = trans_separation[separation]
