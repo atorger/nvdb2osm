@@ -1066,6 +1066,7 @@ class WayDatabase:
         max_angle = -1
         best_way = None
         for w1 in ways:
+            w1_closed = w1.way[0] == w1.way[-1]
             if w1.way[0] == ep:
                 p1 = w1.way[1]
                 w1_start = True
@@ -1075,6 +1076,7 @@ class WayDatabase:
             for w2 in ways:
                 if w1 == w2 or w1.tags != w2.tags:
                     continue
+                w2_closed = w2.way[0] == w2.way[-1]
                 if w2.way[0] == ep:
                     p3 = w2.way[1]
                     w2_start = True
@@ -1083,7 +1085,20 @@ class WayDatabase:
                     w2_start = False
                 if w1_start == w2_start and not way_may_be_reversed(w1) and not way_may_be_reversed(w2):
                     # one way must be reversed, but none can be reversed
-                    continue
+
+                    # if one way is closed, we can swap start/end to recover, otherwise skip this pair
+                    if w1_closed:
+                        if w1_start:
+                            p1 = w1.way[-2]
+                        else:
+                            p1 = w1.way[1]
+                    elif w2_closed:
+                        if w2_start:
+                            p3 = w2.way[-2]
+                        else:
+                            p3 = w2.way[1]
+                    else:
+                        continue
                 # calculate angle between p1 and p2
                 xa = p1.x - ep.x
                 ya = p1.y - ep.y
