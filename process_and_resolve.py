@@ -825,7 +825,7 @@ def sort_multiple_road_names(way_db):
             return 1
         # sort on name
         if i1[0] != i2[0]:
-            if i1[0] > i2[0]:
+            if str(i1[0]) > str(i2[0]):
                 return 1
             return -1
         return 0
