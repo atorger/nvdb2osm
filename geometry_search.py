@@ -95,7 +95,7 @@ class GeometrySearch:
             if idx == 0:
                 continue
             prev = way.way[idx-1]
-            is_between, _ = point_between_points(point, prev, p, 1e-6)
+            is_between, _ = point_between_points(point, prev, p, 1e-5)
             if not is_between:
                 continue
             dist1 = dist2d(prev, point)
@@ -110,7 +110,7 @@ class GeometrySearch:
                 return prev
             return p
 
-        raise RuntimeError("Insertion point not found")
+        raise RuntimeError(f"Insertion point not found for {way.rlid} {point}")
 
     def snap_point_into_geometry(self, point, realpoint_snap_distance, max_snap_distance):
         dist, p, _ = self._realpoints.find_nearest_within(point, realpoint_snap_distance)
