@@ -24,7 +24,13 @@ def join_ways(ways):
         return ways
     w1 = ways.pop(0)
     ways_out = [ w1 ]
-    assert w1.way[0] != w1.way[-1] or len(w1.way) == 2, "Closed way not expected here"
+    if w1.way[0] == w1.way[-1]:
+        # only okay if all are the same
+        for p in w1.way[1:]:
+            if p != w1.way[0]:
+                logging.error(f"w1 {w1}")
+                logging.error(f"w1.way {w1.way}")
+                raise RuntimeError("Closed way not expected here")
     while len(ways) > 0:
         match = False
         for idx, w2 in enumerate(ways):
