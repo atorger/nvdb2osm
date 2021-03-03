@@ -29,15 +29,20 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
     if zipfile.is_zipfile(directory_or_zip):
         zf = zipfile.ZipFile(directory_or_zip)
         files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp")]
-        if len(files) == 0:
-            raise RuntimeError(f"No file name *{name}.shp in {directory_or_zip}")
-        filename = files[0]
-        gdf_filename = "zip://" + str(directory_or_zip) + "!" + filename
+        if len(files) > 0:
+            filename = files[0]
+            gdf_filename = "zip://" + str(directory_or_zip) + "!" + filename
     else:
         pattern = os.path.join(directory_or_zip, "*" + name + ".shp")
         files = glob.glob(pattern)
-        filename = files[0]
-        gdf_filename = files[0]
+        if len(files) > 0:
+            filename = files[0]
+            gdf_filename = files[0]
+
+    if len(files) == 0:
+        _log.warning(f"No file name *{name}.shp in {directory_or_zip}")
+        return []
+
     _log.info(f"Reading file {filename}")
     gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
     _log.info(f"done ({len(gdf)} segments)")
