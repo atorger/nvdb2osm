@@ -208,10 +208,14 @@ class GeometrySearch:
         _log.debug("Extend geometry")
         _log.debug(f"update_dist_segs: {update_dist_segs}")
         _log.debug(f"ref_way: {ref_way.way}")
-        _log.debug(f"fext_way: {ext_way}")
+        _log.debug(f"ext_way: {ext_way}")
         if ext_way[0] == ref_way.way[-1]:
             ref_way.way += ext_way[1:]
         elif ext_way[-1] == ref_way.way[0]:
+            ref_way.way = ext_way[:-1] + ref_way.way
+        elif snap_to_line(ref_way.way[-1], ext_way[0], ext_way[1]) is not None:
+            ref_way.way += ext_way[1:]
+        elif snap_to_line(ref_way.way[0], ext_way[-2], ext_way[-1]) is not None:
             ref_way.way = ext_way[:-1] + ref_way.way
         else:
             raise RuntimeError("Extension does not connect to reference")
