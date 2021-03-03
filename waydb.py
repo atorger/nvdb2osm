@@ -60,7 +60,8 @@ def join_ways(ways):
 # 'point_keepers' set. If the whole way is shorter than minimum segment it's reduced
 # to one point
 #
-def remove_short_segments_and_redundant_points(way, min_seg_len, point_keepers=None):
+def remove_short_segments_and_redundant_points(way1, min_seg_len, point_keepers=None):
+    way = way1.way
     dsq = min_seg_len * min_seg_len
     new_way = []
     if point_keepers is None:
@@ -80,6 +81,7 @@ def remove_short_segments_and_redundant_points(way, min_seg_len, point_keepers=N
                             return [ way[0] ]
                         if not way[0] in point_keepers:
                             return [ way[-1] ]
+                    logging.error(f"RLID {way1.rlid} {way1.tags}")
                     logging.error(f"way {way}")
                     logging.error(f"new_way {new_way}")
                     raise RuntimeError("Keeper points closer than minimum segment length %s < %s" % (dist2d(new_way[-1], p), min_seg_len))
@@ -473,17 +475,20 @@ class WayDatabase:
                         if len(ep_list) == 0:
                             continue
 
-                        new_point = ep_list[0][0]
-                        if first_pass:
-                            # first pass we can pick any point due to short snap distance
-                            snapped_points.add(new_point)
+                        # if already snapped, don't move it
+                        if way.way[way_idx] in snapped_points:
+                            new_point = way.way[way_idx]
                         else:
-                            # prefer to snap to a point already snapped
-                            for ep in ep_list:
-                                if ep[0] in snapped_points:
-                                    new_point = ep[0]
-                                    break
-
+                            new_point = ep_list[0][0]
+                            if first_pass:
+                                # first pass we can pick any point due to short snap distance
+                                snapped_points.add(ep_list[0][0])
+                            else:
+                                # prefer to snap to a point already snapped
+                                for ep in ep_list:
+                                    if ep[0] in snapped_points:
+                                        new_point = ep[0]
+                                        break
 
                         for ep in ep_list:
                             old_point = ep[0]
@@ -526,7 +531,7 @@ class WayDatabase:
             joined_ways = remove_DKReflinjetillkomst_overlaps(joined_ways, self.POINT_SNAP_DISTANCE)
             for way in joined_ways:
                 # very short segments lead to problems with snapping (can cause gaps where there should not be any)
-                new_way = remove_short_segments_and_redundant_points(way.way, self.POINT_SNAP_DISTANCE, endpoints)
+                new_way = remove_short_segments_and_redundant_points(way, self.POINT_SNAP_DISTANCE, endpoints)
                 if len(new_way) < 2:
                     continue
                 assert new_way[0] == way.way[0] and new_way[-1] == way.way[-1]
@@ -855,7 +860,7 @@ class WayDatabase:
 
     def _adapt_way_into_reference_geometry(self, way, data_src_name, is_retry=False):
         # first snap each point of the way into the existing geometry
-        way.way = remove_short_segments_and_redundant_points(way.way, self.POINT_SNAP_DISTANCE)
+        way.way = remove_short_segments_and_redundant_points(way, self.POINT_SNAP_DISTANCE)
         if len(way.way) == 1:
             #_log.info("RLID %s reduced to a point" % way.rlid)
             return None, [ way ]
