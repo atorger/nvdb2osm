@@ -127,15 +127,21 @@ def join_ways_using_nvdb_tags(ways, snap_dist):
     it = iter(ways)
     pw = next(it)
     for w in it:
-        logging.debug(f"pw {pw.way}")
-        logging.debug(f"w {w.way}")
         if pw.tags["SLUTAVST"] < w.tags["STARTAVST"]:
+            # there's a gap between 'pw' and 'w', keep both
             new_ways.append(pw)
         elif pw.tags["SLUTAVST"] == w.tags["STARTAVST"]:
+            # perfect join, extend 'pw' with 'w'
             w.tags["STARTAVST"] = pw.tags["STARTAVST"]
-            w.tags["SHAPE_LEN"] += pw.tags["STARTAVST"]
-            w.way = pw.way + w.way # probably double point, removed elsewhere
+            w.tags["SHAPE_LEN"] += pw.tags["SHAPE_LEN"]
+            w.way = pw.way + w.way # we probably add a double point here, removed elsewhere
+        elif pw.tags["SLUTAVST"] >= w.tags["SLUTAVST"]:
+            # 'pw' spans the whole of 'w', discard 'w'
+            w = pw
         else:
+            # partial overlap
+
+            # figure out how much of 'pw' that is before 'w' starts, and store to 'nw'
             gs = GeometrySearch(10)
             gs.insert(w)
             nw = []
