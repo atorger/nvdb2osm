@@ -22,6 +22,13 @@ _log = logging.getLogger("waydb")
 def join_ways(ways):
     if len(ways) == 1:
         return ways
+
+    # Due to snapping some very short segments can be zero length, sort to make sure
+    # we go through in order, otherwise we can miss to include the zero length segments
+    def startavst(w):
+        return w.tags["STARTAVST"]
+    ways.sort(key=startavst)
+
     w1 = ways.pop(0)
     ways_out = [ w1 ]
     if w1.way[0] == w1.way[-1]:
@@ -154,7 +161,7 @@ def join_ways_using_nvdb_tags(ways, snap_dist):
 #
 # Note that even if segments are joined incorrectly, if the actual data layers doesn't contain any
 # data in the joined segment it will not turn up in the map, so better join one too many than one
-# to few.
+# too few.
 #
 def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
 
@@ -168,8 +175,11 @@ def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
     i = 0
     while i + 1 < len(ways):
         dist = dist2d(ways[i+0].way[-1], ways[i+1].way[0])
-        # previous max gap was 1.0, but 2.4 meter gap was observed in Falun dataset
-        if dist < 2.5:
+        # previous max gap was 1.0, but 2.4 meter gap was observed in Falun dataset,
+        # and then 3.4 meters in Kil dataset, and 8.6 meters in Piteå.
+        #
+        # Any false joins are not too bad as it won't join the data layers on top.
+        if dist < 10:
             shapelen_sum = ways[i+0].tags["SHAPE_LEN"] + ways[i+1].tags["SHAPE_LEN"]
             avst_diff = ways[i+1].tags["STARTAVST"] - ways[i+0].tags["SLUTAVST"]
             shape_dist = shapelen_sum * avst_diff
