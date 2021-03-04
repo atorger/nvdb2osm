@@ -673,7 +673,7 @@ def tag_translation_DKHastighetsgrans(tags):
 
     if (cond_str != "" or len(vtypes) > 0) and (alt_maxspeed < 0 or alt_maxspeed == maxspeed):
         append_fixme_value(tags, "DKHastighetsgrans: conditions without alternate speed")
-        _log.warning(f"DKHastighetsgrans: conditions without alternate speed {tags} (RLID {tags['RLID']})")
+        _log.warning(f"DKHastighetsgrans: conditions without alternate speed {tags} (RLID {tags['RLID']} {vtypes} {cond_str})")
         cond_str = ""
 
     if only_applies_to_these_vehicles:
@@ -1199,13 +1199,15 @@ TAG_TRANSLATIONS = {
         "add_keys_and_values":    "NVDB_gagata=yes",
         "SIDA=Vänster":           "NVDB_gagata_side=left",
         "SIDA=Höger":             "NVDB_gagata_side=right",
-        "SIDA=Vänster och höger": "NVDB_gagata_side=both"
+        "SIDA=Vänster och höger": "NVDB_gagata_side=both",
+        "SIDA=None": None
     },
     "NVDB_DKGangfartsomrade": {
         "add_keys_and_values":    "NVDB_gangfartsomrode=yes",
         "SIDA=Vänster":           "NVDB_gangfartsomrode_side=left",
         "SIDA=Höger":             "NVDB_gangfartsomrode_side=right",
-        "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both"
+        "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both",
+        "SIDA=None": None
     },
     "NVDB_DKGatunamn": {
         "NAMN": "name",
