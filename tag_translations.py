@@ -1069,6 +1069,22 @@ def preprocess_name(name):
     # if it's an all uppercase name, capitalize it
     if name.isupper():
         name = string.capwords(name)
+        # Some common strings are not names, convert the capitalized strings back to lowercase/uppercase as suited
+        replace_table = {
+            "Gc": "GC",
+            "Mot": "mot",
+            "Med": "med",
+            "Grenväg": "grenväg",
+            "Stickväg": "stickväg",
+            "Grenvägar": "grenvägar",
+            "Stickvägar": "stickvägar",
+            "Stick": "stick",
+            "Väg": "väg",
+            "Tunnel": "tunnel",
+            "Körbana": "körbana"
+        }
+        for k, v in replace_table.items():
+            name = name.replace(k, v)
 
     # ';' not compatible with OSM, for example "G;a" instead of "G:a" as abbreviation of "Gamla" has been observed
     name = name.replace(";", ":")
