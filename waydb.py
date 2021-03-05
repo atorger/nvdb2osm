@@ -169,7 +169,7 @@ def join_ways_using_nvdb_tags(ways, snap_dist):
 # data in the joined segment it will not turn up in the map, so better join one too many than one
 # too few.
 #
-def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
+def join_DKReflinjetillkomst_gaps(ways):
 
     if len(ways) == 1:
         return ways
@@ -190,13 +190,7 @@ def join_DKReflinjetillkomst_gaps(ways, endpoints, search_dist):
             avst_diff = ways[i+1].tags["STARTAVST"] - ways[i+0].tags["SLUTAVST"]
             shape_dist = shapelen_sum * avst_diff
             _log.warning(f"a suspiciously small gap was found in RLID {ways[i].rlid} ({dist}m), segments where joined (total SHAPE_LEN {shapelen_sum}m, AVST diff {avst_diff}m => TAG gap {shape_dist}m)")
-            # keep the most connected point
-            r1 = len(endpoints.find_all_within(ways[i+1].way[0], search_dist))
-            r2 = len(endpoints.find_all_within(ways[i].way[-1], search_dist))
-            if r1 > r2:
-                ways[i+1].way = ways[i].way[:-1] + ways[i+1].way
-            else:
-                ways[i+1].way = ways[i].way + ways[i+1].way[1:]
+            ways[i+1].way = ways[i].way + ways[i+1].way
             del ways[i]
         else:
             i += 1
@@ -543,13 +537,13 @@ class WayDatabase:
                 last_print = print_progress(last_print, idx, len(rlid_ways), progress_text="Join segments")
             # make longest possible ways of RLID segments
             joined_ways = join_ways(ways)
-            joined_ways = join_DKReflinjetillkomst_gaps(joined_ways, endpoints, self.POINT_SNAP_DISTANCE)
+            joined_ways = join_DKReflinjetillkomst_gaps(joined_ways)
             joined_ways = remove_DKReflinjetillkomst_overlaps(joined_ways, self.POINT_SNAP_DISTANCE)
             for way in joined_ways:
                 # very short segments lead to problems with snapping (can cause gaps where there should not be any)
                 new_way = remove_short_segments_and_redundant_points(way, self.POINT_SNAP_DISTANCE, endpoints)
                 if len(new_way) < 2:
-                    _log.debug(f"Skipping zero length segment for {way.rlid}");
+                    _log.debug(f"Skipping zero length segment for {way.rlid}")
                     continue
                 assert new_way[0] == way.way[0] and new_way[-1] == way.way[-1]
                 way.way = new_way
@@ -745,7 +739,7 @@ class WayDatabase:
 
     def insert_rlid_way(self, way, data_src_name, debug_ways=None):
         if way.rlid not in self._ref_way_db:
-            _log.debug("Skipping RLID %s (not in reference geometry)" % way.rlid)
+            _log.debug(f"Skipping RLID {way.rlid} (not in reference geometry)")
             return
 
         _, ways = self._adapt_way_into_reference_geometry(way, data_src_name)
@@ -882,18 +876,20 @@ class WayDatabase:
         current_segs = self.way_db.get(way.rlid, [])
         if len(extend_way_start) > 0:
             extend_way_start.append(new_way[first_snap])
-            self._ref_gs.extend_geometry(ref_way, extend_way_start, current_segs)
+            if not self._ref_gs.extend_geometry(ref_way, extend_way_start, current_segs):
+                return False
 
         if len(extend_way_end) > 0:
             extend_way_end.insert(0, new_way[last_snap])
-            self._ref_gs.extend_geometry(ref_way, extend_way_end, current_segs)
+            if not self._ref_gs.extend_geometry(ref_way, extend_way_end, current_segs):
+                return False
         return True
 
     def _adapt_way_into_reference_geometry(self, way, data_src_name, is_retry=False):
         # first snap each point of the way into the existing geometry
         way.way = remove_short_segments_and_redundant_points(way, self.POINT_SNAP_DISTANCE)
         if len(way.way) == 1:
-            _log.debug("RLID %s reduced to one point" % way.rlid)
+            _log.debug(f"RLID {way.rlid} reduced to one point")
             return None, [ way ]
         new_way = []
         prev = None

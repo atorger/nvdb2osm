@@ -218,7 +218,8 @@ class GeometrySearch:
         elif snap_to_line(ref_way.way[0], ext_way[-2], ext_way[-1]) is not None:
             ref_way.way = ext_way[:-1] + ref_way.way
         else:
-            raise RuntimeError("Extension does not connect to reference")
+            _log.debug("Extension does not connect to reference")
+            return False
 
         update_set = set()
         for ref_set in self._realpoints:
@@ -249,6 +250,7 @@ class GeometrySearch:
             else:
                 _log.debug(f"no change in dist {p.dist}")
             seg.way[idx].dist = p.dist
+        return True
 
     def _test_way_dist(self, way):
         assert self._use_dist
