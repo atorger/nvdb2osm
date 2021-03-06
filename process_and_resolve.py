@@ -253,20 +253,20 @@ def preprocess_bridges_and_tunnels(ways, way_db):
     delete_bridges = set()
     convert_to_tunnels = []
     for way in underways:
-        crossing = bridges_lcs.find_crossing_ways(way)
+        crossings = bridges_lcs.find_crossing_ways(way)
         short_bridge_count = 0
-        for bridge in crossing:
+        for bridge, _ in crossings:
             if is_short_bridge(bridge, bridges, SHORT_BRIDGE_LENGTH):
                 short_bridge_count += 1
-        if len(crossing) == 0:
+        if len(crossings) == 0:
             # this sometimes happens due to poor alignment or a missing bridge, but can also be crossed by railway bridges
             # (not included in the data)
             #print("Underfart %s not crossed" % way.rlid)
             pass
-        elif short_bridge_count == len(crossing):
+        elif short_bridge_count == len(crossings):
             #print("Underfart %s crossed only by %s short bridges, converting to tunnel and removing bridges" % (way.rlid, len(crossing)))
             convert_to_tunnels.append(way)
-            for bridge in crossing:
+            for bridge, _ in crossings:
                 delete_bridges.add(bridge)
 
     for way in convert_to_tunnels:
@@ -291,8 +291,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
         tags = {}
         tags["bridge"] = "yes"
         tags["layer"] = 1
-        crossing = bridges_lcs.find_crossing_ways(way, abort_at_first=True)
-        if len(crossing) > 0:
+        if len(bridges_lcs.find_crossing_ways(way, abort_at_first=True)) > 0:
             # in theory we could do a better job if we looked at "överfart och underfart" separately
             # and analyzed the connecting road network, but as the data is often not fully correct and
             # these situations are rare, we just add a FIXME in these situations.
@@ -314,14 +313,13 @@ def preprocess_bridges_and_tunnels(ways, way_db):
         tags = {}
         tags["tunnel"] = "yes"
 
-        if tunnels_lcs.find_crossing_ways(way, abort_at_first=True):
+        if len(tunnels_lcs.find_crossing_ways(way, abort_at_first=True)) > 0:
             fixme_count += 1
             tags["layer"] = -1
             tags["fixme"] = "could not resolve layer"
         else:
             # no crossing ways => no layer tag
-            crossing = all_lcs.find_crossing_ways(way, abort_at_first=True)
-            if len(crossing) > 0:
+            if len(all_lcs.find_crossing_ways(way, abort_at_first=True)) > 0:
                 tags["layer"] = -1
 
         merge_translated_tags(way, tags)
@@ -406,6 +404,58 @@ def process_street_crossings(points, way_db, data_src_name):
         _log.warning(f"did not find any way crossing for {fixme_count} street crossings, fixme tags added")
     return crossings
 
+# process_railway_crossings()
+#
+def process_railway_crossings(points, way_db, railways):
+
+    _log.info("Setting up search data structure for railways (to snap railway crossings)...")
+    rw_gs = GeometrySearch(1000)
+    for w in railways:
+        rw_gs.insert(w)
+    _log.info("done")
+
+    fixme_count = 0
+    rw_crossings = []
+    for node in points:
+        ways = way_db.gs.find_all_nearby_ways(node.way)
+        cp = []
+        crossing_tag = "level_crossing"
+        for w in ways:
+            if w.rlid == node.rlid:
+                if "KLASS" not in w.tags:
+                    crossing_tag = "crossing"
+                crossings = rw_gs.find_crossing_ways(w)
+                for w_and_cp in crossings:
+                    crossing_point = w_and_cp[1]
+                    dist = dist2d(node.way, crossing_point)
+                    cp.append((dist, crossing_point))
+        cp = sorted(cp, key=lambda x: x[0])
+        fixme = False
+        node.tags["railway"] = crossing_tag
+        if len(cp) == 0:
+            fixme = True
+            rw_crossings.append(node)
+        else:
+            # Snap to suitable crossing(s)
+            track_count = node.tags.get("NVDB_rwc_tracks", 1)
+            for i in range(0, track_count):
+                dist = cp[i][0]
+                # as we match RLID it's low risk to get the crossing wrong, so we can use a large max dist
+                # Offset errors of 150 meters have been observed (Lycksele data set)
+                if dist > 200:
+                    fixme = True
+                    rw_crossings.append(node)
+                    break
+                crossing_point = cp[i][1]
+                rwc = node.make_copy_new_way(crossing_point)
+                rw_crossings.append(rwc)
+        if fixme:
+            fixme_count += 1
+            merge_translated_tags(node, {"fixme": "no nearby railway crossing found"})
+
+    if fixme_count > 0:
+        _log.warning(f"did not find any actual crossing between railway and way for {fixme_count} railway crossings, fixme tags added")
+    return rw_crossings
 
 # parse_road_number()
 #
@@ -1020,6 +1070,7 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
         "NVDB_guess_lanes",
         "NVDB_gagata_side",
         "NVDB_layby_side",
+        "NVDB_rwc_tracks",
         "KLASS",
         "FPVKLASS",
         "GCMTYP",

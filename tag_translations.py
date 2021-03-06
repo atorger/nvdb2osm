@@ -1125,24 +1125,24 @@ def process_tag_translations(tags, tag_translations):
                 raise RuntimeError("Bad item in add_keys_and_values %s" % item)
             new_items[kv[0].strip()] = kv[1].strip()
     for k, v in tags.items():
-        if k in tag_translations:
+        # look at k=v first as we want to support both key=value and key replacement for the same key.
+        kv = "%s=%s" % (k, v)
+        if kv in tag_translations:
+            sub = tag_translations.get(kv)
+            replaced_keys.append(k)
+            if sub is not None:
+                # replace specific key/value combination with new key/value combo
+                if not isinstance(sub, list):
+                    sub = [sub]
+                for kv in sub:
+                    kv = kv.split('=')
+                    new_items[kv[0].strip()] = kv[1].strip()
+        elif k in tag_translations:
             sub = tag_translations[k]
             # replace key with new key name (or remove it)
             replaced_keys.append(k)
             if sub is not None:
                 new_items[sub] = v
-        else:
-            kv = "%s=%s" % (k, v)
-            if kv in tag_translations:
-                sub = tag_translations.get(kv)
-                replaced_keys.append(k)
-                if sub is not None:
-                    # replace specific key/value combination with new key/value combo
-                    if not isinstance(sub, list):
-                        sub = [sub]
-                    for kv in sub:
-                        kv = kv.split('=')
-                        new_items[kv[0].strip()] = kv[1].strip()
     tags.update(new_items)
     for k in replaced_keys:
         del tags[k]
@@ -1329,7 +1329,6 @@ TAG_TRANSLATIONS = {
         "TYP=6": "surface=asphalt",     # Y1G
         "TYP=7": "surface=asphalt"      # Förseglat grus
     },
-
     "NVDB_DKFarthinder": {
         "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
         "TYP=2":  "traffic_calming=bump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
@@ -1391,6 +1390,32 @@ TAG_TRANSLATIONS = {
 #        "KLASS": None,
 #        "TYP": None,
 #    },
+    "VIS_DKJarnvagskorsning": {
+        "PLAKORNIID": None,              # Plankorsnings-Id
+        "JVGBANDEL": None,               # Jvg-bandel
+        "JVGILOETER": None,              # Jvg-kilometer
+        "JVGMETER": None,                # Jvg-meter
+        "ANTALSPAAR": "NVDB_rwc_tracks", # Antal spår
+        "VAEPROILEN": None,              # Vägprofil farligt vägkrön
+        "VAEPROILVA": None,              # Vägprofil tvär kurva
+        "VAEPROILNG": None,              # Vägprofil brant lutning
+        "VAEGSKYDD=1": "crossing:barrier=full", # Helbom
+        "VAEGSKYDD=2": "crossing:barrier=half",	# Halvbom
+        "VAEGSKYDD=3": [ "crossing:bell=yes", "crossing:light=yes" ], # Ljus och ljudsignal
+        "VAEGSKYDD=4": "crossing:light=yes",    # Ljussignal
+        "VAEGSKYDD=5": "crossing:bell=yes",	# Ljudsignal
+        "VAEGSKYDD=6": "crossing:saltire=yes",  # Kryssmärke
+        "VAEGSKYDD=7": "crossing:barrier=no",   # Utan skydd
+        "PORALHEJJD": "maxheight", # Portalhöjd
+        "PORALHEJJD=0.0": None, # Portalhöjd, value for no portal
+        "PORALHEJJD=9.0": None, # Portalhöjd, alt value for no portal
+        "TAAGFLOEDE": None,   # Tågflöde
+        "KONAKTEDNG": None,   # Contact line, in OSM set on railway, not crossing
+        "KORMAGSIIN": None,   # Kort magasin
+        "XKOORDINAT": None,   # X-koordinat
+        "YKOORDINAT": None,   # Y-koordinat
+        "SENSTANDAD": None    # Senast ändrad
+    },
     "VIS_DKP_ficka": {
         "translator_function": tag_translation_DKP_ficka
     },

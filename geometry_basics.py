@@ -48,7 +48,7 @@ def snap_to_line(point, line_p1, line_p2):
 #
 # Lines that lie exactly on top of each other do not cross, so if you need to check if a line
 # touches the other you need an additional check.
-def lines_intersect(n1, n2, p1, p2):
+def line_intersection(n1, n2, p1, p2):
     Nx1 = n1.x
     Ny1 = n1.y
     Nx2 = n2.x
@@ -59,7 +59,7 @@ def lines_intersect(n1, n2, p1, p2):
     Py2 = p2.y
     denom = ((Py2 - Py1) * (Nx2 - Nx1)) - ((Px2 - Px1) * (Ny2 - Ny1))
     if denom == 0:
-        return False
+        return None
     a = Ny1 - Py1
     b = Nx1 - Px1
     num1 = ((Px2 - Px1) * a) - ((Py2 - Py1) * b)
@@ -67,9 +67,8 @@ def lines_intersect(n1, n2, p1, p2):
     a = num1 / denom
     b = num2 / denom
     if 0 < a < 1 and 0 < b < 1:
-        #return Point(Nx1 + (a * (Nx2 - Nx1)), Ny1 + (a * (Ny2 - Ny1)))
-        return True
-    return False
+        return Point(Nx1 + (a * (Nx2 - Nx1)), Ny1 + (a * (Ny2 - Ny1)))
+    return None
 
 # will include tp equal to p1 or p2
 def point_between_points(tp, p1, p2, tolerance):
@@ -118,3 +117,7 @@ def calc_way_length(points):
         length += dist
         prev = p
     return length, min_dist
+
+def bounds_intersect(b1, b2):
+    # bounds array([minx, miny, maxx, maxy])
+    return not (b2[0] > b1[2] or b2[2] < b1[0] or b2[1] > b1[3] or b2[3] < b1[1])

@@ -318,12 +318,14 @@ class GeometrySearch:
                 prev1 = next(it1)
                 match = False
                 for p1 in it1:
-                    if lines_intersect(p1, prev1, p, prev):
+                    cp = line_intersection(p1, prev1, p, prev)
+                    if cp is not None:
                         match = True
-                        crossing.append(w)
+                        crossing.append((w, cp))
                         if abort_at_first:
                             return crossing
                         break
+                    prev1 = p1
                 if match:
                     break
                 prev = p

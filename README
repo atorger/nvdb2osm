@@ -11,7 +11,7 @@ nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>
 
 Exempel:
 
-nvdb2osm.py -v Vilhelmina_kommun_Shape_TNE__9343.zip vilhelmina.osm
+nvdb2osm.py -v --railway_file=Järnvägsnät_grundegenskaper.zip Luleå_kommun.zip luleå.osm
 
 Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
 exemplet används "-v" för att visa INFO-loggar.
@@ -27,6 +27,14 @@ det blir orimligt mycket data att tugga på en gång.
 
 Det går att köra skriptet direkt på zip-arkivet man laddar ner, det är
 alltså inte nödvändigt att packa upp det, men även det fungerar.
+
+Skritpet lägger inte till järnväg (järnväg kartläggs lämpligen
+separat), men för att kunna lägga järnvägskorsningar på rätt position
+behöver skriptet ändå det nationella järnvägsnätet. Den filen hittas
+också på lastkajen:
+Fillager->Järnvägsdata->Järnvägsnät_grundegenskaper.zip
+Det är en fil för hela Sverige så man använder samma för alla
+kommuner.
 
 Skriptet kräver vissa tredjepartsmoduler, listade i requirements.txt,
 installera med pip install -r requirements.txt
@@ -443,7 +451,23 @@ Validatorn är din vän:
 
 Crossing highways, disconnected ways osv. Gå igenom varningarna
 ordentligt och lär dig vad de betyder. Den är bra på att upptäcka om
-du har vägdubbletter eller vägar som inte är hopkopplade.
+du har vägdubbletter eller vägar som inte är hopkopplade. Observera
+att validatorn inte upptäcker alla fel om man bara kör de tester som
+körs vid uppladdning. Det är en bra start, men innan du laddar upp,
+kör även validatorn på all nerladdad geometri, då hittar den fel som
+finns sedan tidigare också (som man kan välja rätta till eller låta
+det vara som innan), men även möjligen fler fel i din sammanfogning.
+
+Använd OSMI (OSM inspector) efteråt:
+
+Jobbar man med stora mängder data är det validatorn till trots ändå
+viss risk att något fel slinker igenom. När leverantören geofabrik
+uppdaterat sin databas (de är ganska snabba) är en bra sak att gå
+igenom området man uppdaterat med deras OSM inspector:
+http://tools.geofabrik.de/osmi/ då kan man hitta fel som man kanske
+missade med validatorn. Routing view Islands och Unconnected roads är
+det som är vettigast att gå igenom. Notera att den varnar även för
+sånt som inte är verkliga fel.
 
 
 FIXME-taggar och JOSM Validator
@@ -576,6 +600,25 @@ barrier=gate med access=permissive. Det betyder att bommen är
 generellt sett öppen, men den kanske inte är det. Om man vet att
 bommen är i regel låst kan man ändra taggen till access=private (det
 finns också locked=yes, men den taggen är mindre använd).
+
+Järnvägskorsningar:
+
+NVDB innehåller järnvägskorsningar, men de är dåligt
+positionerade. Skriptet läser in järnvägsgeometrin separat och flyttar
+dem till verklig korsning, om den ligger i närheten. I enstaka fall
+kan korsningen så avlägset felplacerad att skriptet inte hittar en
+korsning, och då läggs en fixme-tagg till.
+
+I fallet en väg korsar flera spår innehåller NVDB oftast bara en
+korsningspunkt och istället antal spår den korsar. Skriptet duplicerar
+korsningarna vid behov för att matcha. Ibland anges felaktigt antal
+spår eller så saknas korsning helt och hållet (alltid(?) för
+cykelväg), och då får man lägga till manuellt. Validatorn varnar om en
+väg korsar en järnväg utan korsningsnod.
+
+Själva järnvägen läggs inte till av skriptet eftersom den av tradition
+kartläggs separat från vägar av kartläggare som specialiserar sig på
+just järnväg.
 
 
 Fel i NVDB-datat

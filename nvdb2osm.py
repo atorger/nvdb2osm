@@ -19,13 +19,10 @@ from nvdb_ti import time_interval_strings
 
 _log = logging.getLogger("nvdb2osm")
 
-
-# read_nvdb_shapefile()
+# read_epsg_shapefile()
 #
-# Read a NVDB shapefile and apply tag translations.
 #
-def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
-    _log = logging.getLogger("nvdb2osm")
+def read_epsg_shapefile(directory_or_zip, name):
     if zipfile.is_zipfile(directory_or_zip):
         zf = zipfile.ZipFile(directory_or_zip)
         files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp")]
@@ -47,8 +44,28 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations):
     gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
     _log.info(f"done ({len(gdf)} segments)")
     assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
-    ways = []
+    return gdf
+
+# read_nvdb_shapefile()
+#
+# Read a NVDB shapefile and apply tag translations.
+#
+def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bounds):
+    gdf = read_epsg_shapefile(directory_or_zip, name)
     _log.info(f"Parsing {len(gdf)} segments...")
+
+    # update global bounding box
+    bounds = gdf.total_bounds
+    if bounds[0] < nvdb_total_bounds[0]:
+        nvdb_total_bounds[0] = bounds[0]
+    if bounds[1] < nvdb_total_bounds[1]:
+        nvdb_total_bounds[1] = bounds[1]
+    if bounds[2] > nvdb_total_bounds[2]:
+        nvdb_total_bounds[2] = bounds[2]
+    if bounds[3] > nvdb_total_bounds[3]:
+        nvdb_total_bounds[3] = bounds[3]
+
+    ways = []
     skip_count = 0
     last_print = 0
     for index, row in gdf.iterrows():
@@ -168,15 +185,18 @@ def main():
         "NVDB_DKStopplikt",
         "NVDB_DKVaghinder",
         "NVDB_DKVajningsplikt",
+        "VIS_DKJarnvagskorsning",
         "VIS_DKP_ficka",
         "VIS_DKRastplats",
     ]
     parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
-    parser.add_argument('--dump_layers', action='store_true')
+    parser.add_argument('--dump_layers', help="Write an OSM XML file for each layer", action='store_true')
+    parser.add_argument('--skip_railway', help="Don't require railway geometry (leads to worse railway crossing handling)", action='store_true')
+    parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network *.shp (usually Järnvägsnät_grundegenskaper.zip)")
     parser.add_argument('--rlid', help="Include RLID in output", action='store_true')
     parser.add_argument(
         '-d', '--debug',
-        help="Print lots of debugging statements",
+        help="Print debugging statements",
         action="store_const", dest="loglevel", const=logging.DEBUG,
         default=logging.WARNING,
     )
@@ -202,12 +222,19 @@ def main():
 
     write_rlid = args.rlid
     debug_dump_layers = args.dump_layers
+    skip_railway = args.skip_railway
     directory_or_zip = args.shape_file
     output_filename = args.osm_file
+    railway_filename = args.railway_file
 
+    if railway_filename is None and not skip_railway:
+        _log.error("File with national railway geometry not provided (use --railway_file). Can be skipped by adding --skip_railway parameter, but then railway crossings will be somewhat misaligned")
+        exit(1)
+
+    nvdb_total_bounds = [10000000, 10000000, 0, 0] # init to outside max range of SWEREF99
     # First setup a complete master geometry and refine it so we have a good geometry to merge the rest of the data with
     name = master_geometry_name
-    ref_ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
+    ref_ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
     if debug_dump_layers:
         write_osmxml(ref_ways, [], "raw_reference_geometry.osm")
     ref_ways = find_overlapping_and_remove_duplicates(name, ref_ways)
@@ -222,7 +249,7 @@ def main():
     for name in all_line_names:
         if name is None:
             break
-        ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
+        ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
         ways = find_overlapping_and_remove_duplicates(name, ways)
         did_insert_new_ref_geometry = way_db.insert_missing_reference_geometry_if_any(ways)
 
@@ -252,7 +279,7 @@ def main():
     for name in point_names:
         if name is None:
             break
-        points = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name])
+        points = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
         points = find_overlapping_and_remove_duplicates(name, points)
 
         do_snap = True
@@ -260,6 +287,24 @@ def main():
             points = preprocess_footcycleway_crossings(points, way_db)
         elif name == "NVDB_DKKorsning":
             points = process_street_crossings(points, way_db, name)
+        elif name == "VIS_DKJarnvagskorsning":
+            if len(points) > 0:
+                railways = []
+                if not skip_railway:
+                    _log.info(f"There are {len(points)} railway crossings, reading railway geometry to have something to snap them to")
+                    gdf = read_epsg_shapefile(railway_filename, "Järnvägsnät_med_grundegenskaper")
+                    _log.info(f"Filtering out railway segments for bounding box {nvdb_total_bounds}...")
+                    for index, row in gdf.iterrows():
+                        if bounds_intersect(row.geometry.bounds, nvdb_total_bounds):
+                            seg = NvdbSegment({ "geometry": shapely_linestring_to_way(row.geometry),
+                                                "RLID": "RW-%s" % index,
+                                                "FRAN_DATUM": "1899-01-01" # dummy date
+                                               })
+                            railways.append(seg)
+                    _log.info(f"Done ({len(railways)} of {len(gdf)} segments kept)")
+                    if debug_dump_layers:
+                        write_osmxml(railways, [], "local-railway.osm")
+                points = process_railway_crossings(points, way_db, railways)
         elif name == "VIS_DKP_ficka":
             points = preprocess_laybys(points, way_db)
             do_snap = False
