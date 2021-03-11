@@ -38,7 +38,7 @@ def read_epsg_shapefile(directory_or_zip, name):
 
     if len(files) == 0:
         _log.warning(f"No file name *{name}.shp in {directory_or_zip}")
-        return []
+        return None
 
     _log.info(f"Reading file {filename}")
     gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
@@ -52,6 +52,8 @@ def read_epsg_shapefile(directory_or_zip, name):
 #
 def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bounds):
     gdf = read_epsg_shapefile(directory_or_zip, name)
+    if gdf is None:
+        return []
     _log.info(f"Parsing {len(gdf)} segments...")
 
     # update global bounding box
