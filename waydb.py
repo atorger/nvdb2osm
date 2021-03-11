@@ -475,8 +475,8 @@ class WayDatabase:
         # snap really close one first to make sure we don't make a unnecessarily long snap
         midpoints = []
         first_pass = True
-        snapped_points = set()
         for snap_distance in [ 0.001, self.POINT_SNAP_DISTANCE]:
+            snapped_points = set()
             for ways in rlid_ways.values():
                 for way in ways:
                     for way_idx in range(0, len(way.way)):
