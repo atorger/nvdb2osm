@@ -472,33 +472,36 @@ class WayDatabase:
     def _snap_points_to_nearby_endpoints(self, rlid_ways, endpoints):
         ep_count = 0
         mp_count = 0
-        # snap really close one first to make sure we don't make a unnecessarily long snap
         midpoints = []
         first_pass = True
-        for snap_distance in [ 0.001, self.POINT_SNAP_DISTANCE]:
+        prev_count = -1
+        while prev_count != ep_count + mp_count:
             snapped_points = set()
+            prev_count = ep_count + mp_count
+            if first_pass:
+                # snap really close one first to make sure we don't make a unnecessarily long snap
+                snap_distance = 0.001
+            else:
+                snap_distance = self.POINT_SNAP_DISTANCE
+
             for ways in rlid_ways.values():
                 for way in ways:
                     for way_idx in range(0, len(way.way)):
                         is_midpoint = way_idx not in (0, len(way.way) - 1)
                         ep_list = endpoints.find_all_within_list(way.way[way_idx], snap_distance)
-                        if len(ep_list) == 0:
+                        if len(ep_list) < 2:
                             continue
 
-                        # if already snapped, don't move it
-                        if way.way[way_idx] in snapped_points:
-                            new_point = way.way[way_idx]
+                        new_point = ep_list[0][0]
+                        if first_pass:
+                            # first pass we can pick any point due to short snap distance
+                            snapped_points.add(ep_list[0][0])
                         else:
-                            new_point = ep_list[0][0]
-                            if first_pass:
-                                # first pass we can pick any point due to short snap distance
-                                snapped_points.add(ep_list[0][0])
-                            else:
-                                # prefer to snap to a point already snapped
-                                for ep in ep_list:
-                                    if ep[0] in snapped_points:
-                                        new_point = ep[0]
-                                        break
+                            # prefer to snap to a point already snapped
+                            for ep in ep_list:
+                                if ep[0] in snapped_points:
+                                    new_point = ep[0]
+                                    break
 
                         for ep in ep_list:
                             old_point = ep[0]
@@ -520,6 +523,7 @@ class WayDatabase:
                             assert is_midpoint
                             way.way[way_idx] = Point(new_point.x, new_point.y)
                             mp_count += 1
+            _log.debug(f"snap_counts {mp_count} {ep_count}")
             first_pass = False
 
         # also add connected midpoints, we need to do it here afterwards to not disturb the multiple pass endpoint snapping
