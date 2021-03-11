@@ -1194,7 +1194,7 @@ class WayDatabase:
                 join_way = w1
             self._remove_seg_before_join(join_way, endpoints)
             self._remove_seg_before_join(seg, endpoints)
-            if join_way.way[connecting_ep_idx] != ep:
+            if join_way.way[connecting_ep_idx] != ep and seg.way[0] != seg.way[-1]:
                 # reversing required
                 if way_may_be_reversed(seg) and way_may_be_reversed(join_way):
                     l1, _ = calc_way_length(seg.way)
