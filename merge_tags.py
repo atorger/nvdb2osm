@@ -21,6 +21,9 @@ def merge_tags(seg, src, data_src_name):
             seg.tag_src[k] = (data_src_name, src_date)
             continue
 
+        if k not in seg.tag_src:
+            seg.tag_src[k] = ("", 18000101)
+
         ov = dst[k]
         if isinstance(ov, list):
             match = False
