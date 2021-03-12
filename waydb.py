@@ -417,6 +417,9 @@ class WayDatabase:
                         continue
                     _log.info(f"extend snap ext:{min_ext_dist:g} dev:{min_dev_dist:g} for RLID {way.rlid}"
                               f" at {latlon_str(p)}")
+                    if p in midpoints:
+                        # for midpoints it may be better to snap to an endpoint instead
+                        p = self._snap_to_nearby_point(p, endpoints, self.MAX_SNAP_DISTANCE)
                     endpoints.remove(way.way[way_idx], way)
                     endpoints.insert(p, way)
                     way.way[way_idx] = Point(p.x, p.y)
@@ -430,7 +433,9 @@ class WayDatabase:
                 if p is None:
                     continue
                 _log.info(f"extend snap ext:{min_ext_dist:g} dev:{min_dev_dist:g} for RLID {way.rlid} at {latlon_str(p)}")
-                endpoints.remove_set(way.way[way_idx])
+                if p in midpoints:
+                    p = self._snap_to_nearby_point(p, endpoints, self.MAX_SNAP_DISTANCE)
+                endpoints.remove(way.way[way_idx], way)
                 endpoints.insert(p, way)
                 way.way[way_idx] = Point(p.x, p.y)
                 ep_count += 1
@@ -468,6 +473,14 @@ class WayDatabase:
         except StopIteration:
             self._way_db_sub_iter = None
             return self.__next__()
+
+
+    @staticmethod
+    def _snap_to_nearby_point(p, snappoints, snap_distance):
+        _, snap, _ = snappoints.find_nearest_within(p, snap_distance, exclude_self=True)
+        if snap is None:
+            return p
+        return snap
 
     def _snap_points_to_nearby_endpoints(self, rlid_ways, endpoints):
         ep_count = 0
