@@ -132,7 +132,7 @@ def log_version():
     _log.info("Checksum for each script file (to be replaced with single version number when script is stable):")
     for fname in files:
         path = os.path.join(os.path.dirname(__file__), fname)
-        _log.info(f"  {fname} MD5 cheksum: {md5(path)}")
+        _log.info(f"  {fname:22} MD5: {md5(path)}")
 
 
 # insert_rlid_elements()
