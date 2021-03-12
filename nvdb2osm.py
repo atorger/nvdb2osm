@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import hashlib
 import logging
 import pathlib
 import zipfile
@@ -112,6 +113,27 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bou
         _log.info(f"done ({len(ways)} segments kept, {skip_count} skipped)")
     return ways
 
+# log_version()
+#
+# Log a unique hash for the code used
+#
+def log_version():
+
+    def md5(fname):
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
+    files = [ "geometry_basics.py", "merge_tags.py", "nvdb2osm.py", "nvdb_ti.py", "process_and_resolve.py", "shapely_utils.py", "twodimsearch.py",
+              "geometry_search.py", "nseg_tools.py", "nvdb_segment.py", "osmxml.py", "proj_xy.py", "tag_translations.py", "waydb.py"
+             ]
+    _log.info("Checksum for each script file (to be replaced with single version number when script is stable):")
+    for fname in files:
+        path = os.path.join(os.path.dirname(__file__), fname)
+        _log.info(f"  {fname} MD5 cheksum: {md5(path)}")
+
 
 # insert_rlid_elements()
 #
@@ -222,6 +244,8 @@ def main():
     logging.getLogger("fiona.ogrext").setLevel(logging.WARNING)
     logging.getLogger("fiona.collection").setLevel(logging.WARNING)
     _log.debug(f"args are {args}")
+
+    log_version()
 
     write_rlid = args.rlid
     debug_dump_layers = args.dump_layers
