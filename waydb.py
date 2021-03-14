@@ -1242,8 +1242,8 @@ class WayDatabase:
                 join_way.way.pop(0)
                 seg.way += join_way.way
             else:
-                _log.error(f"{seg.rlid}, {seg.way}");
-                _log.error(f"{join_way.rlid}, {join_way.way}");
+                _log.error(f"{seg.rlid}, {seg.way}")
+                _log.error(f"{join_way.rlid}, {join_way.way}")
                 raise RuntimeError("Disconnected segments cannot be joined")
             join_way.way = None
 
