@@ -1235,12 +1235,16 @@ class WayDatabase:
             new_rlid.sort()
             new_rlid = ";".join(new_rlid)
             rlid_join_count += 1
-            if ep_idx == 0:
+            if seg.way[0] == join_way.way[-1]:
                 seg.way.pop(0)
                 seg.way = join_way.way + seg.way
-            else:
+            elif seg.way[-1] == join_way.way[0]:
                 join_way.way.pop(0)
                 seg.way += join_way.way
+            else:
+                _log.error(f"{seg.rlid}, {seg.way}");
+                _log.error(f"{join_way.rlid}, {join_way.way}");
+                raise RuntimeError("Disconnected segments cannot be joined")
             join_way.way = None
 
             seg.rlid = new_rlid
