@@ -703,6 +703,12 @@ def resolve_highways(way_db):
             # be used both on forestry roads in rural areas and on living and pedestrian
             # streets in a city.
             #
+            # For forestry roads the official definition is: 7 huvudväg, 8 normalväg,
+            # 9, nollväg. However, the distinction between 8 and 9 in the actual NVDB
+            # data is not that good. From testing the least bad default seems to be
+            # to map both 8 and 9 to track. Some will then need manual upgrading to
+            # unclassified for best results.
+            #
             # City roads should normally already been resolved by other layers, so here
             # we apply the highway tag as best suited in rural areas.
             #
@@ -713,17 +719,17 @@ def resolve_highways(way_db):
                 # need to ignore it)
                 pass
             elif klass <= 1:
-                tags["highway"] = "trunk"
+                tags["highway"] = "trunk" # 0, 1
             elif klass <= 2:
-                tags["highway"] = "primary"
+                tags["highway"] = "primary" # 1, 2
             elif klass <= 4:
-                tags["highway"] = "secondary"
+                tags["highway"] = "secondary" # 3, 4
             elif klass <= 6:
-                tags["highway"] = "tertiary"
-            elif klass <= 8:
-                tags["highway"] = "unclassified"
+                tags["highway"] = "tertiary" # 5, 6
+            elif klass <= 7:
+                tags["highway"] = "unclassified" # 7
             else:
-                tags["highway"] = "track"
+                tags["highway"] = "track" # 8, 9
         else:
             #print("Warning: information missing to resolve highway tag for RLID %s, adding fixme tag" % way.rlid)
             tags["fixme"] = "could not resolve highway tag"
