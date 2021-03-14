@@ -16,7 +16,7 @@
 # VIS_DKFunktionellt_priovagnat          - for resolving highway (a less detailed NVDB_DKFunkVagklass)
 # VIS_DKHallplatslage                    o not translated (suitably used separately when mapping bus lines)
 # VIS_DKHallplats                        o not translated (suitably used separately when mapping bus lines)
-# VIS_DKJarnvagskorsning                 o not translated (poor alignment, would require railway to snap in place)
+# VIS_DKJarnvagskorsning                 - railway crossings (poorly aligned, railways loaded to snap alignment)
 # VIS_DKKalibreringsstracka              o not relevant (measurement reference)
 # VIS_DKKantstolpe                       o not translated (rare, and mainly for winter maintenance)
 # VIS_DKKatastrofoverfart                o not translated (not existing OSM tags, not important for normal users)
