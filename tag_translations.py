@@ -1086,8 +1086,12 @@ def preprocess_name(name):
         for k, v in replace_table.items():
             name = name.replace(k, v)
 
-    # ';' not compatible with OSM, for example "G;a" instead of "G:a" as abbreviation of "Gamla" has been observed
-    name = name.replace(";", ":")
+    replace_table = {
+        "CPL ": "Cpl ", # cirkulationsplats
+        ";": ":" # ';' not compatible with OSM, for example "G;a" instead of "G:a" as abbreviation of "Gamla" has been observed
+    }
+    for k, v in replace_table.items():
+        name = name.replace(k, v)
 
     return name
 
