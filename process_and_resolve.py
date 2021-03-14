@@ -721,7 +721,7 @@ def resolve_highways(way_db):
             elif klass <= 1:
                 tags["highway"] = "trunk" # 0, 1
             elif klass <= 2:
-                tags["highway"] = "primary" # 1, 2
+                tags["highway"] = "primary" # 2
             elif klass <= 4:
                 tags["highway"] = "secondary" # 3, 4
             elif klass <= 6:
