@@ -358,6 +358,7 @@ def main():
     # with the same RLID is oriented in the same direction to not work
     simplify_oneway(way_db, way_db.point_db)
 
+    resolve_lanes(way_db)
     for way in way_db:
         postprocess_miscellaneous_tags(way.tags)
 
@@ -370,7 +371,14 @@ def main():
     for str1 in time_interval_strings:
         _log.info(f"  '{str1}'")
 
+    if debug_dump_layers:
+        waydb2osmxml(way_db, "pre-join.osm")
+
     way_db.join_segments_with_same_tags(join_rlid=True)
+
+    if debug_dump_layers:
+        waydb2osmxml(way_db, "pre-treelike.osm")
+
     way_db.make_way_directions_tree_like()
 
     if debug_dump_layers:

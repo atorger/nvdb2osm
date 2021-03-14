@@ -358,6 +358,7 @@ def process_street_crossings(points, way_db, data_src_name):
             last_size = len(rbw)
         return rbw
 
+    named_rbw = set()
     crossings = []
     fixme_count = 0
     for node in points:
@@ -397,11 +398,27 @@ def process_street_crossings(points, way_db, data_src_name):
                 else:
                     merge_name = node.tags["name"]
                 merge_tags(w, {"name": merge_name}, data_src_name)
+                named_rbw.add(w)
         if "highway" in node.tags:
             del node.tags["name"]
             crossings.append(node)
     if fixme_count > 0:
         _log.warning(f"did not find any way crossing for {fixme_count} street crossings, fixme tags added")
+
+
+    # OSM mandates that roundabouts should not have street names, but only be named if the roundabout has
+    # a specific name, so we make a second pass and remove
+    remove_roundabout_street_names = True
+    if remove_roundabout_street_names:
+        remove_count = 0
+        for way in way_db:
+            if way.tags.get("junction", None) == "roundabout":
+                way.tags.pop("alt_name", None)
+                if way not in named_rbw:
+                    if way.tags.pop("name", None) is not None:
+                        remove_count += 1
+        _log.info(f"Removed {remove_count} roundabout street names")
+
     return crossings
 
 # process_railway_crossings()
@@ -945,7 +962,7 @@ def remove_redundant_speed_limits(way_db):
         if klass >= 7 and way.tags.get("highway", None) in ["service", "unclassified", "track"]:
             way.tags.pop("maxspeed", None)
             remove_count += 1
-    _log.info("done (removed {remove_count} of {total_count} speed limits)")
+    _log.info(f"done (removed {remove_count} of {total_count} speed limits)")
 
 # simplify_speed_limits()
 #
@@ -996,16 +1013,37 @@ def simplify_speed_limits(way_db):
 # is spotty we just remove it. This removal will also include some private roads, but
 # the width standard is not entirely clear there either.
 #
+# Then there's a second pass which removes all width except for the larger roads,
+# this was added after discussion with users which don't think width is valuable
+# enough to cause more road segments and harder to manually maintain.
+#
 def cleanup_highway_widths(way_db):
     _log.info("Cleanup highway widths...")
     remove_count = 0
+    total_count = 0
+    apply_second_pass = True
     for way in way_db:
-        highway = way.tags.get("highway", None)
-        if (highway == "unclassified" and way.tags.get("NVDB_gatutyp", None) is None) or highway == "track":
-            w = way.tags.pop("width", None)
-            if w is not None:
+        if "width" not in way.tags:
+            continue
+        total_count += 1
+        if "highway" not in way.tags:
+            continue
+        highway = way.tags["highway"]
+        if (highway == "unclassified" and "NVDB_gatutyp" not in way.tags) or highway == "track":
+            # According to tests, not reliable data, so we remove it
+            way.tags.pop("width", None)
+            remove_count += 1
+            continue
+
+        if apply_second_pass:
+            # This is good data, but to some not deemed important enough to keep
+            klass = int(way.tags.get("KLASS", "9"))
+            if klass >= 7 or highway == "residential":
+                way.tags.pop("width", None)
                 remove_count += 1
-    _log.info(f"done (removed {remove_count} highway widths)")
+                continue
+
+    _log.info(f"done (removed {remove_count} of {total_count} highway widths)")
 
 
 # simplify_oneway()
@@ -1040,7 +1078,7 @@ def simplify_oneway(way_db, point_db):
             continue
 
         for k, v in list(way.tags.items()):
-            #  Removing direction if it's the same as oneway, except for lanes
+            #  Removing direction if it's the same as oneway, except for lanes (need for lane resolving later)
             if ":forward" in k and not "lanes:" in k:
                 del way.tags[k]
                 k = k.replace(":forward", "")
@@ -1053,41 +1091,85 @@ def simplify_oneway(way_db, point_db):
     _log.info("done")
 
 
+# resolve_lanes()
+#
+def resolve_lanes(way_db):
+
+    _log.info("Resolving lanes tags...")
+    for way in way_db:
+        spec_lane_count = 0
+        for k, v in list(way.tags.items()):
+
+            # count how many lanes that are specified (bus and or direction etc)
+            if "lanes:" in k:
+                if isinstance(v, int):
+                    spec_lane_count += v
+                else:
+                    spec_lane_count += int(v.split()[0]) # if conditional, eg "1 @ ...."
+
+        if not "lanes" in way.tags and "NVDB_guess_lanes" in way.tags:
+            way.tags["lanes"] = way.tags["NVDB_guess_lanes"]
+
+        is_oneway = way.tags.get("oneway", None) in ("yes", "-1", -1)
+        if spec_lane_count > 0:
+            total_count = way.tags.get("lanes", -1)
+            if total_count == -1:
+                append_fixme_value(way.tags, "total lane count (lanes=x) not specified")
+            elif spec_lane_count > total_count:
+                append_fixme_value(way.tags, "too many lanes specified")
+            elif spec_lane_count < total_count:
+                if not "lanes:forward" in way.tags and not "lanes:backward" in way.tags:
+                    if is_oneway:
+                        # oneway does not need all lanes specified, all unspecified lanes are assumed to be lanes:oneway-direction
+                        pass
+                    elif total_count - spec_lane_count == 2:
+                        # assume one lane in each direction
+                        way.tags["lanes:forward"] = 1
+                        way.tags["lanes:backward"] = 1
+                    else:
+                        append_fixme_value(way.tags, "could not derive forward/backward lanes")
+                else:
+                    append_fixme_value(way.tags, "too few lanes specified")
+
+        # remove redundant lanes direction
+        if is_oneway and spec_lane_count > 0:
+            if way.tags["oneway"] in (-1, "-1"):
+                dirstr = ":backward"
+                opposite_dirstr = ":forward"
+            else:
+                dirstr = ":forward"
+                opposite_dirstr = ":backward"
+            remove_oneway = False
+            for k in way.tags.keys():
+                if "lanes:" in k and opposite_dirstr in k:
+                    remove_oneway = True
+                    break
+            if remove_oneway:
+                way.tags.pop("oneway", None)
+                total_count = way.tags.get("lanes", None)
+                if total_count is not None and total_count > spec_lane_count:
+                    way.tags["lanes" + dirstr] = total_count - spec_lane_count
+            else:
+                for k, v in list(way.tags.items()):
+                    if "lanes:" in k and dirstr in k:
+                        del way.tags[k]
+                        k = k.replace(dirstr, "")
+                        way.tags[k] = v
+
+        # remove redundant lanes=1 or lanes=2
+        if "lanes" in way.tags:
+            lanes = way.tags["lanes"]
+            if (is_oneway and lanes == 1) or (not is_oneway and lanes == 2):
+                way.tags.pop("lanes", None)
+
+    _log.info("done")
+
+
 # postprocess_miscellaneous_tags()
 #
 # postprocess tags that aren't dealt with in any other more specialized function
 #
 def postprocess_miscellaneous_tags(tags):
-    spec_lane_count = 0
-    for k, v in list(tags.items()):
-
-        # count how many lanes that are specified
-        if "lanes:" in k:
-            if isinstance(v, int):
-                spec_lane_count += v
-            else:
-                spec_lane_count += int(v.split()[0]) # if conditional, eg "1 @ ...."
-
-    if not "lanes" in tags and "NVDB_guess_lanes" in tags:
-        tags["lanes"] = tags["NVDB_guess_lanes"]
-
-    if spec_lane_count > 0:
-        total_count = tags.get("lanes", -1)
-        if total_count == -1:
-            append_fixme_value(tags, "total lane count (lanes=x) not specified")
-        elif spec_lane_count > total_count:
-            append_fixme_value(tags, "too many lanes specified")
-        elif spec_lane_count < total_count:
-            if not "lanes:forward" in tags and not "lanes:backward" in tags:
-                if tags.get("oneway", "") == "yes":
-                    tags["lanes:forward"] = total_count - spec_lane_count
-                elif total_count - spec_lane_count == 2:
-                    tags["lanes:forward"] = 1
-                    tags["lanes:backward"] = 1
-                else:
-                    append_fixme_value(tags, "could not derive forward/backward lanes")
-            else:
-                append_fixme_value(tags, "too few lanes specified")
 
     # remove maxspeed for footways etc (seen in Stockholm data for example)
     if tags.get("highway", None) in [ "steps", "footway" ]:
