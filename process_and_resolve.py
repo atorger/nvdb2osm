@@ -543,6 +543,7 @@ def resolve_highways(way_db):
                 refs.sort(key=cmp_to_key(compare_vagnummer))
             way.tags["ref"] = refs
 
+        klass = int(way.tags.get("KLASS", -1))
         tags = {}
         if "GCMTYP" in way.tags:
             gcmtyp = way.tags["GCMTYP"]
@@ -651,29 +652,6 @@ def resolve_highways(way_db):
         elif "NVDB_motortrafikled" in way.tags:
             tags["highway"] = "trunk"
             tags["motorroad"] = "yes"
-        elif "NVDB_gatutyp" in way.tags and way.tags["NVDB_gatutyp"] != "Övergripande länk":
-            gatutyp = way.tags["NVDB_gatutyp"]
-            if gatutyp == "Övergripande länk":
-                raise RuntimeError() # should already be handled
-            if gatutyp == "Huvudgata":
-                tags["highway"] = "residential"
-            elif gatutyp == "Lokalgata stor":
-                tags["highway"] = "residential"
-            elif gatutyp == "Lokalgata liten":
-                tags["highway"] = "residential"
-            elif gatutyp == "Kvartersväg":
-                tags["highway"] = "service"
-            elif gatutyp == "Parkeringsområdesväg":
-                tags["highway"] = "service"
-                tags["service"] = "parking_aisle"
-            elif gatutyp == "Infartsväg/Utfartsväg":
-                tags["highway"] = "service"
-            elif gatutyp == "Leveransväg":
-                tags["highway"] = "unclassified"
-            elif gatutyp == "Småväg":
-                tags["highway"] = "unclassified"
-            else:
-                raise RuntimeError("Unknown gatutyp %s" % gatutyp)
         elif "ref" in way.tags: # road number
 
             # Note that even if a road has a road number (and is officially for example "Primär Länsväg") we
@@ -686,7 +664,7 @@ def resolve_highways(way_db):
             #
             # A road with road number will not get worse than tertiary.
             #
-            if not "KLASS" in way.tags:
+            if klass == -1:
                 #raise RuntimeError("KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
                 #print("Warning: KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
                 tags["fixme"] = "could not resolve highway tag"
@@ -713,6 +691,38 @@ def resolve_highways(way_db):
 
                 levels = [ "trunk", "primary", "secondary", "tertiary" ]
                 tags["highway"] = levels[k_level]
+        elif "NVDB_gatutyp" in way.tags and way.tags["NVDB_gatutyp"] != "Övergripande länk":
+            gatutyp = way.tags["NVDB_gatutyp"]
+            if gatutyp == "Övergripande länk":
+                raise RuntimeError() # should already be handled
+            if gatutyp == "Huvudgata":
+                if klass <= 1:
+                    tags["highway"] = "trunk" # 0, 1
+                elif klass <= 2:
+                    tags["highway"] = "primary" # 2
+                elif klass <= 4:
+                    tags["highway"] = "secondary" # 3, 4
+                elif klass <= 5:
+                    tags["highway"] = "tertiary" # 5
+                else:
+                    tags["highway"] = "residential"
+            elif gatutyp == "Lokalgata stor":
+                tags["highway"] = "residential"
+            elif gatutyp == "Lokalgata liten":
+                tags["highway"] = "residential"
+            elif gatutyp == "Kvartersväg":
+                tags["highway"] = "service"
+            elif gatutyp == "Parkeringsområdesväg":
+                tags["highway"] = "service"
+                tags["service"] = "parking_aisle"
+            elif gatutyp == "Infartsväg/Utfartsväg":
+                tags["highway"] = "service"
+            elif gatutyp == "Leveransväg":
+                tags["highway"] = "unclassified"
+            elif gatutyp == "Småväg":
+                tags["highway"] = "unclassified"
+            else:
+                raise RuntimeError("Unknown gatutyp %s" % gatutyp)
         elif "KLASS" in way.tags:
             # KLASS (from DKFunkVagklass) on it's own is used here last as a fallback
             # when there is no other information to rely on. KLASS is a metric on how
@@ -729,7 +739,6 @@ def resolve_highways(way_db):
             # City roads should normally already been resolved by other layers, so here
             # we apply the highway tag as best suited in rural areas.
             #
-            klass = int(way.tags["KLASS"])
             if way.tags.get("route", "") == "ferry":
                 # Special case for ferry routes (shouldn't have a highway tag, but is
                 # in NVDB classified with importance and thus have a KLASS tag, so we
