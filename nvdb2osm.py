@@ -351,6 +351,7 @@ def main():
     sort_multiple_road_names(way_db)
     resolve_highways(way_db)
     simplify_speed_limits(way_db)
+    remove_redundant_speed_limits(way_db)
     cleanup_highway_widths(way_db)
 
     # Note: simplify_oneway() may reverse some ways, causing functions depending on that ways

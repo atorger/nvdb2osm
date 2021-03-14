@@ -912,6 +912,41 @@ def sort_multiple_road_names(way_db):
 
     _log.info("done")
 
+# remove_redundant_speed_limits()
+#
+# Sweden have default maxspeed as 70 when there is no road signs, or 50 in residential areas
+# NVDB sets maxspeed on all roads, however OSM tradition is to exclude unnecessary tags.
+#
+# Maxspeed 70 on short driveways looks a bit strange too.
+#
+# A quirk has been observed in NVDB data: sometimes short segments of forestry roads far from residential
+# areas have maxspeed 50 instead of 70. This is assumed to be some sort of bug and not actual speed limit,
+# which should be the default 70.
+#
+def remove_redundant_speed_limits(way_db):
+    _log.info("Removing redundant speed limits...")
+    total_count = 0
+    remove_count = 0
+    for way in way_db:
+        if "maxspeed" not in way.tags:
+            continue
+        total_count += 1
+        if "maxspeed:forward" in way.tags or "maxspeed:backward" in way.tags:
+            # unidirectional speed limits, assume these are signed, keep
+            continue
+        maxspeed = int(way.tags["maxspeed"])
+        if maxspeed not in (50, 70):
+            # not any of the default speeds, keep
+            continue
+        if "NVDB_gatutyp" in way.tags:
+            # residential area, keep speed limits
+            continue
+        klass = int(way.tags.get("KLASS", "9"))
+        if klass >= 7 and way.tags.get("highway", None) in ["service", "unclassified", "track"]:
+            way.tags.pop("maxspeed", None)
+            remove_count += 1
+    _log.info("done (removed {remove_count} of {total_count} speed limits)")
+
 # simplify_speed_limits()
 #
 # Speed limits in NVDB often has direction. Here we merge such that if we have forward/backward
