@@ -745,8 +745,13 @@ def resolve_highways(way_db):
                 tags["highway"] = "tertiary" # 5, 6
             elif klass <= 7:
                 tags["highway"] = "unclassified" # 7
+            elif klass <= 8:
+                if way.tags.get("NVDB_government_funded", "no") == "yes":
+                    tags["highway"] = "unclassified"  # 8
+                else:
+                    tags["highway"] = "track" # 8
             else:
-                tags["highway"] = "track" # 8, 9
+                tags["highway"] = "track" # 9
         else:
             #print("Warning: information missing to resolve highway tag for RLID %s, adding fixme tag" % way.rlid)
             tags["fixme"] = "could not resolve highway tag"
@@ -1194,6 +1199,7 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
         "NVDB_gagata_side",
         "NVDB_layby_side",
         "NVDB_rwc_tracks",
+        "NVDB_government_funded",
         "KLASS",
         "FPVKLASS",
         "GCMTYP",

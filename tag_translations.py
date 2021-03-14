@@ -7,7 +7,7 @@
 # Net                                    o redundant
 # TFR_DKTjalrestriktion                  o not relevant (temporary information of road damage)
 # TRAFIK_DKTrafik                        o not relevant (traffic statistics)
-# TRV_EVB_DKDriftbidrag_statligt         o redundant (road surface etc for government managed roads)
+# TRV_EVB_DKDriftbidrag_statligt         - for resolving highway (figuring out difference between track/unclassified on small roads)
 # VIS_DKBrunn___Slamsugning              o not translated
 # VIS_DKBullerskydd_vag                  o not translated (noise barrier, but incomplete and geometry on road rather than wall)
 # VIS_DKDriftomrade                      o not relevant
@@ -1316,6 +1316,13 @@ TAG_TRANSLATIONS = {
         "ORDNING": None,
         "ROLL": None,
         "VARD": None,
+    },
+    "TRV_EVB_DKDriftbidrag_statligt": {
+        "add_keys_and_values": "NVDB_government_funded=yes",
+        "VAGDELSN1": None,
+        "VAGNR1": None,
+        "SLITLAG1": None,
+        "TRAFIKKL1": None,
     },
     "VIS_DKFunktionellt_priovagnat": {},
     "VIS_DKOmkorningsforbud": {

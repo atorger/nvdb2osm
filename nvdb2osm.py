@@ -197,6 +197,7 @@ def main():
         "NVDB_DKSlitlager",
         "NVDB_DKVagbredd",
         "NVDB_DKVagnummer",
+        "TRV_EVB_DKDriftbidrag_statligt",
         "VIS_DKFunktionellt_priovagnat",
         "VIS_DKOmkorningsforbud",
         "VIS_DKSlitlager"
