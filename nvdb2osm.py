@@ -189,7 +189,7 @@ def main():
         "NVDB_DKHuvudled",
         "NVDB_DKInskrTranspFarligtGods",
         "NVDB_DKKollektivkorfalt",
-        "NVDB_DKMiljozon",
+        # "NVDB_DKMiljozon", experimental tags, excluding them for now
         "NVDB_DKMotortrafikled",
         "NVDB_DKMotorvag",
         "NVDB_DKOvrigt_vagnamn",
