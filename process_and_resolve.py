@@ -1211,6 +1211,11 @@ def postprocess_miscellaneous_tags(tags):
         tags.pop("tunnel", None)
         tags["covered"] = "yes"
 
+    # in some rare occassions "annan cykelbar förbindelse" is oneway, then we upgrade it to cycleway
+    if "oneway" in tags and tags.get("highway", None) == "path" and tags.get("bicycle", None) == "yes":
+        tags["highway"] = "cycleway"
+        tags.pop("bicycle", None)
+
 # final_pass_postprocess_miscellaneous_tags()
 #
 # Lastly, make a pass over all tags to fixup stuff that isn't dealt with in more specialized functions
