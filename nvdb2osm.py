@@ -360,8 +360,7 @@ def main():
     simplify_oneway(way_db, way_db.point_db)
 
     resolve_lanes(way_db)
-    for way in way_db:
-        postprocess_miscellaneous_tags(way.tags)
+    final_pass_postprocess_miscellaneous_tags(way_db)
 
     used_keys = SortedDict()
     cleanup_used_nvdb_tags(way_db.way_db, used_keys)

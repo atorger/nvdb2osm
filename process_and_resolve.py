@@ -1198,6 +1198,24 @@ def postprocess_miscellaneous_tags(tags):
     if tags.get("hazmat", None) == 'no' and not "hazmat:conditional" in tags and "highway" in tags and tags["highway"] not in MAJOR_HIGHWAYS:
         tags.pop("hazmat", None)
 
+    # add bicycle=yes to pedestrian street, unless there already is a bicycle- or vehicle-related key
+    if tags.get("highway", None) == "pedestrian":
+        has_bicycle = False
+        for k in tags.keys():
+            if "bicycle" in k or "vehicle" == k:
+                has_bicycle = True
+                break
+        if not has_bicycle:
+            tags["bicycle"] = "yes"
+
+# final_pass_postprocess_miscellaneous_tags()
+#
+# Lastly, make a pass over all tags to fixup stuff that isn't dealt with in more specialized functions
+#
+def final_pass_postprocess_miscellaneous_tags(way_db):
+    for way in way_db:
+        postprocess_miscellaneous_tags(way.tags)
+
 # cleanup_used_nvdb_tags()
 #
 # Remove all tags that have been used when resolving various things
