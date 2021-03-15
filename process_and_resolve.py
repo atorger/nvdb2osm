@@ -1194,6 +1194,10 @@ def postprocess_miscellaneous_tags(tags):
     if "maxweight" in tags and not "maxweight:conditional" in tags and "highway" in tags and tags["highway"] not in MAJOR_HIGHWAYS:
         tags.pop("maxweight", None)
 
+    # remove the generic hazmat=no from smaller roads
+    if tags.get("hazmat", None) == 'no' and not "hazmat:conditional" in tags and "highway" in tags and tags["highway"] not in MAJOR_HIGHWAYS:
+        tags.pop("hazmat", None)
+
 # cleanup_used_nvdb_tags()
 #
 # Remove all tags that have been used when resolving various things
