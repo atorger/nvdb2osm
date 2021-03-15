@@ -1202,11 +1202,16 @@ def postprocess_miscellaneous_tags(tags):
     if tags.get("highway", None) == "pedestrian":
         has_bicycle = False
         for k in tags.keys():
-            if "bicycle" in k or "vehicle" == k:
+            if "bicycle" in k or k == "vehicle":
                 has_bicycle = True
                 break
         if not has_bicycle:
             tags["bicycle"] = "yes"
+
+    # building passage is a good guess 90% of the time, but if it's a bridge, it's not a tunnel...
+    if tags.get("tunnel", None) == "building_passage" and "bridge" in tags:
+        tags.pop("tunnel", None)
+        tags["covered"] = "yes"
 
 # final_pass_postprocess_miscellaneous_tags()
 #
