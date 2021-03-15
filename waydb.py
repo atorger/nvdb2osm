@@ -417,10 +417,10 @@ class WayDatabase:
                         continue
                     _log.info(f"extend snap ext:{min_ext_dist:g} dev:{min_dev_dist:g} for RLID {way.rlid}"
                               f" at {latlon_str(p)}")
+                    endpoints.remove(way.way[way_idx], way) # must be removed before midpoint test below so we don't snap to ourself
                     if p in midpoints:
                         # for midpoints it may be better to snap to an endpoint instead
                         p = self._snap_to_nearby_point(p, endpoints, self.MAX_SNAP_DISTANCE)
-                    endpoints.remove(way.way[way_idx], way)
                     endpoints.insert(p, way)
                     way.way[way_idx] = Point(p.x, p.y)
                     ep_count += 1
@@ -433,9 +433,9 @@ class WayDatabase:
                 if p is None:
                     continue
                 _log.info(f"extend snap ext:{min_ext_dist:g} dev:{min_dev_dist:g} for RLID {way.rlid} at {latlon_str(p)}")
+                endpoints.remove(way.way[way_idx], way)
                 if p in midpoints:
                     p = self._snap_to_nearby_point(p, endpoints, self.MAX_SNAP_DISTANCE)
-                endpoints.remove(way.way[way_idx], way)
                 endpoints.insert(p, way)
                 way.way[way_idx] = Point(p.x, p.y)
                 ep_count += 1
@@ -502,13 +502,18 @@ class WayDatabase:
                     for way_idx in range(0, len(way.way)):
                         is_midpoint = way_idx not in (0, len(way.way) - 1)
                         ep_list = endpoints.find_all_within_list(way.way[way_idx], snap_distance)
-                        if len(ep_list) < 2:
+                        if len(ep_list) == 0:
+                            # the own endpoint is expected to exist in endpoints set
+                            assert is_midpoint
+                            continue
+                        if len(ep_list) == 1 and not is_midpoint:
+                            assert ep_list[0][0] == way.way[way_idx]
                             continue
 
                         new_point = ep_list[0][0]
                         if pass_count == 0:
                             # first pass we can pick any point due to short snap distance
-                            snapped_points.add(ep_list[0][0])
+                            snapped_points.add(new_point)
                         else:
                             # prefer to snap to a point already snapped
                             for ep in ep_list:
@@ -516,6 +521,7 @@ class WayDatabase:
                                     new_point = ep[0]
                                     break
 
+                        # move all the nearby endpoints to the point we have chosen for snapping (new_point)
                         for ep in ep_list:
                             old_point = ep[0]
                             if old_point == new_point:
@@ -540,6 +546,7 @@ class WayDatabase:
             pass_count += 1
 
         # also add connected midpoints, we need to do it here afterwards to not disturb the multiple pass endpoint snapping
+        # FIXME: modifying contents and meaning of endpoints is a hard-to-follow side effect
         for mp in midpoints:
             idx = mp[0]
             way = mp[1]
