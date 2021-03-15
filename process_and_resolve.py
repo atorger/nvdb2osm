@@ -622,6 +622,8 @@ def resolve_highways(way_db):
                 gcm_resolve_crossings.append(way)
             elif gcmtyp == 27: # Färja (C+G)
                 tags["route"] = "ferry"
+                tags["foot"] = "yes"
+                tags["motor_vehicle"] = "no"
             elif gcmtyp == 28: # Cykelpassage och övergångsställe (C+G)
                 tags["highway"] = "cycleway"
                 tags["cycleway"] = "crossing"
@@ -738,12 +740,8 @@ def resolve_highways(way_db):
             # City roads should normally already been resolved by other layers, so here
             # we apply the highway tag as best suited in rural areas.
             #
-            if way.tags.get("route", "") == "ferry":
-                # Special case for ferry routes (shouldn't have a highway tag, but is
-                # in NVDB classified with importance and thus have a KLASS tag, so we
-                # need to ignore it)
-                pass
-            elif klass <= 1:
+            # Special case for ferry routes (shouldn't have a highway tag)
+            if klass <= 1:
                 tags["highway"] = "trunk" # 0, 1
             elif klass <= 2:
                 tags["highway"] = "primary" # 2
@@ -760,6 +758,16 @@ def resolve_highways(way_db):
                     tags["highway"] = "track" # 8
             else:
                 tags["highway"] = "track" # 9
+
+            # Special case for ferry
+            if way.tags.get("route", None) == "ferry":
+                tags["ferry"] = tags["highway"]
+                tags.pop("highway")
+                if tags["ferry"] in [ "track", "service" ]:
+                    tags["ferry"] = "unclassified"
+                tags["foot"] = "yes"
+                tags["bicycle"] = "yes"
+                tags["motor_vehicle"] = "yes"
         else:
             #print("Warning: information missing to resolve highway tag for RLID %s, adding fixme tag" % way.rlid)
             tags["fixme"] = "could not resolve highway tag"
