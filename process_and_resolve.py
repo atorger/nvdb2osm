@@ -595,8 +595,6 @@ def resolve_highways(way_db):
                 tags["wheelchair"] = "yes"
                 tags["fixme"] = "could not resolve incline"
             elif gcmtyp == 16: # Perrong (G)
-                tags["highway"] = "platform"
-                tags["public_transport"] = "platform"
                 tags["railway"] = "platform"
             elif gcmtyp == 17: # Trappa (C+G)
                 tags["highway"] = "steps"
