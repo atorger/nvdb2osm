@@ -370,7 +370,6 @@ def tag_translation_single_value_with_time_interval(tags, key, value):
 #
 # Maxweight
 #  - "Särskilda villkor" (specific conditions) not documented in NVDB so cannot be translated
-#  - Maxweight may be defined by other layers, the lower value is kept when merging
 #
 def tag_translation_DKBarighet(tags):
     winter_bk = tags["BAEIGHTSOD"] is not None and tags["BAEIGHTSOD"] != tags["BAEIGHTSSS"]

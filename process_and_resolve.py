@@ -13,6 +13,7 @@ from nseg_tools import *
 
 _log = logging.getLogger("process")
 
+MAJOR_HIGHWAYS = [ "trunk", "motorway", "primary", "secondary", "tertiary", "trunk_link", "motorway_link", "primary_link", "secondary_link", "tertiary_link" ]
 
 # merge_translated_tags()
 #
@@ -1188,6 +1189,10 @@ def postprocess_miscellaneous_tags(tags):
     # remove maxspeed for footways etc (seen in Stockholm data for example)
     if tags.get("highway", None) in [ "steps", "footway" ]:
         tags.pop("maxspeed", None)
+
+    # remove the generic maxweight from smaller roads
+    if "maxweight" in tags and not "maxweight:conditional" in tags and "highway" in tags and tags["highway"] not in MAJOR_HIGHWAYS:
+        tags.pop("maxweight", None)
 
 # cleanup_used_nvdb_tags()
 #
