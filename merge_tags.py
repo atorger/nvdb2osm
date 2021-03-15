@@ -71,15 +71,19 @@ def merge_tags(seg, src, data_src_name):
 
 
         # go through things we want to resolve before we look at the date
+        prio_layers = {
+            "VIS_DKSlitlager": "NVDB_DKSlitlager",
+            "NVDB_DKGCM_passage": "NVDB_DKKorsning"
+        }
         if not resolved:
-            if data_src_name == "VIS_DKSlitlager" and seg.tag_src[k][0] == "NVDB_DKSlitlager":
+            if prio_layers.get(data_src_name, None) == seg.tag_src[k][0]:
                 dst[k] = v
                 seg.tag_src[k] = (data_src_name, src_date)
-                solution = "prioritized layer"
                 resolved = True
-            elif seg.tag_src[k][0] == "VIS_DKSlitlager" and data_src_name == "NVDB_DKSlitlager":
                 solution = "prioritized layer"
+            elif prio_layers.get(seg.tag_src[k][0], None) == data_src_name:
                 resolved = True
+                solution = "prioritized layer"
 
         # resolve by date, if possible
         if not resolved:

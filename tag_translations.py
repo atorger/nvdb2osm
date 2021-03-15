@@ -1371,7 +1371,7 @@ TAG_TRANSLATIONS = {
     },
     "NVDB_DKKorsning": {
         "GENRALSEYP": "NVDB_generaliseringstyp",
-        "SIGALRGLNG=ja":    [ "highway=crossing", "crossing=traffic_signals" ],
+        "SIGALRGLNG=ja":    [ "highway=traffic_signals" ],
         "SIGALRGLNG=nej":   None,
         "SIGALRGLNG=okänt": None,
         "NAMN": "name",
