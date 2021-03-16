@@ -573,8 +573,20 @@ def resolve_highways(way_db):
                 tags["highway"] = "path" # refined later
                 gcm_resolve_crossings.append(way)
             elif gcmtyp == 9: # Annan cykelbar förbindelse (C)
-                tags["highway"] = "path"
-                tags["bicycle"] = "yes"
+                # This type unfortunately has multi-uses. In larger cities it's commonly used to
+                # connect disconnected cycleways, eg in places you need to pass 10 - 20 meters of
+                # pavement to get on to the next section. But it's also used for longer sections
+                # of unpaved tracks that make practical links for cyclists but are not really
+                # maintained as cycleways.
+                #
+                # To differ between these we look at road surface, and if it's marked oneway
+                # (happens in some cases in cities) we also upgrade it to cycleway
+                #
+                if "oneway" in way.tags or way.tags.get("surface", "unpaved") != "unpaved":
+                    tags["highway"] = "cycleway"
+                else:
+                    tags["highway"] = "path"
+                    tags["bicycle"] = "yes"
             elif gcmtyp == 10: # Annan ej cykelbar förbindelse (C+G)
                 tags["highway"] = "path"
             elif gcmtyp == 11: # Gångbana (G)
@@ -1218,11 +1230,6 @@ def postprocess_miscellaneous_tags(tags):
     if tags.get("tunnel", None) == "building_passage" and "bridge" in tags:
         tags.pop("tunnel", None)
         tags["covered"] = "yes"
-
-    # in some rare occassions "annan cykelbar förbindelse" is oneway, then we upgrade it to cycleway
-    if "oneway" in tags and tags.get("highway", None) == "path" and tags.get("bicycle", None) == "yes":
-        tags["highway"] = "cycleway"
-        tags.pop("bicycle", None)
 
 # final_pass_postprocess_miscellaneous_tags()
 #
