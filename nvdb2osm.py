@@ -360,6 +360,7 @@ def main():
     simplify_speed_limits(way_db)
     remove_redundant_speed_limits(way_db)
     cleanup_highway_widths(way_db)
+    remove_redundant_cycleway_names(way_db)
 
     # Note: simplify_oneway() may reverse some ways, causing functions depending on that ways
     # with the same RLID is oriented in the same direction to not work

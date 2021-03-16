@@ -3,6 +3,7 @@ from functools import cmp_to_key
 
 from geometry_basics import *
 from geometry_search import GeometrySearch, snap_to_closest_way
+from twodimsearch import TwoDimSearch
 from merge_tags import merge_tags, append_fixme_value
 from nvdb_segment import *
 from proj_xy import latlon_str
@@ -14,6 +15,7 @@ from nseg_tools import *
 _log = logging.getLogger("process")
 
 MAJOR_HIGHWAYS = [ "trunk", "motorway", "primary", "secondary", "tertiary", "trunk_link", "motorway_link", "primary_link", "secondary_link", "tertiary_link" ]
+MINOR_HIGHWAYS = [ "residential", "unclassified", "service", "track" ]
 
 # merge_translated_tags()
 #
@@ -1016,8 +1018,7 @@ def simplify_cycleway_crossings(way_db):
                         if w1.tags["highway"] not in GCM:
                             crossings.append(p)
                             break
-                        else:
-                            has_cw_crossing = True
+                        has_cw_crossing = True
 
         for w0 in crossing_set:
             w0.tags.pop(way.tags["highway"], None)
@@ -1047,6 +1048,48 @@ def simplify_cycleway_crossings(way_db):
             count += 1
 
     _log.info(f"done (converted {count} crossings, skipped {skipped_count} as node crossings already existed, {no_crossing_count} had no crossing roads)")
+
+# remove_redundant_cycleway_names()
+#
+# Remove names of cycleways that are named the same as neighboring street
+#
+def remove_redundant_cycleway_names(way_db):
+    _log.info("Removing redundant cycleway names...")
+    remove_count = 0
+    name2road = {}
+    candidates = []
+    for way in way_db:
+        if "highway" in way.tags and "name" in way.tags:
+            hw = way.tags["highway"]
+            if (hw in MAJOR_HIGHWAYS or hw in MINOR_HIGHWAYS):
+                name = way.tags["name"]
+                if name in name2road:
+                    name2road[name].append(way)
+                else:
+                    name2road[name] = [ way ]
+            elif hw in ["cycleway", "footway", "path", "steps", "elevator" ]:
+                candidates.append(way)
+
+    candidates2 = []
+    gs = TwoDimSearch()
+    for way in candidates:
+        if way.tags["name"] in name2road:
+            for p in way.way:
+                gs.insert(p, way)
+            candidates2.append(way)
+
+    for way in candidates2:
+        name = way.tags["name"]
+        for w1 in name2road[name]:
+            for p in w1.way:
+                if way in gs.find_all_within(p, 100):
+                    del way.tags["name"]
+                    _log.debug(f"removed name {name} from {way.tags['highway']} {way.rlid}")
+                    break
+            if "name" not in way.tags:
+                remove_count += 1
+                break
+    _log.info(f"done (removed {remove_count} redundant names)")
 
 # remove_redundant_speed_limits()
 #
