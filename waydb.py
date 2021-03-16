@@ -338,17 +338,18 @@ class WayDatabase:
     MAX_SNAP_DISTANCE = 2
     EMERGENCY_SNAP_DISTANCE = 7
 
-    def __init__(self, reference_geometry):
+    def __init__(self, reference_geometry, perform_self_testing=True):
 
         _log.info("Setting up way database and cleaning reference geometry...")
 
         self.way_db = {}
         self.point_db = {}
         self.gs = None
-        self._ref_gs = GeometrySearch(GEO_FILL_LENGTH, use_dist=True)
+        self._ref_gs = GeometrySearch(GEO_FILL_LENGTH, use_dist=True, perform_self_testing=perform_self_testing)
         self._ref_way_db = {}
         self._way_db_iter = None
         self._way_db_sub_iter = None
+        self._perform_self_testing = perform_self_testing
 
         # Expected properties of 'reference_geometry':
         #
@@ -444,8 +445,7 @@ class WayDatabase:
         if ep_count > 0:
             _log.warning("extend snaps typically means that there are gaps in the data source's geometry")
 
-        self_check = False
-        if self_check:
+        if self._perform_self_testing:
             for ways in rlid_ways.values():
                 for way in ways:
                     for ep in [ way.way[0], way.way[-1] ]:
@@ -572,7 +572,8 @@ class WayDatabase:
                 assert new_way[0] == way.way[0] and new_way[-1] == way.way[-1]
                 way.way = new_way
                 test_self_connections(way)
-                self._test_way_dist(way, allow_unset=True)
+                if self._perform_self_testing:
+                    self._test_way_dist(way, allow_unset=True)
 
                 self._ref_gs.insert(way)
                 self._test_way_dist(self._ref_gs.find_reference_way(way.way[0], way.rlid))
@@ -772,8 +773,9 @@ class WayDatabase:
                 debug_ways.append(w.make_copy_new_way(copy_way(w.way)))
             self._split_and_merge(w, data_src_name)
 
-        if way.rlid in self.way_db:
-            self._test_segment(self.way_db[way.rlid]) # FIXME remove after code is robust
+        if self._perform_self_testing:
+            if way.rlid in self.way_db:
+                self._test_segment(self.way_db[way.rlid])
 
     def _test_segment(self, segs):
         it = iter(segs)
@@ -933,7 +935,8 @@ class WayDatabase:
                     if p is None:
                         raise RuntimeError("Way with RLID %s %s has no existing geometry within %s meters" % (way.rlid, latlon_str(point), max_snap_distance))
 
-            self._test_way_dist(ref_way)
+            if self._perform_self_testing:
+                self._test_way_dist(ref_way)
             if p != prev:
                 # sometimes close points are merged to the same position
                 assert p.dist >= 0
@@ -998,7 +1001,8 @@ class WayDatabase:
             # Very rare (seen in Stockholm dataset), and sort of illegal
             _log.warning(f"endpoint attaches to own midpoint for RLID {way.rlid}")
             way.way[-1].dist = ref_way.way[-1].dist
-            self._test_way_dist(way)
+            if self._perform_self_testing:
+                self._test_way_dist(way)
 
         # if this way has fewer points that the reference geometry it snaps to (happens in
         # some cases), we need to insert missing points we can assume that:
@@ -1098,7 +1102,7 @@ class WayDatabase:
 
     def setup_geometry_search(self):
         _log.info("Setting up search data structure for all geometry...")
-        self.gs = GeometrySearch(GEO_FILL_LENGTH)
+        self.gs = GeometrySearch(GEO_FILL_LENGTH, use_dist=False, perform_self_testing=self._perform_self_testing)
         self.gs.insert_waydb(self.way_db)
         _log.info("done")
 

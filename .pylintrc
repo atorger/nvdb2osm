@@ -153,6 +153,7 @@ disable=print-statement,
 	too-many-nested-blocks,
 	too-many-arguments,
 	too-many-return-statements,
+	too-many-instance-attributes,
 	logging-fstring-interpolation
 
 

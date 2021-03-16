@@ -220,6 +220,7 @@ def main():
     parser.add_argument('--skip_railway', help="Don't require railway geometry (leads to worse railway crossing handling)", action='store_true')
     parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network *.shp (usually Järnvägsnät_grundegenskaper.zip)")
     parser.add_argument('--rlid', help="Include RLID in output", action='store_true')
+    parser.add_argument('--skip_self_test', help="Skip self tests", action='store_true')
     parser.add_argument(
         '-d', '--debug',
         help="Print debugging statements",
@@ -254,6 +255,7 @@ def main():
     directory_or_zip = args.shape_file
     output_filename = args.osm_file
     railway_filename = args.railway_file
+    perform_self_testing = not args.skip_self_test
 
     if railway_filename is None and not skip_railway:
         _log.error("File with national railway geometry not provided (use --railway_file). Can be skipped by adding --skip_railway parameter, but then railway crossings will be somewhat misaligned")
@@ -266,7 +268,7 @@ def main():
     if debug_dump_layers:
         write_osmxml(ref_ways, [], "raw_reference_geometry.osm")
     ref_ways = find_overlapping_and_remove_duplicates(name, ref_ways)
-    way_db = WayDatabase(ref_ways)
+    way_db = WayDatabase(ref_ways, perform_self_testing)
 
     if debug_dump_layers:
         write_osmxml(way_db.get_reference_geometry(), [], "reference_geometry.osm")
@@ -294,7 +296,8 @@ def main():
                 debug_ways = []
 
         insert_rlid_elements(way_db, ways, name, debug_ways=debug_ways)
-        way_db.test_segments()
+        if perform_self_testing:
+            way_db.test_segments()
         if debug_ways is not None:
             write_osmxml(debug_ways, [], name + "-adapted.osm")
         layer_idx += 1

@@ -26,13 +26,14 @@ def snap_to_closest_way(ways, point):
 
 class GeometrySearch:
 
-    def __init__(self, max_segment_length, use_dist=False):
+    def __init__(self, max_segment_length, use_dist=False, perform_self_testing=False):
         self._maxseglen = max_segment_length
         self._fillpoints = TwoDimSearch()
         self._realpoints = TwoDimSearch()
         self._self_cross_points = {}
         self._rlid2startdist = {}
         self._use_dist = use_dist
+        self._perform_self_testing = perform_self_testing
 
     def insert(self, way):
         it = iter(way.way)
@@ -90,7 +91,8 @@ class GeometrySearch:
         return snap_to_closest_way(ref_ways, point)
 
     def _insert_point_into_geometry(self, point, way, min_distance):
-        self._test_way_dist(way)
+        if self._perform_self_testing:
+            self._test_way_dist(way)
         for idx, p in enumerate(way.way):
             if idx == 0:
                 continue
@@ -103,7 +105,8 @@ class GeometrySearch:
             if dist1 >= min_distance and dist2 >= min_distance:
                 point.dist = prev.dist + dist1
                 way.way.insert(idx, point)
-                self._test_way_dist(way)
+                if self._perform_self_testing:
+                    self._test_way_dist(way)
                 self._realpoints.insert(point, way)
                 return point
             if dist1 < dist2:
