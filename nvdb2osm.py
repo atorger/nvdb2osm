@@ -303,6 +303,9 @@ def main():
         layer_idx += 1
         _log.info(f"Merged {layer_idx} of {layer_count} line geometry layers")
 
+    way_db.join_segments_with_same_tags()
+    way_db.remove_short_sub_segments()
+
     way_db.setup_geometry_search()
 
     layer_count = len(point_names)
@@ -330,14 +333,13 @@ def main():
                     for index, row in gdf.iterrows():
                         if bounds_intersect(row.geometry.bounds, nvdb_total_bounds):
                             seg = NvdbSegment({ "geometry": shapely_linestring_to_way(row.geometry),
-                                                "RLID": "RW-%s" % index,
-                                                "FRAN_DATUM": "1899-01-01" # dummy date
+                                                "RLID": "RW-%s" % index
                                                })
                             railways.append(seg)
                     _log.info(f"Done ({len(railways)} of {len(gdf)} segments kept)")
                     if debug_dump_layers:
                         write_osmxml(railways, [], "local-railway.osm")
-                points = process_railway_crossings(points, way_db, railways)
+                points = preprocess_railway_crossings(points, way_db, railways)
         elif name == "VIS_DKP_ficka":
             points = preprocess_laybys(points, way_db)
             do_snap = False
@@ -349,11 +351,12 @@ def main():
     if debug_dump_layers:
         waydb2osmxml(way_db, "pre-resolve.osm")
 
-    way_db.join_segments_with_same_tags()
-    way_db.remove_short_sub_segments()
-
     sort_multiple_road_names(way_db)
     resolve_highways(way_db)
+
+    # converts cycleway way crossings to node crossing, which is optional, both ways to map are correct
+    simplify_cycleway_crossings(way_db)
+
     simplify_speed_limits(way_db)
     remove_redundant_speed_limits(way_db)
     cleanup_highway_widths(way_db)

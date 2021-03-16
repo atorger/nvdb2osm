@@ -7,9 +7,12 @@ class NvdbSegment:
         # python doesn't support multiple constructors, so we use a hack with dynamic args
         if len(args) == 1:
             shapely_dict = args[0]
+
             assert ("RLID" in shapely_dict), "Missing RLID"
-            assert ("FRAN_DATUM" in shapely_dict), "Missing FRAN_DATUM"
             self.rlid = shapely_dict["RLID"]
+
+            if "FRAN_DATUM" not in shapely_dict:
+                shapely_dict["FRAN_DATUM"] = 18990101
             date = shapely_dict["FRAN_DATUM"]
 
             tags = shapely_dict.copy()

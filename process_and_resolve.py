@@ -422,9 +422,9 @@ def process_street_crossings(points, way_db, data_src_name):
 
     return crossings
 
-# process_railway_crossings()
+# preprocess_railway_crossings()
 #
-def process_railway_crossings(points, way_db, railways):
+def preprocess_railway_crossings(points, way_db, railways):
 
     _log.info("Setting up search data structure for railways (to snap railway crossings)...")
     rw_gs = GeometrySearch(1000)
@@ -961,6 +961,92 @@ def sort_multiple_road_names(way_db):
             way.tags["alt_name"] = sorted_names[1]
 
     _log.info("done")
+
+# simplify_cycleway_crossings()
+#
+# Simplify cycleway (and footway) crossings, meaning converting from way crossings to node crossings.
+# This is simplifying is optional, both ways to map is correct. The advantage of node crossings is
+# that cycleways doesn't get as many splits so they are a bit easier to work with manually
+#
+def simplify_cycleway_crossings(way_db):
+    _log.info("Converting cycleway way crossings to node crossings...")
+    GCM = ["cycleway", "footway", "path" ]
+    count = 0
+    skipped_count = 0
+    no_crossing_count = 0
+    processed_set = set()
+    for way in way_db:
+        if way in processed_set or way.tags.get("highway", None) not in GCM or way.tags.get(way.tags["highway"], None) != "crossing":
+            continue
+
+        # tags to be used for crossing node
+        crossing_tags = { "highway": "crossing" }
+        if "crossing" in way.tags:
+            crossing_tags["crossing"] = way.tags["crossing"]
+        if way.tags["highway"] == "cycleway" or way.tags.get("bicycle", None) == "yes":
+            crossing_tags["bicycle"] = "yes"
+
+        # crossing ways may be split in several parts, get all that are connected via endpoints
+        crossing_set = { way }
+        start_size = 0
+        hw_tag = way.tags["highway"]
+        while start_size != len(crossing_set):
+            start_size = len(crossing_set)
+            new_set = set()
+            for w0 in crossing_set:
+                for ep in [ w0.way[0], w0.way[-1] ]:
+                    ways = way_db.gs.find_all_connecting_ways(ep)
+                    for w1 in ways:
+                        if w1 not in crossing_set and ep in (w1.way[0], w1.way[-1]) and \
+                           w1.tags.get("highway", None) == hw_tag and \
+                           w1.tags.get(hw_tag, None) == "crossing" and \
+                           w1.tags.get("crossing", None) == way.tags.get("crossing", None):
+                            new_set.add(w1)
+            crossing_set = crossing_set.union(new_set)
+
+        _log.debug(f"crossing_set {crossing_set}")
+        crossings = []
+        has_cw_crossing = False
+        for w0 in crossing_set:
+            processed_set.add(w0)
+            for p in w0.way:
+                ways = way_db.gs.find_all_connecting_ways(p)
+                for w1 in ways:
+                    if w1 not in crossing_set and "highway" in w1.tags:
+                        if w1.tags["highway"] not in GCM:
+                            crossings.append(p)
+                            break
+                        else:
+                            has_cw_crossing = True
+
+        for w0 in crossing_set:
+            w0.tags.pop(way.tags["highway"], None)
+            w0.tags.pop("crossing", None)
+
+        if len(crossings) == 0:
+            if not has_cw_crossing:
+                _log.warning(f"RLID {way.rlid} is marked as crossing without crossing roads or cycleways/footways/paths")
+            no_crossing_count += 1
+            continue
+
+        for p in crossings:
+            has_crossing = False
+            crossing_tags["RLID"] = way.rlid
+            if p in way_db.point_db:
+                existing_nodes = way_db.point_db[p]
+                for node in existing_nodes:
+                    crossing_tags["RLID"] = node.rlid
+                    if node.tags.get("highway", None) == "crossing":
+                        has_crossing = True
+                        break
+            if has_crossing:
+                skipped_count += 1
+                continue
+            crossing_tags["geometry"] = p
+            way_db.insert_rlid_node(NvdbSegment(crossing_tags), "resolved")
+            count += 1
+
+    _log.info(f"done (converted {count} crossings, skipped {skipped_count} as node crossings already existed, {no_crossing_count} had no crossing roads)")
 
 # remove_redundant_speed_limits()
 #
