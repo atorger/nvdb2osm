@@ -1360,6 +1360,11 @@ def postprocess_miscellaneous_tags(tags):
         tags.pop("tunnel", None)
         tags["covered"] = "yes"
 
+    # if all lanes are bus lanes, set access restrictions
+    if tags.get("lanes", -1) == (tags.get("lanes:bus", 0) + tags.get("lanes:bus:forward", 0) + tags.get("lanes:bus:backward", 0)):
+        tags["vehicle"] = tags.get("vehicle", "no")
+        tags["bus"] = tags.get("bus", "yes")
+
 # final_pass_postprocess_miscellaneous_tags()
 #
 # Lastly, make a pass over all tags to fixup stuff that isn't dealt with in more specialized functions
