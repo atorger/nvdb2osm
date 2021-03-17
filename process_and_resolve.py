@@ -1071,18 +1071,18 @@ def remove_redundant_cycleway_names(way_db):
                 candidates.append(way)
 
     candidates2 = []
-    gs = TwoDimSearch()
+    max_distance = 100
+    gs = GeometrySearch(max_distance)
     for way in candidates:
         if way.tags["name"] in name2road:
-            for p in way.way:
-                gs.insert(p, way)
+            gs.insert(way)
             candidates2.append(way)
 
     for way in candidates2:
         name = way.tags["name"]
         for w1 in name2road[name]:
             for p in w1.way:
-                if way in gs.find_all_within(p, 100):
+                if way in gs.find_all_nearby_ways(p):
                     del way.tags["name"]
                     _log.debug(f"removed name {name} from {way.tags['highway']} {way.rlid}")
                     break
@@ -1318,6 +1318,12 @@ def resolve_lanes(way_db):
                         k = k.replace(dirstr, "")
                         way.tags[k] = v
 
+        # if all lanes are bus lanes, set access restrictions
+        if way.tags.get("lanes", -1) == (way.tags.get("lanes:bus", 0) + way.tags.get("lanes:bus:forward", 0) + way.tags.get("lanes:bus:backward", 0)):
+            way.tags["vehicle"] = way.tags.get("vehicle", "no")
+            way.tags["bus"] = way.tags.get("bus", "yes")
+            _log.debug(f"Added access restrictions to {way.rlid} due to all being bus lanes");
+
         # remove redundant lanes=1 or lanes=2
         if "lanes" in way.tags:
             lanes = way.tags["lanes"]
@@ -1359,11 +1365,6 @@ def postprocess_miscellaneous_tags(tags):
     if tags.get("tunnel", None) == "building_passage" and "bridge" in tags:
         tags.pop("tunnel", None)
         tags["covered"] = "yes"
-
-    # if all lanes are bus lanes, set access restrictions
-    if tags.get("lanes", -1) == (tags.get("lanes:bus", 0) + tags.get("lanes:bus:forward", 0) + tags.get("lanes:bus:backward", 0)):
-        tags["vehicle"] = tags.get("vehicle", "no")
-        tags["bus"] = tags.get("bus", "yes")
 
 # final_pass_postprocess_miscellaneous_tags()
 #
