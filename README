@@ -527,6 +527,33 @@ Exempel på vanliga Validator-varningar, med kommentarer:
 Övrigt att tänka på
 -------------------
 
+Flerfiliga vägar:
+
+NVDB har information om antal körfält och även antal bussfält, men
+inte vilket fält som är vilket. NVDB saknar även information om vilka
+fält som är till för att svänga, så turn:lanes-taggning måste man göra
+själv. Ofta går det se på flygfotot vilka pilar som finns i de olika
+körfälten, och om inte är turn:lanes ofta kartlagt sedan tidigare så
+man kan behålla det som var.
+
+Ibland är en flerfilig väg kartlagd som en way, ibland som två och
+båda sätten är korrekt (förutsatt att taggarna är rätt satta). Ibland
+har NVDB och tidigare kartläggning i OSM gjort olika val. Det är upp
+till din egen bedömning vad som är lämpligt i det fallet, att antingen
+behålla som det är i OSM, eller det som är i NVDB. Oftast är det
+vettigast att ta alternativet med fler ways eftersom vägen i dessa
+fall har stor utbredning.
+
+Stora och flerfiliga vägar ingår nästan alltid i route-relationer,
+dessa måste man se till att de är korrekta efter man uppdaterat
+geometrin. När man använder replace geometry och matchar segment mot
+segment så sköts det automatiskt. När man gör om geometrin så att den
+kanske går från en way till två, måste man manuellt uppdatera
+rutterna.
+
+Överlag är uppdatering av flerfiliga vägar en av de mer avancerade
+uppgifterna i importarbetet.
+
 Vägnummer:
 
 I Sverige är vi vana att europavägar skrivs utan mellanslag, "E4"
@@ -593,6 +620,45 @@ kullersten mm får man således ändra manuellt.
 men enligt OSM-wiki avser det knytnävsstora stenar, så egentligen inte
 rätt. Bättre är då "surface=fine_gravel".)
 
+Vändplaner:
+
+NVDB saknar vändplaner i skogsbilvägsnätet, så de måste man lägga till
+manuellt. De syns på Lantmäteriets rasterkarta.
+
+Vändplaner på lite större vägar finns ofta i NVDB men är så dåligt
+placerade att de importeras inte av skriptet (de kartläggs i NVDB som
+"vändmöjlighet" och är alltså inte en exakt specifikation var
+vändplanen i fråga faktiskt ligger). Så titta gärna på flygfoton inne
+byar mm där vändplaner kan förväntas finnas och lägg till vid
+behov. Dessa vändplaner finns i regel inte i rasterkartan heller.
+
+Återvändsgränder med vändplan i städer är inte heller kartlagda i
+NVDB (ej heller i rasterkartan), så de får man lägga till manuellt.
+
+Vägar som slutar med återvändsgränd eller vändplan ritas oftast lite
+väl långt, till slutet av vändplanen medan OSM-tradition är att sluta
+vägen mitt på vändplanen. Är man noggrann bör man matcha positionen
+mot (positionsjusterat) flygfoto och det innebär i flesta fall kan man
+korta av vägen något för att matcha OSM-tradition.
+
+Parkeringar:
+
+NVDB har inga areor, så parkering när de är kartlagda är som
+punkter. För parkeringsfickor, parking=layby, rekommenderar vi starkt
+att man gör det som skriptet gör, dvs endast en punkt med
+parking=layby bredvid vägen. I vissa fall kan det tidigare vara
+kartlagt med en area, eller en punkt med en service-vägsnutt. Om det
+inte är en väldigt speciell parkeringsficka så rekommenderar vi att
+man förenklar till en punkt.
+
+För andra typer av parkeringar är dock areor att rekommendera, och
+dessa måste alltså kartläggas manuellt. NVDB-skripet lägger in en nod
+för större rastplatser, men dessa består i verkligheten ofta av flera
+parkeringar och kanske byggnader, och är oftast redan
+kartlagda. Kontrollera så att all information som NVDB-noden
+tillhandahåller finns i rastplatskartläggningen, och plocka sedan bort
+NVDB-noden helt om parkeringen är kartlagd som en area.
+
 Vägbommar:
 
 Bommar som NVDB markerat med "låst grind eller bom" sätts till
@@ -620,6 +686,65 @@ Själva järnvägen läggs inte till av skriptet eftersom den av tradition
 kartläggs separat från vägar av kartläggare som specialiserar sig på
 just järnväg.
 
+Namn på vägar:
+
+NVDB har skiftade kvalitet på vägnamn. Namn i städer har i regel god
+kvalité, men i storleksordningen 1 av 1000 kan det vara felstavat
+eller liknande, så det är bra att vara på sin vakt ändå.
+
+Om man råkar missa något så anser vi att det är bättre att ta in
+namnen oförändrade även med mindre fel som NVDB har, än att lämna
+vägarna utan namn.
+
+I vissa städer ges cykelvägarna samma namn som gatan intill, skriptet
+rensar bort dessa för enligt OSM-tradition ska cykelvägarna inte ha
+egna namn då. Har cykelvägen eget namn behålls det.
+
+I vissa fall rapporteras namnen in i endast versaler. Skripet
+konverterar dessa efter bästa förmåga.
+
+Förkortningar förekommer i vägnamnen. Norra, Södra osv förkortas ofta
+till en bokstav. Vi rekommenderar att man ändrar det och skriver ut
+fulla namnet om man vet vad det är.
+
+Vissa förkortningar kan man dock behålla, som Cpl för
+cirkulationsplats, grv. och stv. för grenväg och stickväg.
+
+Skogbilvägsnätet har mindre bra kvalitet på vägnamnen. Dels är det
+ganska vanligt med felstavningar, och dels är det vanligt med "lat"
+namngiving typ "Granträskvägen med grenvägar". Vi rekommenderar
+följande strategi:
+
+  - Korrigera stavfel
+  - Ganska ofta kan namn vara anges med och utan 's', exempel
+    "Storlidsvägen" eller "Storlidvägen". Om man inte har mer
+    information, välj alternativet som känns mer naturligt att säga,
+    (gärna i lokal dialekt) för det är i regel det namnet som används.
+  - Svenska namn ska vara rikssvenska, om namnet inte är specifik känt
+    för dialektstavningen. Dvs om även en person som inte talar
+    dialekten använder dialektnamnet så ska dialektstavningen
+    användas.
+  - Vägnät som namngetts i grupp med samma namn typ "X med grenvägar"
+    delas helst upp så att huvudvägen heter bara X, och grenvägarna
+    heter "X grv." Skogsbilvägar förlängs ofta i omgångar så ibland är
+    det inte klart vilken som är huvudväg och inte, i så fall kan det
+    vara säkrast att namnge alla med samma namn, alltså bara med "X",
+    och lägg inte på "med grenvägar". I många fall har NVDB redan den
+    typen av namnsättning, då kan man välja behålla den eller förfina
+    genom att peka ut vilka som är grenvägar genom att lägga på
+    "grv.".
+
+OSM har en tradition av att använda en del icke-officiella lokala
+namn. Så ibland när man sammanfogar stöter man på ställen där namnet
+på vägen kan vara ett helt annat än det som är i NVDB. Där är det upp
+till din bedömning vad bästa alternativet är. Ofta är det att behålla
+OSM-namnet som det är, och lägga in NVDB-namnet på alt_name.
+
+Inne i städer är det vanligt att OSM och NVDB har oilka positioner på
+exakt var namnet på en väg börjar och slutar. NVDB har oftast bra
+kvalitet på sin position, så använd egen bedömning hur du gör när
+skillnader uppstår.
+
 
 Fel i NVDB-datat
 ----------------
@@ -644,9 +769,6 @@ perfekt. Detta är några fel som observerats:
   - Enskild väg som är belagd kan vara markerad som grus.
   - Vägar i små samhällen kan vara markerad som belagd fastän det är
     grus.
-  - Vägar som slutar med återvändsgränd eller vändplan ritas oftast
-    lite väl långt, till slutet av vändplanen medan OSM-tradition är
-    att sluta vägen mitt på vändplanen.
   - Original-datat har en hel del småglapp här och var, som skriptet
     reparerar för det mesta. I enstaka fall kan exempelvis en
     skogsväg sakna sitt vägnamn över 50 meter eller så. Dessa
