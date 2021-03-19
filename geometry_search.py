@@ -279,10 +279,15 @@ class GeometrySearch:
             ref_dist = p.dist
             prev = p
 
-    def find_all_nearby_ways(self, point):
+    def find_all_nearby_ways(self, point_or_list_of_points):
+        if isinstance(point_or_list_of_points, list):
+            points = point_or_list_of_points
+        else:
+            points = [ point_or_list_of_points ]
         ways = set()
-        ways.update(self._realpoints.find_all_within(point, self._maxseglen))
-        ways.update(self._fillpoints.find_all_within(point, self._maxseglen))
+        for point in points:
+            ways.update(self._realpoints.find_all_within(point, self._maxseglen))
+            ways.update(self._fillpoints.find_all_within(point, self._maxseglen))
         return ways
 
     @staticmethod
@@ -300,7 +305,14 @@ class GeometrySearch:
     def find_reference_way(self, point, rlid):
         return self._filter_reference_way(self.find_all_connecting_ways(point), rlid)
 
-    def find_all_connecting_ways(self, point):
+    def find_all_connecting_ways(self, point_or_list_of_points):
+        if isinstance(point_or_list_of_points, list):
+            ways = set()
+            for point in point_or_list_of_points:
+                if point in self._realpoints:
+                    ways.update(self._realpoints[point])
+            return ways
+        point = point_or_list_of_points
         if not point in self._realpoints:
             return set()
         return self._realpoints[point]
