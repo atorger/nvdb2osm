@@ -1232,7 +1232,7 @@ TAG_TRANSLATIONS = {
         "NAMN": "name",
         "RIKTNING": None,
         "ORDNING": None,
-        "ROLL": None,
+        "ROLL": "NVDB_road_role",
         "VARD": None
     },
     "NVDB_DKGatutyp": {
@@ -1305,15 +1305,28 @@ TAG_TRANSLATIONS = {
         # grus is used for all roads that are not paved.
         "TYP=grus":   "surface=unpaved"
     },
+#    "NVDB_DKTillganglighet": {
+#        "KLASS=A": "NVDB_availability_class=1",
+#        "KLASS=B": "NVDB_availability_class=2",
+#        "KLASS=C": "NVDB_availability_class=3",
+#        "KLASS=D": "NVDB_availability_class=4"
+#    },
     "NVDB_DKVagbredd": {
         "BREDD": "width",
         "MÄTMETOD": None
     },
+#    "NVDB_DKVaghallare": {
+#        "VAEHAALAMN": "NVDB_maintainer_name",
+#        "VAEHAALAYP": "NVDB_maintainer_type",
+#        "FOEVALNIRM": "NVDB_management_type",
+#        "AVVKANEUAR": None,
+#        "ORGNISTIER": None
+#    },
     "NVDB_DKVagnummer": {
         "translator_function": tag_translation_DKVagnummer,
         "RIKTNING": None,
         "ORDNING": None,
-        "ROLL": None,
+        "ROLL": "NVDB_road_role",
         "VARD": None,
     },
     "TRV_EVB_DKDriftbidrag_statligt": {
