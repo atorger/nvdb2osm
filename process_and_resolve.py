@@ -3,14 +3,12 @@ from functools import cmp_to_key
 
 from geometry_basics import *
 from geometry_search import GeometrySearch, snap_to_closest_way
-from twodimsearch import TwoDimSearch
 from merge_tags import merge_tags, append_fixme_value
 from nvdb_segment import *
 from proj_xy import latlon_str
 from waydb import GEO_FILL_LENGTH
 from tag_translations import ALL_VEHICLES
 from nseg_tools import *
-
 
 _log = logging.getLogger("process")
 
@@ -350,7 +348,7 @@ def process_street_crossings(points, way_db, data_src_name):
         while True:
             nrbw = set()
             for w in rbw:
-                ways = way_db.gs.find_all_connecting_ways(w.way[0])
+                ways = way_db.gs.find_all_connecting_ways(w.way[0]).copy()
                 ways.update(way_db.gs.find_all_connecting_ways(w.way[-1]))
                 for w1 in ways:
                     if w1.tags.get("junction", "") == "roundabout":
@@ -748,11 +746,14 @@ def resolve_highways(way_db):
             # For forestry roads the official definition is: 7 huvudväg, 8 normalväg,
             # 9, nollväg. However, the distinction between 8 and 9 in the actual NVDB
             # data is not that good. From testing the least bad default seems to be
-            # to map both 8 and 9 to track. Some will then need manual upgrading to
-            # unclassified for best results.
+            # to map both 8 and 9 to track.
             #
             # City roads should normally already been resolved by other layers, so here
-            # we apply the highway tag as best suited in rural areas.
+            # we apply the highway tag as best suited in rural areas. Exception:
+            # The NVDB_DKGatunamn which provides NVDB_road_role tag is used to differ
+            # between service/unclassified and track on KLASS 8 and 9. (Names on forestry
+            # and other private roads comes from NVDB_DKOvrigt_vagnamn and doesn't have
+            # role tag set)
             #
             # Special case for ferry routes (shouldn't have a highway tag)
             if klass <= 1:
@@ -766,12 +767,15 @@ def resolve_highways(way_db):
             elif klass <= 7:
                 tags["highway"] = "unclassified" # 7
             elif klass <= 8:
-                if way.tags.get("NVDB_government_funded", "no") == "yes":
+                if way.tags.get("NVDB_government_funded", "no") == "yes" or "NVDB_road_role" in way.tags:
                     tags["highway"] = "unclassified"  # 8
                 else:
                     tags["highway"] = "track" # 8
             else:
-                tags["highway"] = "track" # 9
+                if way.tags.get("NVDB_government_funded", "no") == "yes" or "NVDB_road_role" in way.tags:
+                    tags["highway"] = "service"  # 9
+                else:
+                    tags["highway"] = "track" # 9
 
             # Special case for ferry
             if way.tags.get("route", None) == "ferry":
@@ -865,6 +869,395 @@ def resolve_highways(way_db):
         _log.warning(f"could not resolve tags for {fixme_count} highway segments, added fixme tags")
 
     _log.info("done")
+
+
+
+# get_connected_roads()
+#
+def get_connected_roads(ways, gs, criteria_fun):
+    processed = set()
+    roads = []
+    for way in ways:
+        if way in processed or not criteria_fun(way):
+            continue
+        road = set()
+        new_segs = { way }
+        while len(new_segs) > 0:
+            road.update(new_segs)
+            prev_segs = new_segs
+            new_segs = set()
+            for w0 in prev_segs:
+                for w in gs.find_all_connecting_ways([w0.way[0], w0.way[-1]]):
+                    if w not in road and criteria_fun(w):
+                        new_segs.add(w)
+        processed.update(road)
+        roads.append(road)
+    return roads
+
+
+# upgrade_unclassified_stumps_connected_to_residential
+#
+def upgrade_unclassified_stumps_connected_to_residential(way_db):
+
+    _log.info("Upgrading short unclassified stumps to residential (if connected to residential)...")
+    roads = get_connected_roads(way_db, way_db.gs, lambda way: way.tags.get("highway", None) == "unclassified")
+    upgrade_count = 0
+    for road in roads:
+        total_length = 0
+        has_connected_residential = False
+        for way in road:
+            length, _ = calc_way_length(way.way)
+            total_length += length
+            if total_length > 1000:
+                break
+            if not has_connected_residential:
+                for w in way_db.gs.find_all_connecting_ways([way.way[0], way.way[-1]]):
+                    if w not in road and w.tags.get("highway", None) == "residential":
+                        has_connected_residential = True
+                        break
+
+        if total_length <= 1000 and has_connected_residential:
+            for way in road:
+                _log.debug(f"Upgraded {way.rlid} from unclassified to residential due to being short stump connected to residential.")
+                way.tags["highway"] = "residential"
+                upgrade_count += 1
+    _log.info(f"done ({upgrade_count} segments upgraded from unclassified to residential)")
+
+
+# guess_upgrade_tracks
+#
+# There's not enough information for small roads (KLASS (7) 8, 9) so highway tag cannot be 100%
+# correctly resolved, so manual adjustment will be required. The goal of this function is to
+# make guesses that minimizes the need of manual adjustment
+#
+# Info not used and why:
+#   väghållare / road maintainer:
+#     - forest companies also maintain roads that we want to tag service
+#     - in many municipalities all väghållare is just the same for 8/9, "enskild" with no further
+#       information
+#   tillgänglighetsklass / availability class (NVDB_DKTillganglighet A,B,C,D):
+#     - quirky contents in forestry network, many roads at a higher class than it should be
+#
+#
+# This function must be run after resolve_highways so the basic work is already done
+#
+def guess_upgrade_tracks(way_db):
+
+    def get_deadend_parent_ways(way):
+        ways1 = way_db.gs.find_all_connecting_ways(way.way[0])
+        ways2 = way_db.gs.find_all_connecting_ways(way.way[-1])
+        if len(ways1) == 1 and len(ways2) > 1:
+            ways2 = ways2.copy()
+            return [w for w in ways2 if w != way], way.way[-1]
+        if len(ways1) > 1 and len(ways2) == 1:
+            ways1 = ways1.copy()
+            return [w for w in ways1 if w != way], way.way[0]
+        return None, None
+
+    def way_has_a_gate(way):
+        for p in way.way:
+            if p in way_db.point_db:
+                nodes = way_db.point_db[p]
+                for node in nodes:
+                    if node.tags.get("barrier", None) == "gate":
+                        return True
+        return False
+
+    def is_deadend(way):
+        ways, _ = get_deadend_parent_ways(way)
+        return ways is not None
+
+    def angle_between_ways(cp, w1, w2, go_right=True):
+        p1 = None
+        p3 = None
+        for idx, p in enumerate(w1.way):
+            if p == cp:
+                if go_right:
+                    if idx == len(w1.way)-1:
+                        p1 = w1.way[idx-1]
+                    else:
+                        p1 = w1.way[idx+1]
+                else:
+                    if idx == 0:
+                        p1 = w1.way[idx+1]
+                    else:
+                        p1 = w1.way[idx-1]
+                break
+        for idx, p in enumerate(w2.way):
+            if p == cp:
+                if go_right:
+                    if idx == len(w2.way)-1:
+                        p3 = w2.way[idx-1]
+                    else:
+                        p3 = w2.way[idx+1]
+                else:
+                    if idx == 0:
+                        p3 = w2.way[idx+1]
+                    else:
+                        p3 = w2.way[idx-1]
+                break
+        assert p1 is not None
+        assert p3 is not None
+        xa = p1.x - cp.x
+        ya = p1.y - cp.y
+        xb = p3.x - cp.x
+        yb = p3.y - cp.y
+        denom = math.sqrt(xa*xa + ya*ya) * math.sqrt(xb*xb + yb*yb)
+        if denom != 0:
+            q = (xa * xb + ya * yb) / denom
+            if q < -1:
+                # this can happen due to precision limitation, -1.0000000000000002 seen in tests
+                angle = 180
+            elif q > 1:
+                angle = 0
+            else:
+                angle = math.acos((xa * xb + ya * yb) / denom) * 180 / math.pi
+        else:
+            angle = 0
+        return angle
+
+    def has_track_name(way):
+        if not "name" in way.tags:
+            return False
+        strings = [
+            " stick",
+            " gren",
+            " stv",
+            " grv"
+        ]
+        name = way.tags["name"]
+        for s in strings:
+            if s in name:
+                return True
+        return False
+
+    ROAD_TAGS = MAJOR_HIGHWAYS + MINOR_HIGHWAYS
+    ROAD_TAGS.remove("track")
+    DW_DISTANCE = 300
+
+    _log.info("Making best guesses of upgrading highway=track to highway=unclasified or service...")
+
+    #
+    # Go through all roads and pick up all tracks that may be upgraded and put it in the "undecided" set
+    #
+    undecided = set()
+    current_service_roads = set()
+    leads_nowhere = set()
+    gate_count = 0
+    name_count = 0
+    current_service_roads_gs = GeometrySearch(DW_DISTANCE)
+    for way in way_db:
+        hw = way.tags.get("highway", None)
+        if hw == "track":
+            # exclude all tracks that have gates, this will lead to a few false positives but not too many
+            if has_track_name(way):
+                name_count += 1
+            elif way_has_a_gate(way):
+                gate_count += 1
+            else:
+                if is_deadend(way):
+                    leads_nowhere.add(way)
+                undecided.add(way)
+        elif hw == "service":
+            current_service_roads.add(way)
+            current_service_roads_gs.insert(way)
+
+    orig_count = len(undecided)
+    _log.info(f"  {orig_count} tracks to be considered for upgrading (skipped {gate_count} as they had gates, {name_count} as typical track names)")
+
+    #
+    # Collect the tracks in undecided that all lead up to a dead end (following undecided tracks) in
+    # the leads_nowhere set
+    #
+    def leads_nowhere_iteration(newest_leads_nowhere, leads_nowhere, undecided):
+        also_leads_nowhere = set()
+        for way in newest_leads_nowhere:
+            test_ways = set()
+            for w0 in way_db.gs.find_all_connecting_ways([way.way[0], way.way[-1]]):
+                if w0 not in leads_nowhere and w0 in undecided:
+                    test_ways.add(w0)
+            for w0 in test_ways:
+                for ep in (w0.way[0], w0.way[-1]):
+                    ways = way_db.gs.find_all_connecting_ways(ep)
+                    deadend_for_sure = True
+                    for w1 in ways:
+                        if w1 != w0 and w1 not in leads_nowhere:
+                            deadend_for_sure = False
+                            break
+                    if deadend_for_sure:
+                        also_leads_nowhere.add(w0)
+                        break
+        return also_leads_nowhere
+
+    also_leads_nowhere = leads_nowhere
+    while len(also_leads_nowhere) > 0:
+        also_leads_nowhere = leads_nowhere_iteration(also_leads_nowhere, leads_nowhere, undecided)
+        leads_nowhere.update(also_leads_nowhere)
+
+
+
+    #
+    # Upgrade roads that connect larger roads to unclassified
+    #
+    roads = get_connected_roads(undecided, way_db.gs, \
+                                lambda w : w not in leads_nowhere and w in undecided and int(w.tags.get("KLASS", 9)) <= 8)
+    larger_road_tags = MAJOR_HIGHWAYS + MINOR_HIGHWAYS
+    larger_road_tags.remove("track")
+    larger_road_tags.remove("service")
+    upgraded = set()
+    for road in roads:
+        ext_connected_eps = 0
+        for w0 in road:
+            for ep in (w0.way[0], w0.way[-1]):
+                for w in way_db.gs.find_all_connecting_ways(ep):
+                    if w not in road and w.tags.get("highway", None) in larger_road_tags:
+                        ext_connected_eps += 1
+                        break
+        if ext_connected_eps >= 2:
+            for w0 in road:
+                w0.tags["highway"] = "unclassified"
+            upgraded.update(road)
+    undecided -= upgraded
+    _log.info(f"  {len(upgraded)} tracks upgraded to unclassified as they form connecting links")
+
+    #
+    # Go through all ways that lead nowhere, and see which are quite likely driveways
+    #
+    processed = set()
+    driveway_candidates = set()
+    for way in leads_nowhere:
+        if way in processed or way not in undecided:
+            continue
+
+        isolated_road = True
+        road = set()
+        new_segs = { way }
+        while len(new_segs) > 0:
+            road.update(new_segs)
+            prev_segs = new_segs
+            new_segs = set()
+            for w0 in prev_segs:
+                for w in way_db.gs.find_all_connecting_ways([w0.way[0], w0.way[-1]]):
+                    if w in road:
+                        continue
+                    if w in leads_nowhere and w in undecided:
+                        new_segs.add(w)
+                    elif w in undecided or w.tags.get("highway", None) in ROAD_TAGS:
+                        isolated_road = False
+        processed.update(road)
+
+        if isolated_road:
+            # This road leads nowhere and the only entrance is via a decided track (or path)
+            # Then it's most likely not leading to housing, so we keep it as track.
+            undecided -= road
+            continue
+
+        # check which parts of the road that are candidates for likely driveways
+        for w in road:
+            pways, cp = get_deadend_parent_ways(w)
+            if pways is None:
+                # way segment not a dead end, not a driveway
+                continue
+            length, _ = calc_way_length(w.way)
+            has_connected_midpoints = len(way_db.gs.find_all_connecting_ways(w.way[1:-1])) > 1
+            if length > 150 or has_connected_midpoints:
+                # a bit too long or connected for being a likely driveway
+                continue
+            min_angle = 180
+            for pway in pways:
+                min_angle = min(angle_between_ways(cp, w, pway, go_right=True), min_angle)
+                min_angle = min(angle_between_ways(cp, w, pway, go_right=False), min_angle)
+            if min_angle < 100:
+                # connecting at a sharp angle, good driveway candidate
+                driveway_candidates.add(w)
+
+    # Filter out driveway candidates which has a nearby neighbor. At least one neighbor required to make
+    # it a likely enough driveway to consider it for upgrade
+    #neighbor_driveway_candidates = candidates_with_nearby_neighbor(driveway_candidates, current_service_roads, 300)
+    neighbor_driveway_candidates = set()
+    gs = GeometrySearch(DW_DISTANCE)
+    for way in driveway_candidates:
+        gs.insert(way)
+    for way in driveway_candidates:
+        if way in neighbor_driveway_candidates:
+            continue
+        ways = gs.find_all_nearby_ways([way.way[0], way.way[-1]])
+        ways.update(current_service_roads_gs.find_all_nearby_ways([way.way[0], way.way[-1]]))
+        if len(ways) >= 2:
+            for w in ways:
+                neighbor_driveway_candidates.add(w)
+
+    directly_connected = 0
+    #
+    # Upgrade filtered driveway candidates directly connected to a larger road
+    #
+    for way in neighbor_driveway_candidates:
+        if way not in undecided:
+            continue
+        connected_to_larger_road = False
+        for w in way_db.gs.find_all_connecting_ways([way.way[0], way.way[-1]]):
+            if w.tags.get("highway", None) in ROAD_TAGS:
+                connected_to_larger_road = True
+                break
+        if not connected_to_larger_road:
+            continue
+        current_service_roads.add(way)
+        current_service_roads_gs.insert(way)
+        undecided.remove(way)
+        way.tags["highway"] = "service"
+        directly_connected += 1
+    _log.info(f"  {directly_connected} tracks upgraded to service as likely driveways connected to larger roads")
+
+    # Add driveway candidates *not* connected to a larger road too,
+    # but only if close to a driveway that is connected
+    indirectly_connected = 0
+    for way in neighbor_driveway_candidates:
+        if way in undecided and len(current_service_roads_gs.find_all_nearby_ways([way.way[0], way.way[-1]])) >= 2:
+            current_service_roads.add(way)
+            undecided.remove(way)
+            way.tags["highway"] = "service"
+            indirectly_connected += 1
+    _log.info(f"  {indirectly_connected} tracks upgraded to service as likely driveways near others")
+
+    # Upgrade tracks that form links between larger road and current service roads, but only if they
+    # do so within a single segment.
+    # There are cases when more segments could be followed, but they are few enough to not care,
+    # the upgrade can not be 100% correct in any case.
+    upgraded = set()
+    for way in undecided:
+        has_service_connection = [ False, False ]
+        has_road_connection = [ False, False ]
+        for i, ep in enumerate([way.way[0], way.way[-1]]):
+            for w in way_db.gs.find_all_connecting_ways(ep):
+                if w == way:
+                    continue
+                if w in current_service_roads:
+                    has_service_connection[i] = True
+                elif w.tags.get("highway", None) in ROAD_TAGS:
+                    has_road_connection[i] = True
+        if not has_road_connection[0] and not has_road_connection[1]:
+            continue
+        if has_road_connection[0] != has_road_connection[1]:
+            # if not connected in both ends, don't count service connection on the same end as road connection
+            if has_road_connection[0]:
+                has_service_connection[0] = False
+            if has_road_connection[1]:
+                has_service_connection[1] = False
+        has_service_connection = has_service_connection[0] or has_service_connection[1]
+        if not has_service_connection:
+            for w in way_db.gs.find_all_connecting_ways(way.way[1:-1]):
+                if w in current_service_roads:
+                    has_service_connection = True
+                    break
+        if has_service_connection:
+            way.tags["highway"] = "service"
+            upgraded.add(way)
+
+    undecided -= upgraded
+    _log.info(f"  {len(upgraded)} tracks upgraded to service they form short links between roads and driveways")
+
+    _log.info(f"done ({orig_count - len(undecided)} of {orig_count} tracks upgraded to service)")
+
 
 # sort_multiple_road_names()
 #
@@ -1322,7 +1715,7 @@ def resolve_lanes(way_db):
         if way.tags.get("lanes", -1) == (way.tags.get("lanes:bus", 0) + way.tags.get("lanes:bus:forward", 0) + way.tags.get("lanes:bus:backward", 0)):
             way.tags["vehicle"] = way.tags.get("vehicle", "no")
             way.tags["bus"] = way.tags.get("bus", "yes")
-            _log.debug(f"Added access restrictions to {way.rlid} due to all being bus lanes");
+            _log.debug(f"Added access restrictions to {way.rlid} due to all being bus lanes")
 
         # remove redundant lanes=1 or lanes=2
         if "lanes" in way.tags:
@@ -1393,6 +1786,7 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
         "NVDB_gagata_side",
         "NVDB_layby_side",
         "NVDB_rwc_tracks",
+        "NVDB_road_role",
         "NVDB_government_funded",
         "KLASS",
         "FPVKLASS",

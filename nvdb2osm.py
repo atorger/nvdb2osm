@@ -245,7 +245,7 @@ def main():
     logging.getLogger("fiona._shim").setLevel(logging.WARNING)
     logging.getLogger("fiona.ogrext").setLevel(logging.WARNING)
     logging.getLogger("fiona.collection").setLevel(logging.WARNING)
-    _log.debug(f"args are {args}")
+    _log.info(f"args are {args}")
 
     log_version()
 
@@ -353,6 +353,8 @@ def main():
 
     sort_multiple_road_names(way_db)
     resolve_highways(way_db)
+    upgrade_unclassified_stumps_connected_to_residential(way_db)
+    guess_upgrade_tracks(way_db)
 
     # converts cycleway way crossings to node crossing, which is optional, both ways to map are correct
     simplify_cycleway_crossings(way_db)
