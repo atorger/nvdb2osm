@@ -1353,10 +1353,13 @@ TAG_TRANSLATIONS = {
         "TYP=7": "surface=asphalt"      # Förseglat grus
     },
     "NVDB_DKFarthinder": {
+        # Ideally TYP=1 should be with priority=* (to differ from TYP=3) but there's no info on which
+        # side the choker is unfortunately.
         "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
         "TYP=2":  "traffic_calming=bump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
+        # TYP=3 is similar to TYP=1, but not as narrow choker.
         "TYP=3":  "traffic_calming=choker",  # Sidoförskjutning - avsmalning
-        "TYP=4":  "traffic_calming=choker",  # Sidoförskjutning - refug
+        "TYP=4":  "traffic_calming=island",  # Sidoförskjutning - refug
         "TYP=5":  "traffic_calming=dip",     # Väghåla
         "TYP=6":  "traffic_calming=cushion", # Vägkudde
         "TYP=7":  "traffic_calming=table",   # Förhöjd genomgående GCM-passage
