@@ -1030,7 +1030,7 @@ def tag_translation_DKVaghinder(tags):
     if hindertyp == "pollare":
         tags["barrier"] = "bollard"
     elif hindertyp == "eftergivlig grind":
-        tags["barrier"] = "gate"
+        tags["barrier"] = "swing_gate"
     elif hindertyp == "ej öppningsbar grind eller cykelfålla":
         tags["barrier"] = "cycle_barrier"
     elif hindertyp == "låst grind eller bom":
