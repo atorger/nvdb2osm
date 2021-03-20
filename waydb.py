@@ -1178,7 +1178,10 @@ class WayDatabase:
                     angle = 0
                 if angle > max_angle:
                     max_angle = angle
-                    best_way = (w1, w2)
+                    if max_angle > 30:
+                        best_way = (w1, w2)
+                    else:
+                        _log.debug(f"Skipping extreme angle {angle} between {w1.rlid} {w2.rlid}")
         if best_way is None:
             return None, None
         _log.debug(f"Max angle {max_angle} for {best_way[0].rlid} to {best_way[1].rlid}")
