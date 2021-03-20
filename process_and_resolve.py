@@ -790,6 +790,11 @@ def resolve_highways(way_db):
             #print("Warning: information missing to resolve highway tag for RLID %s, adding fixme tag" % way.rlid)
             tags["fixme"] = "could not resolve highway tag"
 
+        # check if we should make this a link
+        if tags.get("highway", None) in ["motorway", "trunk", "primary", "secondary", "tertiary"] and \
+           way.tags.get("NVDB_road_role", None) == "Gren" and way.tags.get("junction", None) != "roundabout":
+            tags['highway'] += "_link"
+
         if "fixme" in tags:
             fixme_count += 1
         merge_translated_tags(way, tags)
