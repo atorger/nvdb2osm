@@ -637,6 +637,12 @@ def resolve_highways(way_db):
                 tags["foot"] = "yes"
                 tags["motor_vehicle"] = "no"
             elif gcmtyp == 28: # Cykelpassage och övergångsställe (C+G)
+
+                # While these are indeed segregated between cycleway and footway, it will split up the geometry
+                # a lot without any significant value added, especially if cycleway crossing simplification
+                # is used
+                # tags["segregated"] = "yes"
+
                 tags["highway"] = "cycleway"
                 tags["cycleway"] = "crossing"
                 tags["crossing"] = "marked"
