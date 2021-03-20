@@ -1063,7 +1063,7 @@ def guess_upgrade_tracks(way_db):
             current_service_roads_gs.insert(way)
 
     orig_count = len(undecided)
-    _log.info(f"  {orig_count} tracks to be considered for upgrading (skipped {gate_count} as they had gates, {name_count} as typical track names)")
+    _log.info(f"  {orig_count} tracks to be considered for upgrading (skipped {gate_count} as they had gates, and {name_count} with typical forestry branch road names)")
 
     #
     # Collect the tracks in undecided that all lead up to a dead end (following undecided tracks) in
