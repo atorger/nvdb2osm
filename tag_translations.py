@@ -1356,7 +1356,8 @@ TAG_TRANSLATIONS = {
         # Ideally TYP=1 should be with priority=* (to differ from TYP=3) but there's no info on which
         # side the choker is unfortunately.
         "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
-        "TYP=2":  "traffic_calming=bump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
+        # Could also be "bump", but "hump" is statistically much more common
+        "TYP=2":  "traffic_calming=hump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
         # TYP=3 is similar to TYP=1, but not as narrow choker.
         "TYP=3":  "traffic_calming=choker",  # Sidoförskjutning - avsmalning
         "TYP=4":  "traffic_calming=island",  # Sidoförskjutning - refug
