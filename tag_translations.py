@@ -1305,12 +1305,12 @@ TAG_TRANSLATIONS = {
         # grus is used for all roads that are not paved.
         "TYP=grus":   "surface=unpaved"
     },
-#    "NVDB_DKTillganglighet": {
-#        "KLASS=A": "NVDB_availability_class=1",
-#        "KLASS=B": "NVDB_availability_class=2",
-#        "KLASS=C": "NVDB_availability_class=3",
-#        "KLASS=D": "NVDB_availability_class=4"
-#    },
+    "NVDB_DKTillganglighet": {
+        "KLASS=A": "NVDB_availability_class=1",
+        "KLASS=B": "NVDB_availability_class=2",
+        "KLASS=C": "NVDB_availability_class=3",
+        "KLASS=D": "NVDB_availability_class=4"
+    },
     "NVDB_DKVagbredd": {
         "BREDD": "width",
         "MÄTMETOD": None
