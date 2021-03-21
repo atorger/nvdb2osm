@@ -12,6 +12,7 @@ from nseg_tools import *
 
 _log = logging.getLogger("process")
 
+SMALL_ROAD_RESOLVE_ALGORITHMS = ['default', 'prefer_track', 'prefer_track_static', 'prefer_service', 'prefer_service_static']
 MAJOR_HIGHWAYS = [ "trunk", "motorway", "primary", "secondary", "tertiary", "trunk_link", "motorway_link", "primary_link", "secondary_link", "tertiary_link" ]
 MINOR_HIGHWAYS = [ "residential", "unclassified", "service", "track" ]
 
@@ -530,7 +531,7 @@ def compare_vagnummer(r1, r2):
 #
 # Using information from multiple layers, figure out what the highway tag should be (and some side tags)
 #
-def resolve_highways(way_db):
+def resolve_highways(way_db, small_road_resolve_algorithm):
 
     _log.info("Resolve highway tags...")
     fixme_count = 0
@@ -762,6 +763,7 @@ def resolve_highways(way_db):
             # role tag set)
             #
             # Special case for ferry routes (shouldn't have a highway tag)
+            prefer_service = small_road_resolve_algorithm in ['prefer_service', 'prefer_service_static']
             if klass <= 1:
                 tags["highway"] = "trunk" # 0, 1
             elif klass <= 2:
@@ -775,11 +777,14 @@ def resolve_highways(way_db):
             elif klass <= 8:
                 if way.tags.get("NVDB_government_funded", "no") == "yes" or "NVDB_road_role" in way.tags:
                     tags["highway"] = "unclassified"  # 8
+                elif "NVDB_availability_class" not in way.tags and prefer_service:
+                    tags["highway"] = "service" # 8
                 else:
                     tags["highway"] = "track" # 8
             else:
-                if way.tags.get("NVDB_government_funded", "no") == "yes" or "NVDB_road_role" in way.tags:
-                    tags["highway"] = "service"  # 9
+                if way.tags.get("NVDB_government_funded", "no") == "yes" or "NVDB_road_role" in way.tags or \
+                   "NVDB_availability_class" not in way.tags and prefer_service:
+                    tags["highway"] = "service" # 9
                 else:
                     tags["highway"] = "track" # 9
 
@@ -947,7 +952,10 @@ def upgrade_unclassified_stumps_connected_to_residential(way_db):
 #     - in many municipalities all väghållare is just the same for 8/9, "enskild" with no further
 #       information
 #   tillgänglighetsklass / availability class (NVDB_DKTillganglighet A,B,C,D):
-#     - quirky contents in forestry network, many roads at a higher class than it should be
+#     - actual value has quirky contents in forestry network, many roads at a higher class than it
+#       should be
+#     - however if the value exists or not is a lead, value doesn't exist on driveways, unfortunately
+#       it's quite often missing also on some forestry roads and other tracks as well
 #
 #
 # This function must be run after resolve_highways so the basic work is already done
@@ -1221,14 +1229,16 @@ def guess_upgrade_tracks(way_db):
 
     # Add driveway candidates *not* connected to a larger road too,
     # but only if close to a driveway that is connected
-    indirectly_connected = 0
+    upgraded = set()
     for way in neighbor_driveway_candidates:
         if way in undecided and len(current_service_roads_gs.find_all_nearby_ways([way.way[0], way.way[-1]])) >= 2:
-            current_service_roads.add(way)
-            undecided.remove(way)
             way.tags["highway"] = "service"
-            indirectly_connected += 1
-    _log.info(f"  {indirectly_connected} tracks upgraded to service as likely driveways near others")
+            upgraded.add(way)
+    _log.info(f"  {len(upgraded)} tracks upgraded to service as likely driveways near others")
+    for way in upgraded:
+        current_service_roads.add(way)
+        current_service_roads_gs.insert(way)
+    undecided -= upgraded
 
     # Upgrade tracks that form links between larger road and current service roads, but only if they
     # do so within a single segment.
@@ -1263,8 +1273,11 @@ def guess_upgrade_tracks(way_db):
         if has_service_connection:
             way.tags["highway"] = "service"
             upgraded.add(way)
-
+    for way in upgraded:
+        current_service_roads.add(way)
+        current_service_roads_gs.insert(way)
     undecided -= upgraded
+
     _log.info(f"  {len(upgraded)} tracks upgraded to service they form short links between roads and driveways")
 
     _log.info(f"done ({orig_count - len(undecided)} of {orig_count} tracks upgraded to service)")
@@ -1799,6 +1812,7 @@ def cleanup_used_nvdb_tags(way_db_ways, in_use):
         "NVDB_rwc_tracks",
         "NVDB_road_role",
         "NVDB_government_funded",
+        "NVDB_availability_class",
         "KLASS",
         "FPVKLASS",
         "GCMTYP",

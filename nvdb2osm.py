@@ -195,6 +195,7 @@ def main():
         "NVDB_DKOvrigt_vagnamn",
         "NVDB_DKRekomVagFarligtGods",
         "NVDB_DKSlitlager",
+        "NVDB_DKTillganglighet",
         "NVDB_DKVagbredd",
         "NVDB_DKVagnummer",
         "TRV_EVB_DKDriftbidrag_statligt",
@@ -220,6 +221,7 @@ def main():
     parser.add_argument('--skip_railway', help="Don't require railway geometry (leads to worse railway crossing handling)", action='store_true')
     parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network *.shp (usually Järnvägsnät_grundegenskaper.zip)")
     parser.add_argument('--rlid', help="Include RLID in output", action='store_true')
+    parser.add_argument('--small_road_resolve', help="Specify small road resolve algorithm", default="default")
     parser.add_argument('--skip_self_test', help="Skip self tests", action='store_true')
     parser.add_argument(
         '-d', '--debug',
@@ -256,6 +258,11 @@ def main():
     output_filename = args.osm_file
     railway_filename = args.railway_file
     perform_self_testing = not args.skip_self_test
+    small_road_resolve_algorithm = args.small_road_resolve
+
+    if small_road_resolve_algorithm not in SMALL_ROAD_RESOLVE_ALGORITHMS:
+        _log.error(f"small_road_resolve parameter must be one of {SMALL_ROAD_RESOLVE_ALGORITHMS}")
+        sys.exit(1)
 
     if railway_filename is None and not skip_railway:
         _log.error("File with national railway geometry not provided (use --railway_file). Can be skipped by adding --skip_railway parameter, but then railway crossings will be somewhat misaligned")
@@ -352,9 +359,10 @@ def main():
         waydb2osmxml(way_db, "pre-resolve.osm")
 
     sort_multiple_road_names(way_db)
-    resolve_highways(way_db)
-    upgrade_unclassified_stumps_connected_to_residential(way_db)
-    guess_upgrade_tracks(way_db)
+    resolve_highways(way_db, small_road_resolve_algorithm)
+    if small_road_resolve_algorithm not in ['prefer_service_static', 'prefer_track_static']:
+        upgrade_unclassified_stumps_connected_to_residential(way_db)
+        guess_upgrade_tracks(way_db)
 
     # converts cycleway way crossings to node crossing, which is optional, both ways to map are correct
     simplify_cycleway_crossings(way_db)
