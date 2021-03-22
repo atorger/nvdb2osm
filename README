@@ -232,7 +232,14 @@ Det finns två huvudregler man måste följa när man importerar data:
    geometri inne i trånga situationer i städer kan det finnas olika
    kreativa lösningar för och NVDB har inte alltid den bästa.
 
-Att sammanfoga ett nytt OSM-lager som detta skript genererar med
+Viktigt att förstå är att "import" av detta slag är en tidskrävande
+manuell process med dels justering av indatat (NVDB-lagret är inte
+100% korrekt eller komplett rakt ur skriptet) och dels spårbar
+modifiering av nuvarande OSM-data. Det handlar alltså *inte* om att
+bara kasta bort det som finns inne nu och blint ersätta det med
+NVDB-lagret.
+
+Att sammanfoga ett nytt NVDB-lager som detta skript genererar med
 existerande kartdata i OSM är en ganska avancerad uppgift, och det
 hjälper om man är van att använda JOSM innan man försöker.
 
