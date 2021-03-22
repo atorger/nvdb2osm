@@ -666,6 +666,14 @@ I lantbruksbyar är det vanligt att en service-väg till ett hus
 därefter ska övergå till track (kanske grade4 eller 5) när vägen leder
 vidare in i lantbruket. Detta är något skriptet nästan alltid missar.
 
+Man kan ibland bli osäker om det ska vara den ena eller andra
+highway-typen. Det går inte komma ifrån att det finns randfall där det
+är en bedömningsfråga, och olika personer kan göra olika
+bedömningar. Det viktiga är att man har en god avsikt och gör så gott
+man kan efter förmåga. Att det kanske hade blivit lite annorlunda med
+en annan kartläggare är okej. Det vi inte vill se är att man blint
+behåller det skriptet gissat bara för att det är bekvämast.
+
 Flerfiliga vägar:
 
 NVDB har information om antal körfält och även antal bussfält, men
@@ -888,6 +896,9 @@ perfekt. Detta är några fel som observerats:
   - I sällsynta fall (storleksordningen 1 ställe per kommun) kan en
     väg ha en liten parallelförlyttning med sväng där det egentligen
     ska vara en perfekt raksträcka.
+      - Mer ofta kan landsvägars geometri vara lätt "vågig" när flera
+        vägar ansluter i närheten av varandra, vid behov kan man
+        snygga till det.
   - Enskild väg som är belagd kan vara markerad som grus
   - Vägar i små samhällen kan vara markerad som belagd fastän det är
     grus.
@@ -898,7 +909,10 @@ perfekt. Detta är några fel som observerats:
     manuellt korrigera dem.
 
 Utöver rena fel så finns inte tillräcklig information i NVDB för att
-göra 100% korrekt översättning av highway-typen.
+göra 100% korrekt översättning av highway-typen. Highway-typ handlar
+också i viss mån om personlig bedömning och i vissa fall är det
+"korrekt" med flera alternativ, vilket gör att en perfekt match hade
+inte varit att förvänta även om NVDB hade fullständig information.
 
 
 Hålla datat uppdaterat
