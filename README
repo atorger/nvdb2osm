@@ -577,42 +577,57 @@ vägtyp.
 
 Vägtypen residential finns på ett sätt representerad i NVDB,
 vägar i tätbebyggt område pekas ut specifikt och de görs till
-residential av skriptet. Det blir väldigt sällan för många
-residential-vägar i översättningen, men däremot för få. Större byar
-som inte anses vara tätbebyggt område i NVDB ska fortfarande i regel
-ha residential-vägar i OSM.
+residential av skriptet. Det blir sällan för många residential-vägar i
+översättningen, men däremot för få. Större byar som inte anses vara
+tätbebyggt område i NVDB ska fortfarande i regel ha residential-vägar
+i OSM. Gränsen när man använder residential istället för unclassified
+i en by är lite flytande och det är upp till egen bedömning. Om husen
+står tätt liksom i en stad så är det en kandidat för residential. Vitt
+utspridda lantbruksbyar använder man unclassified för gemensamt
+brukade vägar, service för uppfarter till bostäder, och track för
+övriga grusvägar och traktorspår. Vissa byar kan ha en gles
+lantbruksdel och ett tättare byggt område, då kan det vara aktuellt
+att använad residential på endast de vägar som är i det täta området,
+man behöver alltså inte ha residential i hela byn bara för att man har
+det på ett ställe.
 
 Större vägar i städer ska ibland vara tertiary eller högre istället
 för residential. Denna översättning missas ofta i NVDB-lagret eftersom
 nivåerna i NVDB stämmer dåligt överens med OSM-tradition. Eftersom
-städer i regel är väl kartlagde i det avseendet är det nästan alltid
-bäst att använda den vägtyp som var innan.
+städer i regel är väl kartlagda i det avseendet är det nästan alltid
+bäst att använda den vägtyp som finns sedan tidigare.
 
-I OSM är det ganska vanligt att vägar i städers industriområden satts
-till unclassified istället för residential, medan i NVDB-lagret
-översätts de till residential. Efter diskussioner med svenska
-kartläggare har vi kommit fram till att det är att föredra som NVDB
-gör, vägar som tydligt hör ihop med själva stan ska vara residential
-även om det är i ett industriområde där det inte finns bostäder, så i
-det här fallet ska man alltså ändra det som fanns i OSM tidigare.
+I OSM i Sverige är det ganska vanligt att vägar i städers
+industriområden satts till unclassified istället för residential,
+medan i NVDB-lagret översätts de till residential. Efter diskussioner
+med svenska kartläggare har vi kommit fram till att det är att föredra
+som NVDB gör, vägar som tydligt hör ihop med själva stan ska vara
+residential även om det är i ett industriområde där det inte finns
+bostäder, så i det här fallet ska man alltså ändra det som fanns i OSM
+tidigare. Inne i ett större samhälle och städer där gatunamn används
+på alla gator kan residential användas även på kortare stumpar som
+kanske varit service i en by, så länge de har gatunamn och är ansluten
+till övriga residential-vägnätet.
 
 Vägtyperna unclassified, service och track är de knepigaste för
 skriptet att avgöra. Det beror på att de typerna inte mappar direkt
-mot en nivå som funktionell vägklass, utan det handlar om hur vägen
-används, och det finns inte den informationen in NVDB. Genom att
-kombinera flera olika taggar ur NVDB-lagret och analysera geometrin
-kan skriptet göra en ganska okej gissning, men det finns garanterat
-behov av manuella justeringar.
+mot en nivå som funktionell vägklass, utan det handlar till stor del
+om hur vägen används, och det finns inte den informationen in
+NVDB. Genom att kombinera flera olika taggar ur NVDB-lagret och
+analysera geometrin kan skriptet göra en ganska okej gissning, men det
+finns garanterat behov av manuella justeringar. Hur mycket beror på
+lite hur geometrin ser ut, vissa områden är svårare för skriptet att
+avgöra än andra.
 
 Unclassified ska användas för vägar som leder någonstans, till en by
 eller som kopplar ihop andra större vägar, eller vägar som är mer
 allmänt använda än service och viktigare än track. Den fungerar
-ungefär som residential i småbyar (storleksordningen 30 hushåll). Inte
-alla vägar som kopplar ihop ska dock vara unclassified, det måste vara
-rimlig bilväg som faktiskt används nu och då, så åtminstone
-motsvarande track tracktype grade3 eller bättre (oftast grade2 eller
-asfalt). Skriptet kommer i vissa fall gissa fel och göra dessa som
-track, eller göra vissa som borde var track till unclassified.
+ungefär som residential i små eller glesa byar. Inte alla vägar som
+kopplar ihop ska dock vara unclassified, det måste vara rimlig bilväg
+som faktiskt används nu och då, så åtminstone motsvarande track
+tracktype grade3 eller bättre (oftast grade2 eller asfalt). Skriptet
+kommer i vissa fall gissa fel och göra dessa som track, eller göra
+vissa som borde var track till unclassified.
 
 Track används lite speciellt i svensk kartläggningstradition. OSM
 wikin är ganska luddig och inte specifikt skriven för svenska
@@ -620,24 +635,32 @@ förhållanden förstås. På många ställen i världen används track just
 bara som traktorspår där man inte gärna kör bil överhuvudtaget. I
 Sverige med vårt väldigt stora grusvägsnät används dock track även
 till "mindre viktiga grusvägar", och vill man ange kvalitet så
-använder man tracktype grade1 - grade5.
+använder man tracktype grade1 - grade5. Skriptet sätter inte ut grade,
+eftersom den informationen inte finns i NVDB.
 
- Grade1: belagd väg, används typ aldrig. Kan vara aktuell för gammal
- övergiven asfalterad väg.
- Grade2: vanlig grusväg i gott skick, inga problem att kör 70 km/h med
- vanlig bil
+ Grade1: belagd väg, används nästan aldrig. Kan vara aktuell för
+ gammal övergiven asfalterad väg.
+ Grade2: vanlig grusväg i gott skick, inga problem att köra 70 km/h
+ med vanlig bil.
  Grade3: grönsträngad grusväg, går i regel köra 70 med vanlig bil, men
- med mer försiktighet
+ med mer försiktighet.
  Grade4: äldre mer eller mindre övergiven grusväg i dåligt skick eller
- traktorspår i lantbruket, går att köra SUV i lägre fart
+ traktorspår i lantbruket, går att köra SUV i lägre
+ fart. Åkermarksvägar är typiskt framkomligare än skogsvägar med
+ denna gradering.
  Grade5: ännu sämre, troligen ej framkomlig med bil, traktor
  krävs. Används även för traktorspår i lantbruket som inte är direkt
  anlagd väg utan går direkt över jordbruksmark, de är i regel
  framkomliga för bilar. Ser helt gröna ut på sommartidsflygfoto.
 
-Om man inte anger kvalitet på sina track ska de vara grade3 eller
-bättre. NVDB innehåller i regel bara sånt som motsvarar grade3 och
-bättre.
+Om man inte anger kvalitet på sina track bör de vara grade3 eller
+bättre, alltså helt okej att köra en vanlig bil på. NVDB innehåller i
+regel bara sånt som motsvarar grade3 och bättre, men det finns
+undantag. Lantmäteriets rasterkarta har fler vägar och också mer
+information om vägens kvalitet vilket man kan se på de olika typerna
+av sträckning. Använd dock flygfoto, på de riktigt små enskilda
+vägarna har även lantmäteriets karta ofta fel i fråga om vägars
+kvalitet.
 
 Service-typen ska användas för vägar som leder till ett hus, strand,
 camping osv. Även här är OSM-wikin lite luddig och man får titta på
@@ -645,7 +668,13 @@ svensk tradition. Vanligast i fråga om NVDB är korta snuttar som går
 fram till enskilda bostadshus. Det finns ingen information i NVDB
 om vilka vägar som leder till bostäder så skriptet får gissa och gör
 en del fel, så vissa av vägarna blir kvar som track och behöver
-manuellt uppgraderas.
+manuellt uppgraderas. Där kartläggning redan gjorts är det vanligt att
+det finns flera service-vägar kartlagda som inte finns i NVDB, till
+exempel uppfarter och vägar inne i gårdar på industriområden och på
+stora parkeringar. De måste man komma ihåg att koppla igen på när man
+uppgraderar de större vägarna, och ofta finns behov att att justera
+position på dem då de ofta kartlagts efter äldre flygfoton som haft
+sämre positionering.
 
 Var extra misstänksam mot långa service-vägar. En väg som går till en
 telemast kan ansen vara en service-väg, men de kartläggs ofta som
@@ -656,23 +685,24 @@ biten service.
 
 I glesbygden kan det finnas korta vägstumpar ute i ingenstans som
 används till att sätta i båtar mm. Dessa brukar lämnas som track
-eftersom de inte har en frekvent och tydlig användning.
+eftersom de inte har en frekvent och tydlig användning. Inne i byar
+sätts dessa typer av vägar lämpligen till service.
 
 I lite större byar kan skriptet tro att alla vägar ska vara service,
 fast det egentligen är lämpligare med en kombination av unclassified
-och service, och om byn är större eller tätare byggd, residential.
+och service, och om byn är tätare byggd, residential.
 
 I lantbruksbyar är det vanligt att en service-väg till ett hus
 därefter ska övergå till track (kanske grade4 eller 5) när vägen leder
 vidare in i lantbruket. Detta är något skriptet nästan alltid missar.
 
 Man kan ibland bli osäker om det ska vara den ena eller andra
-highway-typen. Det går inte komma ifrån att det finns randfall där det
-är en bedömningsfråga, och olika personer kan göra olika
-bedömningar. Det viktiga är att man har en god avsikt och gör så gott
-man kan efter förmåga. Att det kanske hade blivit lite annorlunda med
-en annan kartläggare är okej. Det vi inte vill se är att man blint
-behåller det skriptet gissat bara för att det är bekvämast.
+highway-typen. Det går inte komma ifrån att det finns knepiga
+fall där där olika personer kan göra olika bedömningar. Det viktiga är
+att man har en god avsikt och gör så gott man kan efter förmåga. Att
+det kanske hade blivit lite annorlunda med en annan kartläggare är
+okej. Det vi inte vill se är att man blint behåller det skriptet
+gissat bara för att det är bekvämast.
 
 Flerfiliga vägar:
 
@@ -691,12 +721,11 @@ behålla som det är i OSM, eller det som är i NVDB. Oftast är det
 vettigast att ta alternativet med fler ways eftersom vägen i dessa
 fall har stor utbredning.
 
-Stora och flerfiliga vägar ingår nästan alltid i route-relationer,
-dessa måste man se till att de är korrekta efter man uppdaterat
-geometrin. När man använder replace geometry och matchar segment mot
-segment så sköts det automatiskt. När man gör om geometrin så att den
-kanske går från en way till två, måste man manuellt uppdatera
-rutterna.
+Stora och flerfiliga vägar ingår ofta i route-relationer, dessa måste
+man se till att de är korrekta efter man uppdaterat geometrin. När man
+använder replace geometry-verktyget och matchar segment mot segment så
+sköts det automatiskt. När man gör om geometrin så att den kanske går
+från en way till två, måste man manuellt uppdatera rutterna.
 
 Överlag är uppdatering av flerfiliga vägar en av de mer avancerade
 uppgifterna i importarbetet.
@@ -713,17 +742,16 @@ vägarna utan namn.
 
 I vissa städer ges cykelvägarna samma namn som gatan intill, skriptet
 rensar bort dessa för enligt OSM-tradition ska cykelvägarna inte ha
-egna namn då. Har cykelvägen eget namn behålls det.
+egna namn då. Har cykelvägen ett unikt namn behålls det.
 
 I vissa fall har namnen rapporterats in till NVDB med endast
 versaler. Skripet konverterar dessa efter bästa förmåga.
 
 Förkortningar förekommer i vägnamnen. Norra, Södra osv förkortas ofta
 till en bokstav. Vi rekommenderar att man ändrar det och skriver ut
-fulla namnet om man vet vad det är.
-
-Vissa förkortningar kan man dock behålla, som Cpl för
-cirkulationsplats, grv. och stv. för grenväg och stickväg.
+fulla namnet om man vet vad det är. Vissa förkortningar kan man dock
+behålla, som Cpl för cirkulationsplats, grv. och stv. för grenväg och
+stickväg.
 
 Skogbilvägsnätet har mindre bra kvalitet på vägnamnen. Dels är det
 ganska vanligt med felstavningar, och dels är det vanligt med "lat"
@@ -748,12 +776,22 @@ följande strategi:
     typen av namnsättning, då kan man välja behålla den eller förfina
     genom att peka ut vilka som är grenvägar genom att lägga på
     "grv.".
+  - Var uppmärksam på glapp, dvs att det kan vara ett par hundra meter
+    utan namn och sen fortsätter det med samma namn, i de flesta fall
+    är detta ett fel i NVDB och vägen ska ha samma namn även i
+    glappet.
+  - Då vägen nyligen förlängts kan sista delen vara utan namn. Det är
+    då säkrast att lämna den utan namn istället för att använda samma
+    namn som innan, eftersom det är ganska vanligt att förlängningen
+    även om den bygger vidare och inte är en tydlig gren får ett nytt
+    namn.
 
 OSM har en tradition av att använda en del icke-officiella lokala
 namn. Så ibland när man sammanfogar stöter man på ställen där namnet
 på vägen kan vara ett helt annat än det som är i NVDB. Där är det upp
 till din egna bedömning vad bästa alternativet är. Ofta är det att
-behålla OSM-namnet som det är, och lägga in NVDB-namnet på alt_name.
+behålla OSM-namnet som det är, och lägga in NVDB-namnet på
+alt_name. Eller tvärtom.
 
 Inne i städer är det vanligt att OSM och NVDB har oilka positioner på
 exakt var namnet på en väg börjar och slutar. NVDB har oftast bra
@@ -797,11 +835,11 @@ behov. Dessa vändplaner finns i regel inte i rasterkartan heller.
 Återvändsgränder med vändplan i städer är inte heller kartlagda i
 NVDB (ej heller i rasterkartan), så de får man lägga till manuellt.
 
-Vägar som slutar med återvändsgränd eller vändplan ritas oftast lite
-väl långt, till slutet av vändplanen medan OSM-tradition är att sluta
-vägen mitt på vändplanen. Är man noggrann bör man matcha positionen
-mot (positionsjusterat) flygfoto och det innebär i flesta fall kan man
-korta av vägen något för att matcha OSM-tradition.
+Vägar som slutar med återvändsgränd eller vändplan ritas i NVDB oftast
+lite väl långt, till slutet av vändplanen medan OSM-tradition är att
+sluta vägen mitt på vändplanen. Är man noggrann bör man matcha
+positionen mot (positionsjusterat) flygfoto och det innebär i flesta
+fall kan man korta av vägen något för att matcha OSM-tradition.
 
 Parkeringar:
 
@@ -816,11 +854,11 @@ till en punkt.
 
 För andra typer av parkeringar är dock areor att rekommendera, och
 dessa måste alltså kartläggas manuellt. NVDB-skripet lägger in en nod
-för större rastplatser, men dessa består i verkligheten ofta av flera
-parkeringar och kanske byggnader, och är oftast redan
-kartlagda. Kontrollera så att all information som NVDB-noden
-tillhandahåller finns i rastplatskartläggningen, och plocka sedan bort
-NVDB-noden helt om parkeringen är kartlagd som en area.
+för större rastplatser längs landsvägarna, men dessa består i
+verkligheten ofta av flera parkeringar och kanske byggnader, och är
+oftast redan kartlagda. Kontrollera så att all information som
+NVDB-noden tillhandahåller finns i rastplatskartläggningen, och plocka
+sedan bort NVDB-noden helt om parkeringen är kartlagd som en area.
 
 Vägbommar:
 
@@ -828,7 +866,9 @@ Bommar som NVDB markerat med "låst grind eller bom" sätts till
 barrier=gate med access=permissive. Det betyder att bommen är
 generellt sett öppen, men den kanske inte är det. Om man vet att
 bommen är i regel låst kan man ändra taggen till access=private (det
-finns också locked=yes, men den taggen är mindre använd).
+finns också locked=yes, men den taggen är mindre använd). Ruttverktyg
+som använder OSM-data tillåter i regel ruttning via access=permissive,
+men inte via access=private.
 
 Ofta(st) är bom-typen av typen "lift_gate", men den mer generella
 taggen "gate" används för säkerhets skull. Tyvärr har inte OSM en
@@ -856,9 +896,9 @@ Själva järnvägen läggs inte till av skriptet eftersom den av tradition
 kartläggs separat från vägar av kartläggare som specialiserar sig på
 just järnväg.
 
-NVDB:s järnvägsgeometri har ibland mindre offset-fel, om en
-järnvägskorsning verkar skumt placerad jämför med rasterkartan som är
-mer att lita på då det gäller järnvägen.
+NVDB:s järnvägsgeometri har ibland mindre positionsfel, om en
+järnvägskorsning verkar skumt placerad jämför med Lantmäteriets
+rasterkarta som är mer att lita på då det gäller positionering.
 
 Vägnummer:
 
@@ -874,7 +914,20 @@ länsbokstaven vara med här.
 
 Undernummer används sällan i olika kartor, men det finns med i OSM nu
 och skriptet tar därför med dem läggs på efter huvudnumret separerat
-med en punkt, exempel ("E 4.20").
+med en punkt (exempel: "E 4.20").
+
+
+Förenklingar
+------------
+
+Skriptet tar inte med all information som finns i NVDB. Ett exempel är
+att det inte sätter maxspeed 50 och 70 på småvägar där hastigheten
+inte är skyltad. Bredd på vägarna tas bara med på stora vägar med
+mera. Korsningar på cykelväg görs om från way till node. Exakt vilket
+data som tagits med och vilka förenklingar som gjorts har diskuterats
+och beslutats tillsammans med vana kartläggare. Är man intresserad av
+detaljer så får man kika i skriptets källkod.
+
 
 Fel i NVDB-datat
 ----------------
@@ -886,6 +939,10 @@ perfekt. Detta är några fel som observerats:
     felplacerade eller för korta för att nå över älven. Broar kan
     saknas, särskilt för cykelvägar. Ungefär hälften av broarna
     behöver någon slags korrigering.
+  - Där en bäck går under vägen i en stor vägtrumma kan ibland NVDB
+    lägga in en mycket kort bro, fastän det inte är en
+    brokonstruktion. Här är det bättre att ta bort bron och använda
+    kulvert för bäcken.
   - Broar som korsar andra vägar kan vara hopkopplade felaktigt i
     korsningen.
   - Gatunamn är i hög grad korrekt, men storleksordningen 1 av 1000
