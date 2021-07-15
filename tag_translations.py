@@ -1168,96 +1168,96 @@ def process_tag_translations(tags, tag_translations):
 # Table for tag translations.
 #
 TAG_TRANSLATIONS = {
-    "NVDB_DKAntal_korfalt2": {
+    "NVDB_DK_O_96_Antal_korfalt": {
         "KOEFAETSAL": "lanes",
         "KOEFAETING": None,
         "KOEFAETIN1": None,
         "RIKTNING": None
     },
-    "NVDB_DKBarighet": {
+    "NVDB_DK_O_10_Barighet": {
         "translator_function": tag_translation_DKBarighet,
     },
-    "NVDB_DKBegrAxelBoggiTryck": {
+    "NVDB_DK_O_9_BegrAxelBoggiTryck": {
         "translator_function": tag_translation_DKBegrAxelBoggiTryck,
     },
-    "NVDB_DKBegrBruttovikt": {
+    "NVDB_DK_O_6_BegrBruttovikt": {
         "translator_function": tag_translation_DKBegrBruttovikt,
     },
-    "NVDB_DKBegrFordBredd": {
+    "NVDB_DK_O_7_BegrFordBredd": {
         "translator_function": tag_translation_DKBegrFordBredd,
     },
-    "NVDB_DKBegrFordLangd": {
+    "NVDB_DK_O_8_BegrFordLangd": {
         "translator_function": tag_translation_DKBegrFordLangd,
     },
-    "NVDB_DKBro_och_tunnel": {
+    "NVDB_DK_O_25_Bro_och_tunnel": {
         "IDENTITET": None,
         "LAENGD": None,
         "NAMN": None
     },
-    "NVDB_DKCirkulationsplats": {
+    "NVDB_DK_O_11_Cirkulationsplats": {
         "add_keys_and_values": "junction=roundabout",
         "RIKTNING": None
     },
-    "NVDB_DKCykVgKatier": {
+    "NVDB_DK_O_107_CykelVgsKat": {
         "FOEBINELRI": "NVDB_cykelvagkat",
     },
-    "NVDB_DKFarjeled": {
+    "NVDB_DK_O_23_Farjeled": {
         "LEDSNAMN": "name",
         "add_keys_and_values": "route=ferry"
     },
-    "NVDB_DKForbjudenFardriktning": {
+    "NVDB_DK_O_77_ForbjudenFardriktning": {
         "RIKTNING=Mot": "oneway=yes",
         "RIKTNING=Med": "oneway=-1",
         "expect_unset_time_intervals": True
     },
-    "NVDB_DKForbudTrafik": {
+    "NVDB_DK_O_12_ForbudTrafik": {
         "translator_function": tag_translation_DKForbudTrafik,
     },
-    "NVDB_DKFunkVagklass": {},
-    "NVDB_DKGagata": {
+    "NVDB_DK_O_38_FunkVagklass": {},
+    "NVDB_DK_O_13_Gagata": {
         "add_keys_and_values":    "NVDB_gagata=yes",
         "SIDA=Vänster":           "NVDB_gagata_side=left",
         "SIDA=Höger":             "NVDB_gagata_side=right",
         "SIDA=Vänster och höger": "NVDB_gagata_side=both",
         "SIDA=None": None
     },
-    "NVDB_DKGangfartsomrade": {
+    "NVDB_DK_O_33_Gangfartsomrade": {
         "add_keys_and_values":    "NVDB_gangfartsomrode=yes",
         "SIDA=Vänster":           "NVDB_gangfartsomrode_side=left",
         "SIDA=Höger":             "NVDB_gangfartsomrode_side=right",
         "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both",
         "SIDA=None": None
     },
-    "NVDB_DKGatunamn": {
+    "NVDB_DK_O_20_Gatunamn": {
         "NAMN": "name",
         "RIKTNING": None,
         "ORDNING": None,
         "ROLL": "NVDB_road_role",
         "VARD": None
     },
-    "NVDB_DKGatutyp": {
+    "NVDB_DK_O_100_Gatutyp": {
         "TYP": "NVDB_gatutyp",
         "INDSTRVAEG": None,
         "UPPAMLNDDE": None,
         "AVFRTSAEEG": None
     },
-    "NVDB_DKGCM_belyst": {
+    "NVDB_DK_O_97_GCM_belyst": {
         "add_keys_and_values": "lit=yes"
     },
-    "NVDB_DKGCM_separation": {
+    "NVDB_DK_O_98_GCM_separation": {
         "translator_function": tag_translation_DKGCM_separation
     },
-    "NVDB_DKGCM_vagtyp": { },
-    "NVDB_DKHastighetsgrans": {
+    "NVDB_DK_O_99_GCM_vagtyp": { },
+    "NVDB_DK_O_48_Hastighetsgrans": {
         "translator_function": tag_translation_DKHastighetsgrans,
     },
-    "NVDB_DKHuvudled": {
+    "NVDB_DK_O_104_Huvudled": {
         "add_keys_and_values": "priority_road=designated",
     },
-    "NVDB_DKInskrTranspFarligtGods": {
+    "NVDB_DK_O_16_InskrTranspFarligtGods": {
         "translator_function": tag_translation_DKInskrTranspFarligtGods,
     },
-    "NVDB_DKKollektivkorfalt": {
+    "NVDB_DK_O_101_Kollektivkorfalt": {
         "translator_function": tag_translation_DKKollektivkorfalt,
     },
     "NVDB_DKMiljozon": {
@@ -1273,17 +1273,17 @@ TAG_TRANSLATIONS = {
         "MILOEZNKSS=Miljözon klass 3": "environmental_zone:sv=3", # custom tag
         "MILOEZNKSS=None": None
     },
-    "NVDB_DKMotortrafikled": {
+    "NVDB_DK_O_18_Motortrafikled": {
         "add_keys_and_values": "NVDB_motortrafikled=yes"
     },
-    "NVDB_DKMotorvag": {
+    "NVDB_DK_O_19_Motorvag": {
         "add_keys_and_values": "NVDB_motorvag=yes"
     },
-    "NVDB_DKOvrigt_vagnamn": {
+    "NVDB_DK_O_21_Ovrigt_vagnamn": {
         "NAMN": "name",
         "ORGANISAT": None
     },
-    "NVDB_DKReflinjetillkomst": {
+    "NVDB_DK_O_43_Reflinjetillkomst": {
         "ANSVARORG": None,
         "DIM1": None,
         "FLYGHJD1": None,
@@ -1293,11 +1293,11 @@ TAG_TRANSLATIONS = {
         "SKALFKT1": None,
         "SLUTDAT1": None
     },
-    "NVDB_DKRekomVagFarligtGods": {
+    "NVDB_DK_O_39_RekomVagFarligtGods": {
         "REKOMEND=rekommenderad primär väg":   "hazmat=designated",
         "REKOMEND=rekommenderad sekundär väg": "hazmat=designated"
     },
-    "NVDB_DKSlitlager": {
+    "NVDB_DK_O_30_Slitlager": {
         # note: surface=paved would be more correct, but asphalt is so dominant in Sweden that we use that
         "TYP=belagd": "surface=asphalt",
 
@@ -1305,13 +1305,13 @@ TAG_TRANSLATIONS = {
         # grus is used for all roads that are not paved.
         "TYP=grus":   "surface=unpaved"
     },
-    "NVDB_DKTillganglighet": {
+    "NVDB_DK_O_34_Tillganglighet": {
         "KLASS=A": "NVDB_availability_class=1",
         "KLASS=B": "NVDB_availability_class=2",
         "KLASS=C": "NVDB_availability_class=3",
         "KLASS=D": "NVDB_availability_class=4"
     },
-    "NVDB_DKVagbredd": {
+    "NVDB_DK_O_31_Vagbredd": {
         "BREDD": "width",
         "MÄTMETOD": None
     },
@@ -1322,27 +1322,27 @@ TAG_TRANSLATIONS = {
 #        "AVVKANEUAR": None,
 #        "ORGNISTIER": None
 #    },
-    "NVDB_DKVagnummer": {
+    "NVDB_DK_O_4_Vagnummer": {
         "translator_function": tag_translation_DKVagnummer,
         "RIKTNING": None,
         "ORDNING": None,
         "ROLL": "NVDB_road_role",
         "VARD": None,
     },
-    "TRV_EVB_DKDriftbidrag_statligt": {
+    "EVB_O_10368_Driftbidrag_statligt": {
         "add_keys_and_values": "NVDB_government_funded=yes",
         "VAGDELSN1": None,
         "VAGNR1": None,
         "SLITLAG1": None,
         "TRAFIKKL1": None,
     },
-    "VIS_DKFunktionellt_priovagnat": {},
-    "VIS_DKOmkorningsforbud": {
+    "VIS_DK_O_64_Funktionellt_priovagnat": {},
+    "VIS_DK_O_7_Omkorningsforbud": {
         "RIKTNING=Med":         "overtaking:forward=no",
         "RIKTNING=Mot":         "overtaking:backward=no",
         "RIKTNING=Med och mot": "overtaking=no",
     },
-    "VIS_DKSlitlager": {
+    "VIS_DK_O_12_Slitlager": {
         "TYP=0": None,                  # Uppgift saknas
         "TYP=1": "surface=asphalt",     # Bituminös
         "TYP=2": "surface=asphalt",     # Oljegrus
@@ -1352,7 +1352,7 @@ TAG_TRANSLATIONS = {
         "TYP=6": "surface=asphalt",     # Y1G
         "TYP=7": "surface=asphalt"      # Förseglat grus
     },
-    "NVDB_DKFarthinder": {
+    "NVDB_DK_O_26_Farthinder": {
         # Ideally TYP=1 should be with priority=* (to differ from TYP=3) but there's no info on which
         # side the choker is unfortunately.
         "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
@@ -1370,7 +1370,7 @@ TAG_TRANSLATIONS = {
         "TYP=11": "traffic_calming=dynamic_bump", # Dynamiskt passivt farthinder
         "LAEGE": None
     },
-    "NVDB_DKGCM_passage": {
+    "NVDB_DK_O_27_GCM_passage": {
         "REFGPASAGE=ja": "crossing:island=yes",
         "REFGPASAGE=nej": None,
         "REFGPASAGE=okänt": None,
@@ -1381,12 +1381,12 @@ TAG_TRANSLATIONS = {
         "PASSAGETYP=signalreglerat övergångsställe och/eller signalreg": [ "highway=crossing", "crossing=traffic_signals" ],
         "PASSAGETYP=övergångsställe och/eller cykelpassage/cykelöverfa": [ "highway=crossing", "crossing=marked" ],
     },
-    "NVDB_DKHojdhinder45dm": {
+    "NVDB_DK_O_24_Hojdhinder45dm": {
         "FRIHOJD": "maxheight",
         "HOJDID": None,
         "TYP": None
     },
-    "NVDB_DKKorsning": {
+    "NVDB_DK_O_22_Korsning": {
         "GENRALSEYP": "NVDB_generaliseringstyp",
         "SIGALRGLNG=ja":    [ "highway=traffic_signals" ],
         "SIGALRGLNG=nej":   None,
@@ -1397,16 +1397,16 @@ TAG_TRANSLATIONS = {
         "XKOORDINAT": None,
         "YKOORDINAT": None
     },
-    "NVDB_DKStopplikt": {
+    "NVDB_DK_O_103_Stopplikt": {
         "add_keys_and_values":  "highway=stop",
         "RIKTNING=Med":         "direction=forward",
         "RIKTNING=Mot":         "direction=backward",
         "RIKTNING=Med och mot": None
     },
-    "NVDB_DKVaghinder": {
+    "NVDB_DK_O_37_Vaghinder": {
         "translator_function": tag_translation_DKVaghinder
     },
-    "NVDB_DKVajningsplikt": {
+    "NVDB_DK_O_102_Vajningsplikt": {
         "add_keys_and_values":  "highway=give_way",
         "RIKTNING=Med":         "direction=forward",
         "RIKTNING=Mot":         "direction=backward",
@@ -1417,7 +1417,7 @@ TAG_TRANSLATIONS = {
 #        "KLASS": None,
 #        "TYP": None,
 #    },
-    "VIS_DKJarnvagskorsning": {
+    "VIS_DK_O_4_Jarnvagskorsning": {
         "PLAKORNIID": None,              # Plankorsnings-Id
         "JVGBANDEL": None,               # Jvg-bandel
         "JVGILOETER": None,              # Jvg-kilometer
@@ -1443,10 +1443,10 @@ TAG_TRANSLATIONS = {
         "YKOORDINAT": None,   # Y-koordinat
         "SENSTANDAD": None    # Senast ändrad
     },
-    "VIS_DKP_ficka": {
+    "VIS_DK_O_90_P_ficka": {
         "translator_function": tag_translation_DKP_ficka
     },
-    "VIS_DKRastplats" : {
+    "VIS_DK_O_32_Rastplats" : {
         "translator_function": tag_translation_DKRastplats,
     }
 }

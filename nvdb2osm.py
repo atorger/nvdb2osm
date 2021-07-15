@@ -156,65 +156,65 @@ def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None, do_snap=T
 
 def main():
     """The main function, entry point of the program."""
-    master_geometry_name = "NVDB_DKReflinjetillkomst"
+    master_geometry_name = "NVDB_DK_O_43_Reflinjetillkomst"
 
     # Note the order how the layers are merged is in part important, see comments
     # So be careful if you re-order
     line_names = [
         # We always do FunkVagklass and GCM_vagtyp/DKCykVgKatier first, as experience tells us
         # that if there is a problem with the reference geometry these layers will trigger it.
-        "NVDB_DKFunkVagklass", # all streets/roads
-        "NVDB_DKGCM_vagtyp",   # all footways/cycleways
-        "NVDB_DKCykVgKatier",  # most often redundant, otherwise complements DKGCM_vagtyp
+        "NVDB_DK_O_38_FunkVagklass", # all streets/roads
+        "NVDB_DK_O_99_GCM_vagtyp",   # all footways/cycleways
+        "NVDB_DK_O_107_CykelVgsKat",  # most often redundant, otherwise complements DKGCM_vagtyp
 
         # just alphabetical order
-        "NVDB_DKAntal_korfalt2",
-        "NVDB_DKBarighet",
-        "NVDB_DKBegrAxelBoggiTryck",
-        "NVDB_DKBegrBruttovikt",
-        "NVDB_DKBegrFordBredd",
-        "NVDB_DKBegrFordLangd",
-        "NVDB_DKBro_och_tunnel",
-        "NVDB_DKCirkulationsplats",
-        "NVDB_DKFarjeled",
-        "NVDB_DKForbjudenFardriktning",
-        "NVDB_DKForbudTrafik",
-        "NVDB_DKGagata",
-        "NVDB_DKGangfartsomrade",
-        "NVDB_DKGatunamn",
-        "NVDB_DKGatutyp",
-        "NVDB_DKGCM_belyst",
-        "NVDB_DKGCM_separation",
-        "NVDB_DKHastighetsgrans",
-        "NVDB_DKHuvudled",
-        "NVDB_DKInskrTranspFarligtGods",
-        "NVDB_DKKollektivkorfalt",
+        "NVDB_DK_O_96_Antal_korfalt",
+        "NVDB_DK_O_10_Barighet",
+        "NVDB_DK_O_9_BegrAxelBoggiTryck",
+        "NVDB_DK_O_6_BegrBruttovikt",
+        "NVDB_DK_O_7_BegrFordBredd",
+        "NVDB_DK_O_8_BegrFordLangd",
+        "NVDB_DK_O_25_Bro_och_tunnel",
+        "NVDB_DK_O_11_Cirkulationsplats",
+        "NVDB_DK_O_23_Farjeled",
+        "NVDB_DK_O_77_ForbjudenFardriktning",
+        "NVDB_DK_O_12_ForbudTrafik",
+        "NVDB_DK_O_13_Gagata",
+        "NVDB_DK_O_33_Gangfartsomrade",
+        "NVDB_DK_O_20_Gatunamn",
+        "NVDB_DK_O_100_Gatutyp",
+        "NVDB_DK_O_97_GCM_belyst",
+        "NVDB_DK_O_98_GCM_separation",
+        "NVDB_DK_O_48_Hastighetsgrans",
+        "NVDB_DK_O_104_Huvudled",
+        "NVDB_DK_O_16_InskrTranspFarligtGods",
+        "NVDB_DK_O_101_Kollektivkorfalt",
         # "NVDB_DKMiljozon", experimental tags, excluding them for now
-        "NVDB_DKMotortrafikled",
-        "NVDB_DKMotorvag",
-        "NVDB_DKOvrigt_vagnamn",
-        "NVDB_DKRekomVagFarligtGods",
-        "NVDB_DKSlitlager",
-        "NVDB_DKTillganglighet",
-        "NVDB_DKVagbredd",
-        "NVDB_DKVagnummer",
-        "TRV_EVB_DKDriftbidrag_statligt",
-        "VIS_DKFunktionellt_priovagnat",
-        "VIS_DKOmkorningsforbud",
-        "VIS_DKSlitlager"
+        "NVDB_DK_O_18_Motortrafikled",
+        "NVDB_DK_O_19_Motorvag",
+        "NVDB_DK_O_21_Ovrigt_vagnamn",
+        "NVDB_DK_O_39_RekomVagFarligtGods",
+        "NVDB_DK_O_30_Slitlager",
+        "NVDB_DK_O_34_Tillganglighet",
+        "NVDB_DK_O_31_Vagbredd",
+        "NVDB_DK_O_4_Vagnummer",
+        "EVB_O_10368_Driftbidrag_statligt",
+        "VIS_DK_O_64_Funktionellt_priovagnat",
+        "VIS_DK_O_7_Omkorningsforbud",
+        "VIS_DK_O_12_Slitlager"
     ]
 
     point_names = [
-        "NVDB_DKFarthinder",
-        "NVDB_DKGCM_passage",
-        "NVDB_DKHojdhinder45dm",
-        "NVDB_DKKorsning",
-        "NVDB_DKStopplikt",
-        "NVDB_DKVaghinder",
-        "NVDB_DKVajningsplikt",
-        "VIS_DKJarnvagskorsning",
-        "VIS_DKP_ficka",
-        "VIS_DKRastplats",
+        "NVDB_DK_O_26_Farthinder",
+        "NVDB_DK_O_27_GCM_passage",
+        "NVDB_DK_O_24_Hojdhinder45dm",
+        "NVDB_DK_O_22_Korsning",
+        "NVDB_DK_O_103_Stopplikt",
+        "NVDB_DK_O_37_Vaghinder",
+        "NVDB_DK_O_102_Vajningsplikt",
+        "VIS_DK_O_4_Jarnvagskorsning",
+        "VIS_DK_O_90_P_ficka",
+        "VIS_DK_O_32_Rastplats",
     ]
     parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
     parser.add_argument('--dump_layers', help="Write an OSM XML file for each layer", action='store_true')
