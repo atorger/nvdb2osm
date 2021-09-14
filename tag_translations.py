@@ -1,102 +1,102 @@
 
-# AGGREGATLevkval_DoU_2017               o not relevant (leveranskvalitetsklass)
-# AGGREGATVagkategori                    o redundant (aggregate road types, government roads only)
-# ATKATK_Matplats                        o not relevant (measurement place, not food place)
-# BATMAN_*                               o redundant (bridges and tunnels, doesn't add relevat info over NVDB_DKBro_och_tunnel)
-# Miljö_Landskap*                        o not relevant
-# Net                                    o redundant
-# TFR_DKTjalrestriktion                  o not relevant (temporary information of road damage)
-# TRAFIK_DKTrafik                        o not relevant (traffic statistics)
-# TRV_EVB_DKDriftbidrag_statligt         - for resolving highway (figuring out difference between track/unclassified on small roads)
-# VIS_DKBrunn___Slamsugning              o not translated
-# VIS_DKBullerskydd_vag                  o not translated (noise barrier, but incomplete and geometry on road rather than wall)
-# VIS_DKDriftomrade                      o not relevant
-# VIS_DKDriftvandplats                   o not relevant (operating turning point can be routed in road network)
-# VIS_DKFPV_*                            o not relevant (prioritized roads for certain uses)
-# VIS_DKFunktionellt_priovagnat          - for resolving highway (a less detailed NVDB_DKFunkVagklass)
-# VIS_DKHallplatslage                    o not translated (suitably used separately when mapping bus lines)
-# VIS_DKHallplats                        o not translated (suitably used separately when mapping bus lines)
-# VIS_DKJarnvagskorsning                 - railway crossings (poorly aligned, railways loaded to snap alignment)
-# VIS_DKKalibreringsstracka              o not relevant (measurement reference)
-# VIS_DKKantstolpe                       o not translated (rare, and mainly for winter maintenance)
-# VIS_DKKatastrofoverfart                o not translated (not existing OSM tags, not important for normal users)
-# VIS_DKMittremsa                        o not relevant (lane separation in meters)
-# VIS_DKOmkorningsforbud                 - overtaking=no
-# VIS_DKOverledningsplats                o not translated (similar to VIS_DKKatastrofoverfart)
-# VIS_DKPendlings__och_servicevg         o not relevant
-# VIS_DKP_ficka                          - parking=layby
-# VIS_DKRaffla                           o not translated (rare, no existing OSM tag, not important)
-# VIS_DKRastplats                        - amenity=parking etc, requires manual splitting to multiple nodes/areas (fixme tag added)
-# VIS_DKSidoanlaggningsvag               o redundant
-# VIS_DKSlitlager                        - detailed road surface for government managed roads (complements NVDB_Slitlager)
-# VIS_DKStamvag                          o redundant
-# VIS_DKStigningsfalt                    o not translated (rare, generally covered by increase of lanes)
-# VIS_DKStorstadsvag                     o redundant
-# VIS_DKStrateg_VN_tyngretranspo         o not relevant
-# VIS_DKTEN_T_Vagnat                     o redundant
-# VIS_DKVagnybyggnad_2009                o not relevant
-# VIS_DKVagtyp                           o redundant (government roads only)
-# VIS_DKViltpassage_i_plan               o not translated
-# VIS_DKViltstangsel                     o not translated (wildlife fence, but not mapped at fence but rather on road)
-# VIS_DKViltuthopp                       o not translated
-# VIS_DKVinter2003                       o not translated (winter_service=yes, but only covering the large roads,
+# AGGREGATLevkval_DoU_2017       o not relevant (leveranskvalitetsklass)
+# AGGREGATVagkategori            o redundant (aggregate road types, government roads only)
+# ATKATK_Matplats                o not relevant (measurement place, not food place)
+# BATMAN_*                       o redundant (bridges and tunnels, doesn't add relevat info over NVDB-Bro_och_tunnel)
+# Miljö_Landskap*                o not relevant
+# Net                            o redundant
+# TFR-Tjalrestriktion            o not relevant (temporary information of road damage)
+# TRAFIK-Trafik                  o not relevant (traffic statistics)
+# EVB-Driftbidrag_statligt       - for resolving highway (figuring out difference between track/unclassified on small roads)
+# VIS-Brunn___Slamsugning        o not translated
+# VIS-Bullerskydd_vag            o not translated (noise barrier, but incomplete and geometry on road rather than wall)
+# VIS-Driftomrade                o not relevant
+# VIS-Driftvandplats             o not relevant (operating turning point can be routed in road network)
+# VIS-FPV_*                      o not relevant (prioritized roads for certain uses)
+# VIS-Funktionellt_priovagnat    - for resolving highway (a less detailed NVDB-FunkVagklass)
+# VIS-Hallplatslage              o not translated (suitably used separately when mapping bus lines)
+# VIS-Hallplats                  o not translated (suitably used separately when mapping bus lines)
+# VIS-Jarnvagskorsning           - railway crossings (poorly aligned, railways loaded to snap alignment)
+# VIS-Kalibreringsstracka        o not relevant (measurement reference)
+# VIS-Kantstolpe                 o not translated (rare, and mainly for winter maintenance)
+# VIS-Katastrofoverfart          o not translated (not existing OSM tags, not important for normal users)
+# VIS-Mittremsa                  o not relevant (lane separation in meters)
+# VIS-Omkorningsforbud           - overtaking=no
+# VIS-Overledningsplats          o not translated (similar to VIS-Katastrofoverfart)
+# VIS-Pendlings__och_servicevg   o not relevant
+# VIS-P_ficka                    - parking=layby
+# VIS-Raffla                     o not translated (rare, no existing OSM tag, not important)
+# VIS-Rastplats                  - amenity=parking etc, requires manual splitting to multiple nodes/areas (fixme tag added)
+# VIS-Sidoanlaggningsvag         o redundant
+# VIS-Slitlager                  - detailed road surface for government managed roads (complements NVDB_Slitlager)
+# VIS-Stamvag                    o redundant
+# VIS-Stigningsfalt              o not translated (rare, generally covered by increase of lanes)
+# VIS-Storstadsvag               o redundant
+# VIS-Strateg_VN_tyngretranspo   o not relevant
+# VIS-TEN_T_Vagnat               o redundant
+# VIS-Vagnybyggnad_2009          o not relevant
+# VIS-Vagtyp                     o redundant (government roads only)
+# VIS-Viltpassage_i_plan         o not translated
+# VIS-Viltstangsel               o not translated (wildlife fence, but not mapped at fence but rather on road)
+# VIS-Viltuthopp                 o not translated
+# VIS-Vinter2003                 o not translated (winter_service=yes, but only covering the large roads,
 #                                                          ie not all roads that actually have winter service)
-# VIS_DKVVIS                             o not relevant (weather stations)
+# VIS-VVIS                       o not relevant (weather stations)
 
 #
 # At the time of writing these are all NVDB files, and how they are used in the translation:
 #
-# NVDB_DKAntal_korfalt2            - lanes=x
-# NVDB_DKBarighet                  - maxweight=x
-# NVDB_DKBegrAxelBoggiTryck        - maxaxleload=x, maxbogieweight=x, maxaxleload:conditional=x
-# NVDB_DKBegrBruttovikt            - maxweightrating=x
-# NVDB_DKBegrFordBredd             - maxwidth=x
-# NVDB_DKBegrFordLangd             - maxlength=x
-# NVDB_DKBro_och_tunnel            - bridges and tunnels
-# NVDB_DKC_Cykelled                o not translated (named cycling routes, similar to NVDB_DKTurismcykelled)
-# NVDB_DKCirkulationsplats         - junction=roundabout
-# NVDB_DKC_Rekbilvagcykeltrafik    o not translated (recommended road for cyclists)
-# NVDB_DKCykVgKatier               - used to resolve highway, often redundant (subset of DKGCM_vagtyp), but not everywhere
-# NVDB_DKFarjeled                  - ferry routes
-# NVDB_DKFarthinder                - traffic_calming=x
-# NVDB_DKForbjudenFardriktning     - oneway
-# NVDB_DKForbjudenSvang            o ? empty data in Stockholm, Göteborg and other test areas
-# NVDB_DKForbudTrafik              - traffic restrictions, partly translated (too specific, not enough OSM tags available)
-# NVDB_DKFramkFordonskomb          o not translated (rare tag, possibility for trucks etc to get through)
-# NVDB_DKFunkVagklass              - used to resolve highway
-# NVDB_DKGagata                    - used to resolve highway
-# NVDB_DKGangfartsomrade           - used to resolve highway
-# NVDB_DKGatunamn                  - street names
-# NVDB_DKGatutyp                   - used to resolve highway
-# NVDB_DKGCM_belyst                - lit=yes
-# NVDB_DKGCM_passage               - traffic signals for footway/cycleway
-# NVDB_DKGCM_separation            - cycleway separation
-# NVDB_DKGCM_vagtyp                - cycleways and footways (and some more other rare types)
-# NVDB_DKHastighetsgrans           - maxspeed, including time limits
-# NVDB_DKHojdhinder45dm            - maxheight
-# NVDB_DKHuvudled                  - priority_road=designated
-# NVDB_DKInskrTranspFarligtGods    - hazmat=no (hazardous goods)
-# NVDB_DKKollektivkorfalt          - psv:lanes=* (not enough info to know placement of lanes or if bus or psv)
-# NVDB_DKKorsning                  - highway=traffic_signals, names for roundabouts
-# NVDB_DKMiljozon                  - Swedish environment zones, custom tag used for now
-# NVDB_DKMotortrafikled            - used to resolve highway
-# NVDB_DKMotorvag                  - used to resolve highway
-# NVDB_DKOvrigt_vagnamn            - road names
-# NVDB_DKReflinjetillkomst         - used as reference geometry, no tags used
-# NVDB_DKRekomVagFarligtGods       - hazmat=designated
-# NVDB_DKSlitlager                 - road surface paved/gravel
-# NVDB_DKStopplikt                 - highway=stop
-# NVDB_DKSvangmojlighet            o not translated (rare tag, possibility for trucks to turn in tight crossings)
-# NVDB_DKTattbebyggtOmrade         o redundant (subset of DKGatutyp)
-# NVDB_DKTillganglighet            o redundant (similar to DKFunkVagKlass)
-# NVDB_DKTurismcykelled            o not translated (named cycling routes)
-# NVDB_DKVagbredd                  - street width
-# NVDB_DKVaghallare                o not translated (road maintainer)
-# NVDB_DKVaghinder                 - barrier=x
-# NVDB_DKVagnummer                 - ref=x and used to resolve highway
-# NVDB_DKVagtrafiknat              o redundant
-# NVDB_DKVajningsplikt             - highway=give_way
-# NVDB_DKVandmojlighet             o was turning_circle, but is too often wrong so no longer used
+# NVDB-Antal_korfalt2            - lanes=x
+# NVDB-Barighet                  - maxweight=x
+# NVDB-BegrAxelBoggiTryck        - maxaxleload=x, maxbogieweight=x, maxaxleload:conditional=x
+# NVDB-BegrBruttovikt            - maxweightrating=x
+# NVDB-BegrFordBredd             - maxwidth=x
+# NVDB-BegrFordLangd             - maxlength=x
+# NVDB-Bro_och_tunnel            - bridges and tunnels
+# NVDB-C_Cykelled                o not translated (named cycling routes, similar to NVDB-Turismcykelled)
+# NVDB-Cirkulationsplats         - junction=roundabout
+# NVDB-C_Rekbilvagcykeltrafik    o not translated (recommended road for cyclists)
+# NVDB-CykelVgsKat               - used to resolve highway, often redundant (subset of GCM_vagtyp), but not everywhere
+# NVDB-Farjeled                  - ferry routes
+# NVDB-Farthinder                - traffic_calming=x
+# NVDB-ForbjudenFardriktning     - oneway
+# NVDB-ForbjudenSvang            o ? empty data in Stockholm, Göteborg and other test areas
+# NVDB-ForbudTrafik              - traffic restrictions, partly translated (too specific, not enough OSM tags available)
+# NVDB-FramkFordonskomb          o not translated (rare tag, possibility for trucks etc to get through)
+# NVDB-FunkVagklass              - used to resolve highway
+# NVDB-Gagata                    - used to resolve highway
+# NVDB-Gangfartsomrade           - used to resolve highway
+# NVDB-Gatunamn                  - street names
+# NVDB-Gatutyp                   - used to resolve highway
+# NVDB-GCM_belyst                - lit=yes
+# NVDB-GCM_passage               - traffic signals for footway/cycleway
+# NVDB-GCM_separation            - cycleway separation
+# NVDB-GCM_vagtyp                - cycleways and footways (and some more other rare types)
+# NVDB-Hastighetsgrans           - maxspeed, including time limits
+# NVDB-Hojdhinder45dm            - maxheight
+# NVDB-Huvudled                  - priority_road=designated
+# NVDB-InskrTranspFarligtGods    - hazmat=no (hazardous goods)
+# NVDB-Kollektivkorfalt          - psv:lanes=* (not enough info to know placement of lanes or if bus or psv)
+# NVDB-Korsning                  - highway=traffic_signals, names for roundabouts
+# NVDB-Miljozon                  - Swedish environment zones, custom tag used for now
+# NVDB-Motortrafikled            - used to resolve highway
+# NVDB-Motorvag                  - used to resolve highway
+# NVDB-Ovrigt_vagnamn            - road names
+# NVDB-Reflinjetillkomst         - used as reference geometry, no tags used
+# NVDB-RekomVagFarligtGods       - hazmat=designated
+# NVDB-Slitlager                 - road surface paved/gravel
+# NVDB-Stopplikt                 - highway=stop
+# NVDB-Svangmojlighet            o not translated (rare tag, possibility for trucks to turn in tight crossings)
+# NVDB-TattbebyggtOmrade         o redundant (subset of Gatutyp)
+# NVDB-Tillganglighet            o redundant (similar to FunkVagKlass)
+# NVDB-Turismcykelled            o not translated (named cycling routes)
+# NVDB-Vagbredd                  - street width
+# NVDB-Vaghallare                o not translated (road maintainer)
+# NVDB-Vaghinder                 - barrier=x
+# NVDB-Vagnummer                 - ref=x and used to resolve highway
+# NVDB-Vagtrafiknat              o redundant
+# NVDB-Vajningsplikt             - highway=give_way
+# NVDB-Vandmojlighet             o was turning_circle, but is too often wrong so no longer used
 
 import logging
 import string
@@ -109,6 +109,8 @@ _log = logging.getLogger("translations")
 # append_fixme_value()
 #
 def append_fixme_value(tags, fixme_value):
+    if fixme_value is None:
+        return
     if "fixme" not in tags:
         tags["fixme"] = "NVDB import: " + fixme_value
     else:
@@ -154,7 +156,7 @@ def add_extra_nodes_tag(tags, extra_nodes):
 def parse_speed_limit(tags, key):
     speed = tags[key]
     # text "gångfart" is very rare (forgot which dataset it was seen in)
-    # we use DKGangfartsomrade rather than this to resolve living_street
+    # we use Gangfartsomrade rather than this to resolve living_street
     # This could probably be used also on pedestrian streets (gågata) which
     # is not the same as living street.
     if speed == "gångfart":
@@ -193,11 +195,11 @@ def parse_direction(tags):
 #
 def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
     del_tags = []
-    idx = 1
+    add_tags = []
     vtypes = []
-    while key_base + str(idx) in tags:
-        key = key_base + str(idx)
-        if tags[key] is not None and tags[key] != -1:
+    fixme = None
+    for key in tags:
+        if key.startswith(key_base) and tags[key] != -1:
             v = tag_translation_fordon_trafikant(tags[key], tags["RLID"])
             if v == "FIXME":
                 append_fixme_value(tags, "Unknown tag %s" % tags[key])
@@ -208,19 +210,20 @@ def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
                     purpose_list.append(v.split()[1])
                 else:
                     _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
-                    append_fixme_value(tags, "%s contains conditional element" % key_base)
+                    fixme = f"{key_base} contains conditional element";
             elif v.startswith("USER"):
                 if user_list is not None:
                     user_list.append(v.split()[1])
                 else:
                     _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
-                    append_fixme_value(tags, "%s contains conditional element" % key_base)
+                    fixme = f"{key_base} contains conditional element";
             else:
                 vtypes.append(v)
-        del_tags.append(key)
-        idx += 1
+        if key.startswith(key_base):
+            del_tags.append(key)
     for k in del_tags:
         del tags[k]
+    append_fixme_value(tags, fixme)
     return vtypes
 
 # Translation table used by the tag_translation_fordon_trafikant() function
@@ -251,7 +254,7 @@ VEHICLES_AND_ROAD_USERS_TRANSLATIONS = {
     "fordon eller fordonståg vars längd, lasten inräkna": "lhv",
 
     # full length: "fordon som används av rörelsehindrade med särskilt tillstånd"
-    "fordon som används av rörelsehindrade med särskilt": "USER disabled",
+    "fordon som används av rörelsehindrade med särskilt tillstånd": "USER disabled",
 
     "fordon som används för distribution av post":        "IGNORE",
     "fyrhjulig moped":       "atv",
@@ -366,12 +369,12 @@ def tag_translation_single_value_with_time_interval(tags, key, value):
     else:
         tags[key] = value
 
-# tag_translation_DKBarighet()
+# tag_translation_Barighet()
 #
 # Maxweight
 #  - "Särskilda villkor" (specific conditions) not documented in NVDB so cannot be translated
 #
-def tag_translation_DKBarighet(tags):
+def tag_translation_Barighet(tags):
     winter_bk = tags["BAEIGHTSOD"] is not None and tags["BAEIGHTSOD"] != tags["BAEIGHTSSS"]
     tag_translations = {
         "BAEIGHTSSS=BK 1": "maxweight=64",
@@ -394,12 +397,12 @@ def tag_translation_DKBarighet(tags):
         tags["maxweight:conditional"] = str(tags["wc"]) + " @ (" + start_winter + "-" + stop_winter + ")"
     _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3"]]
 
-# tag_translation_DKBegrAxelBoggiTryck()
+# tag_translation_BegrAxelBoggiTryck()
 #
 # Maxaxleload/maxbogieweight/triple axle
 #  - we skip information about organisation (Länsstyrelse) etc, and just keep the weight information
 #
-def tag_translation_DKBegrAxelBoggiTryck(tags):
+def tag_translation_BegrAxelBoggiTryck(tags):
     time_interval = parse_time_interval_tags(tags)
     if time_interval == -1:
         append_fixme_value(tags, "time interval parse failure")
@@ -428,12 +431,12 @@ def tag_translation_DKBegrAxelBoggiTryck(tags):
         tags.pop("TYPTRYCK" + str(i), None)
     _ = [tags.pop(key, None) for key in [ "AARTAL1", "AARTAL2", "LOEPNUMME1", "LOEPNUMME2", "MEDELADEON", "ORGNISTI1", "ORGNISTI2" ]]
 
-# tag_translation_DKBegrBruttovikt()
+# tag_translation_BegrBruttovikt()
 #
 # Maxweightrating
 #  - FORD_TAG=ja means "also applies to vehicle trains". OSM doesn't do that distinction, so we ignore it
 #
-def tag_translation_DKBegrBruttovikt(tags):
+def tag_translation_BegrBruttovikt(tags):
     key = "maxweightrating"
     value = tags["BRUTTOVIKT"]
     tags.pop("RIKTNING", None) # ignored
@@ -441,11 +444,11 @@ def tag_translation_DKBegrBruttovikt(tags):
     tags.pop("BRUTTOVIKT", None)
     tag_translation_single_value_with_time_interval(tags, key, value)
 
-# tag_translation_DKBegrFordBredd()
+# tag_translation_BegrFordBredd()
 #
 # Maxwidth
 #
-def tag_translation_DKBegrFordBredd(tags):
+def tag_translation_BegrFordBredd(tags):
     key = "maxwidth"
     value = tags["FORD_BREDD"]
     tags.pop("FORD_BREDD", None)
@@ -453,11 +456,11 @@ def tag_translation_DKBegrFordBredd(tags):
         tags.pop("FORDTRAF" + str(i), None) # doesn't seem to be used
     tag_translation_single_value_with_time_interval(tags, key, value)
 
-# tag_translation_DKBegrFordLangd()
+# tag_translation_BegrFordLangd()
 #
 # Maxlength
 #
-def tag_translation_DKBegrFordLangd(tags):
+def tag_translation_BegrFordLangd(tags):
     key = "maxlength"
     value = tags["FORD_LGD"]
     tags.pop("FORD_LGD", None)
@@ -465,13 +468,13 @@ def tag_translation_DKBegrFordLangd(tags):
         tags.pop("FORDTRAF" + str(i), None) # doesn't seem to be used
     tag_translation_single_value_with_time_interval(tags, key, value)
 
-# tag_translation_DKForbudTrafik()
+# tag_translation_ForbudTrafik()
 #
 # Traffic restrictions.
 #   - Quite tricky to get right.
 #   - Cannot be translated 100% correct due to too few OSM tags, and some NVDB free text fields
 #
-def tag_translation_DKForbudTrafik(tags):
+def tag_translation_ForbudTrafik(tags):
 
     # BESKRGFART      Beskrivning (fritext, sällsynt, verkar vara samma som BSEKR_GEJ1)
     # BSEKR_GEJ1      Gäller ej.Beskrivning (fritext, exempel: "Fordon som används vid bärgningsarbete")
@@ -493,7 +496,7 @@ def tag_translation_DKForbudTrafik(tags):
     for k, v in list(tags.items()):
         if v is None:
             del tags[k]
-    _log.debug(f"DKForbudTrafik input: {tags} {ti}")
+    _log.debug(f"ForbudTrafik input: {tags} {ti}")
 
     forbidden_ti = ti["/"]
     exemption_ti = ti["GE/"]
@@ -589,14 +592,14 @@ def tag_translation_DKForbudTrafik(tags):
         idx += 1
     _ = [tags.pop(key, None) for key in ["BESKRGFART", "BSEKR_GEJ1", "GENOMFART", "TOTALVIKT"]]
 
-    _log.debug(f"DKForbudTrafik output {tags}")
+    _log.debug(f"ForbudTrafik output {tags}")
 
-# tag_translation_DKGCM_separation()
+# tag_translation_GCM_separation()
 #
 # At the time of writing cycleway separation is just a proposal, but quite much use in Germany
 # https://wiki.openstreetmap.org/wiki/Proposed_features/cycleway:separation
 #
-def tag_translation_DKGCM_separation(tags):
+def tag_translation_GCM_separation(tags):
     key = None
     key2 = None
     if tags["SIDA"] == "Höger":
@@ -610,7 +613,7 @@ def tag_translation_DKGCM_separation(tags):
         _log.info(f"ignoring separation with SIDA {tags['SIDA']} (RLID {tags['RLID']})")
     else:
         _log.warning(f"unknown SIDA {tags['SIDA']} (RLID {tags['RLID']})")
-        append_fixme_value(tags, "DKGCM_separation: unknown SIDA value")
+        append_fixme_value(tags, "GCM_separation: unknown SIDA value")
 
     trans_separation = {
         1: "separation_kerb", # kantsten
@@ -625,17 +628,17 @@ def tag_translation_DKGCM_separation(tags):
 
     if separation not in trans_separation:
         _log.warning(f"unknown SEPARATION {separation} (RLID {tags['RLID']})")
-        append_fixme_value(tags, f"DKGCM_separation: unknown SEPARATION value {separation}")
+        append_fixme_value(tags, f"GCM_separation: unknown SEPARATION value {separation}")
     elif trans_separation.get(separation, None) is not None and key is not None:
         tags[key] = trans_separation[separation]
         if key2 is not None:
             tags[key2] = trans_separation[separation]
 
-# tag_translation_DKHastighetsgrans()
+# tag_translation_Hastighetsgrans()
 #
 # Maxspeed, sometimes conditional
 #
-def tag_translation_DKHastighetsgrans(tags):
+def tag_translation_Hastighetsgrans(tags):
     time_interval = parse_time_interval_tags(tags)
     if time_interval == -1:
         append_fixme_value(tags, "time interval parse failure")
@@ -650,13 +653,13 @@ def tag_translation_DKHastighetsgrans(tags):
     only_applies_to_these_vehicles = tags["HAVGIE1"] == 2
     doesnt_apply_to_these_vehicles = tags["HAVGIE1"] == 1
     if len(vtypes) > 0 and tags["HAVGIE1"] == -1:
-        append_fixme_value(tags, "DKHastighetsgrans: got vehicles but applies-to not set")
-        _log.warning(f"DKHastighetsgrans: got vehicles without applies-to set RLID {tags['RLID']}")
+        append_fixme_value(tags, "Hastighetsgrans: got vehicles but applies-to not set")
+        _log.warning(f"Hastighetsgrans: got vehicles without applies-to set RLID {tags['RLID']}")
         only_applies_to_these_vehicles = True # guess
 
     if (only_applies_to_these_vehicles or doesnt_apply_to_these_vehicles) and len(vtypes) == 0:
-        append_fixme_value(tags, "DKHastighetsgrans: got applies-to but no vehicles")
-        _log.warning(f"DKHastighetsgrans: got applies-to without vehicles RLID {tags['RLID']}")
+        append_fixme_value(tags, "Hastighetsgrans: got applies-to but no vehicles")
+        _log.warning(f"Hastighetsgrans: got applies-to without vehicles RLID {tags['RLID']}")
         only_applies_to_these_vehicles = False
         doesnt_apply_to_these_vehicles = False
 
@@ -671,8 +674,8 @@ def tag_translation_DKHastighetsgrans(tags):
             cond_str = "(weight>%s)" % max_weight
 
     if (cond_str != "" or len(vtypes) > 0) and (alt_maxspeed < 0 or alt_maxspeed == maxspeed):
-        append_fixme_value(tags, "DKHastighetsgrans: conditions without alternate speed")
-        _log.warning(f"DKHastighetsgrans: conditions without alternate speed {tags} (RLID {tags['RLID']} {vtypes} {cond_str})")
+        append_fixme_value(tags, "Hastighetsgrans: conditions without alternate speed")
+        _log.warning(f"Hastighetsgrans: conditions without alternate speed {tags} (RLID {tags['RLID']} {vtypes} {cond_str})")
         cond_str = ""
 
     if only_applies_to_these_vehicles:
@@ -697,16 +700,16 @@ def tag_translation_DKHastighetsgrans(tags):
     tags.pop("HAVGIE1", None)
     tags.pop("TOTALVIKT1", None)
 
-# tag_translation_DKInskrTranspFarligtGods()
+# tag_translation_InskrTranspFarligtGods()
 #
 # Restrictions for hazardous materials
 #
-def tag_translation_DKInskrTranspFarligtGods(tags):
+def tag_translation_InskrTranspFarligtGods(tags):
     may_not = tags["FARINTE"]
     # we translate all values to hazmat=no
     if may_not not in ("föras", "stannas", "parkeras", "stannas eller parkeras"):
         _log.warning(f"unknown FARINTE value {tags} (RLID {tags['RLID']})")
-        append_fixme_value(tags, "DKInskrTranspFarligtGods: unknown FARINTE value")
+        append_fixme_value(tags, "InskrTranspFarligtGods: unknown FARINTE value")
 
     time_intervals = parse_time_interval_tags(tags)
     if time_intervals == -1:
@@ -729,7 +732,7 @@ def tag_translation_DKInskrTranspFarligtGods(tags):
     tags.pop("PLATS1", None)
     tags.pop("RIKTNING", None)
 
-# tag_translation_DKKollektivkorfalt()
+# tag_translation_Kollektivkorfalt()
 #
 # Bus lanes
 #  - NVDB doesn't specify which lane is the bus one
@@ -737,7 +740,7 @@ def tag_translation_DKInskrTranspFarligtGods(tags):
 #  - NVDB has odd way to specify time interval, sometimes only TIM12 set
 #  - We do some lane tricks
 #
-def tag_translation_DKKollektivkorfalt(tags):
+def tag_translation_Kollektivkorfalt(tags):
 
     ti_tags = {
         "DAGSL1": tags.get("DAGSLAG", None),
@@ -781,7 +784,7 @@ def tag_translation_DKKollektivkorfalt(tags):
     elif all_lanes:
         tags["NVDB_guess_lanes"] = 1
     else:
-        # hopefully DKAntal_korfalt2 has this covered
+        # hopefully Antal_korfalt2 has this covered
         pass
 
     if time_interval is not None:
@@ -791,11 +794,11 @@ def tag_translation_DKKollektivkorfalt(tags):
 
     _ = [tags.pop(key, None) for key in [ "MIN13", "MINUT", "TIM12", "TIMME", "DAGSLAG", "STARTDATUM", "SLUTDATUM", "STARTDAG", "SLUTDAG", "KOEFAETKNA" ]]
 
-# tag_translation_DKP_ficka()
+# tag_translation_P_ficka()
 #
 # Layby parkings
 #
-def tag_translation_DKP_ficka(tags):
+def tag_translation_P_ficka(tags):
     tags["amenity"] = "parking"
     tags["parking"] = "layby"
     if tags["SIDA"] == "Höger":
@@ -804,7 +807,7 @@ def tag_translation_DKP_ficka(tags):
         tags["NVDB_layby_side"] = "left"
     else:
         _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
-        append_fixme_value(tags, "DKP_ficka: unknown SIDA value")
+        append_fixme_value(tags, "P_ficka: unknown SIDA value")
 
     # "Uppställbar längd", that is the number of meters that can be used for parking,
     # specified for about 1/3 of the laybys. There is no established OSM key for this
@@ -832,15 +835,15 @@ def tag_translation_DKP_ficka(tags):
     for k, v in tags.items():
         unknown_key = False
 
-        if k == "NAMN": # Namn
+        if k == "NAMN" and v != -1: # Namn
             add_tags["name"] = v
-        if k == "TOALETT":    # Toalett
+        elif k == "TOALETT":    # Toalett
             extra_nodes.append({"amenity": "toilets"})
-        if k == "BORMEDITER": # Bord med sittplatser
+        elif k == "BORMEDITER": # Bord med sittplatser
             extra_nodes.append({"leisure": "picnic_table"})
-        if k == "SOPKAERL":   # Sopkärl
+        elif k == "SOPKAERL":   # Sopkärl
             extra_nodes.append({"amenity": "waste_disposal"})
-        if k == "MOLOK":      # Molok
+        elif k == "MOLOK":      # Molok
             extra_nodes.append({"amenity": "waste_disposal"}) # not 100% sure what a Molok is...
         else:
             unknown_key = True
@@ -854,7 +857,7 @@ def tag_translation_DKP_ficka(tags):
 
     add_extra_nodes_tag(tags, extra_nodes)
 
-# tag_translation_DKRastplats()
+# tag_translation_Rastplats()
 #
 # Highway rest areas
 #   - NVDB point data, packed with tags
@@ -864,7 +867,7 @@ def tag_translation_DKP_ficka(tags):
 #     preferably by making the rest area parking as an area rather than a node and mapping
 #     the individual parts as separate nodes
 #
-def tag_translation_DKRastplats(tags):
+def tag_translation_Rastplats(tags):
     del_keys = [
         "HUVUDMAN",   # Huvudman
         "RASPLASTYP", # Rastplatstyp (rastplats, enkel rastplats)
@@ -965,12 +968,12 @@ def tag_translation_DKRastplats(tags):
 
     add_extra_nodes_tag(tags, extra_nodes)
 
-# tag_translation_DKVagnummer()
+# tag_translation_Vagnummer()
 #
 # Road numbers, may be more than one per road. Information is refined in highway
 # resolve function.
 #
-def tag_translation_DKVagnummer(tags):
+def tag_translation_Vagnummer(tags):
     huvudnr = tags["HUVUDNR"]
     undernr = tags.get("UNDERNR", None)
     if undernr <= 0 or undernr is None:
@@ -1017,11 +1020,11 @@ def tag_translation_DKVagnummer(tags):
 
     _ = [tags.pop(key, None) for key in ["HUVUDNR", "UNDERNR", "EUROPAVÄG", "LÄN"]]
 
-# tag_translation_DKVaghinder()
+# tag_translation_Vaghinder()
 #
 # Barriers
 #
-def tag_translation_DKVaghinder(tags):
+def tag_translation_Vaghinder(tags):
     hindertyp = tags["HINDERTYP"]
     passbredd = tags["PASSBREDD"]
     if passbredd >= 0:
@@ -1045,7 +1048,7 @@ def tag_translation_DKVaghinder(tags):
     elif hindertyp == "övrigt":
         tags["barrier"] = "yes"
     else:
-        append_fixme_value(tags, "DKVaghinder: unknown hindertyp")
+        append_fixme_value(tags, "Vaghinder: unknown hindertyp")
         _log.warning(f"unknown hindertyp {hindertyp} (RLID {tags['RLID']})")
 
     del tags["PASSBREDD"]
@@ -1168,99 +1171,100 @@ def process_tag_translations(tags, tag_translations):
 # Table for tag translations.
 #
 TAG_TRANSLATIONS = {
-    "NVDB_DKAntal_korfalt2": {
+    "NVDB-Antal_korfalt2": {
         "KOEFAETSAL": "lanes",
         "KOEFAETING": None,
         "KOEFAETIN1": None,
         "RIKTNING": None
     },
-    "NVDB_DKBarighet": {
-        "translator_function": tag_translation_DKBarighet,
+    "NVDB-Barighet": {
+        "translator_function": tag_translation_Barighet,
     },
-    "NVDB_DKBegrAxelBoggiTryck": {
-        "translator_function": tag_translation_DKBegrAxelBoggiTryck,
+    "NVDB-BegrAxelBoggiTryck": {
+        "translator_function": tag_translation_BegrAxelBoggiTryck,
     },
-    "NVDB_DKBegrBruttovikt": {
-        "translator_function": tag_translation_DKBegrBruttovikt,
+    "NVDB-BegrBruttovikt": {
+        "translator_function": tag_translation_BegrBruttovikt,
     },
-    "NVDB_DKBegrFordBredd": {
-        "translator_function": tag_translation_DKBegrFordBredd,
+    "NVDB-BegrFordBredd": {
+        "translator_function": tag_translation_BegrFordBredd,
     },
-    "NVDB_DKBegrFordLangd": {
-        "translator_function": tag_translation_DKBegrFordLangd,
+    "NVDB-BegrFordLangd": {
+        "translator_function": tag_translation_BegrFordLangd,
     },
-    "NVDB_DKBro_och_tunnel": {
+    "NVDB-Bro_och_tunnel": {
         "IDENTITET": None,
         "LAENGD": None,
         "NAMN": None
     },
-    "NVDB_DKCirkulationsplats": {
+    "NVDB-Cirkulationsplats": {
         "add_keys_and_values": "junction=roundabout",
         "RIKTNING": None
     },
-    "NVDB_DKCykVgKatier": {
+    "NVDB-CykelVgsKat": {
         "FOEBINELRI": "NVDB_cykelvagkat",
     },
-    "NVDB_DKFarjeled": {
+    "NVDB-Farjeled": {
         "LEDSNAMN": "name",
         "add_keys_and_values": "route=ferry"
     },
-    "NVDB_DKForbjudenFardriktning": {
+    "NVDB-ForbjudenFardriktning": {
         "RIKTNING=Mot": "oneway=yes",
         "RIKTNING=Med": "oneway=-1",
         "expect_unset_time_intervals": True
     },
-    "NVDB_DKForbudTrafik": {
-        "translator_function": tag_translation_DKForbudTrafik,
+    "NVDB-ForbudTrafik": {
+        "translator_function": tag_translation_ForbudTrafik,
     },
-    "NVDB_DKFunkVagklass": {},
-    "NVDB_DKGagata": {
+    "NVDB-FunkVagklass": {},
+    "NVDB-Gagata": {
         "add_keys_and_values":    "NVDB_gagata=yes",
         "SIDA=Vänster":           "NVDB_gagata_side=left",
         "SIDA=Höger":             "NVDB_gagata_side=right",
         "SIDA=Vänster och höger": "NVDB_gagata_side=both",
         "SIDA=None": None
     },
-    "NVDB_DKGangfartsomrade": {
+    "NVDB-Gangfartsomrade": {
         "add_keys_and_values":    "NVDB_gangfartsomrode=yes",
         "SIDA=Vänster":           "NVDB_gangfartsomrode_side=left",
         "SIDA=Höger":             "NVDB_gangfartsomrode_side=right",
         "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both",
         "SIDA=None": None
     },
-    "NVDB_DKGatunamn": {
+    "NVDB-Gatunamn": {
         "NAMN": "name",
         "RIKTNING": None,
         "ORDNING": None,
-        "ROLL": "NVDB_road_role",
-        "VARD": None
+        "LANKROLL": "NVDB_road_role",
+        "SEQ_NO": None,
+        "VARDVAG": None
     },
-    "NVDB_DKGatutyp": {
+    "NVDB-Gatutyp": {
         "TYP": "NVDB_gatutyp",
         "INDSTRVAEG": None,
         "UPPAMLNDDE": None,
         "AVFRTSAEEG": None
     },
-    "NVDB_DKGCM_belyst": {
+    "NVDB-GCM_belyst": {
         "add_keys_and_values": "lit=yes"
     },
-    "NVDB_DKGCM_separation": {
-        "translator_function": tag_translation_DKGCM_separation
+    "NVDB-GCM_separation": {
+        "translator_function": tag_translation_GCM_separation
     },
-    "NVDB_DKGCM_vagtyp": { },
-    "NVDB_DKHastighetsgrans": {
-        "translator_function": tag_translation_DKHastighetsgrans,
+    "NVDB-GCM_vagtyp": { },
+    "NVDB-Hastighetsgrans": {
+        "translator_function": tag_translation_Hastighetsgrans,
     },
-    "NVDB_DKHuvudled": {
+    "NVDB-Huvudled": {
         "add_keys_and_values": "priority_road=designated",
     },
-    "NVDB_DKInskrTranspFarligtGods": {
-        "translator_function": tag_translation_DKInskrTranspFarligtGods,
+    "NVDB-InskrTranspFarligtGods": {
+        "translator_function": tag_translation_InskrTranspFarligtGods,
     },
-    "NVDB_DKKollektivkorfalt": {
-        "translator_function": tag_translation_DKKollektivkorfalt,
+    "NVDB-Kollektivkorfalt": {
+        "translator_function": tag_translation_Kollektivkorfalt,
     },
-    "NVDB_DKMiljozon": {
+    "NVDB-Miljozon": {
         "AARTA8": None,
         "AARTAL": None,
         "LOEPNUMME9": None,
@@ -1273,17 +1277,17 @@ TAG_TRANSLATIONS = {
         "MILOEZNKSS=Miljözon klass 3": "environmental_zone:sv=3", # custom tag
         "MILOEZNKSS=None": None
     },
-    "NVDB_DKMotortrafikled": {
+    "NVDB-Motortrafikled": {
         "add_keys_and_values": "NVDB_motortrafikled=yes"
     },
-    "NVDB_DKMotorvag": {
+    "NVDB-Motorvag": {
         "add_keys_and_values": "NVDB_motorvag=yes"
     },
-    "NVDB_DKOvrigt_vagnamn": {
+    "NVDB-Ovrigt_vagnamn": {
         "NAMN": "name",
         "ORGANISAT": None
     },
-    "NVDB_DKReflinjetillkomst": {
+    "NVDB-Reflinjetillkomst": {
         "ANSVARORG": None,
         "DIM1": None,
         "FLYGHJD1": None,
@@ -1293,11 +1297,11 @@ TAG_TRANSLATIONS = {
         "SKALFKT1": None,
         "SLUTDAT1": None
     },
-    "NVDB_DKRekomVagFarligtGods": {
+    "NVDB-RekomVagFarligtGods": {
         "REKOMEND=rekommenderad primär väg":   "hazmat=designated",
         "REKOMEND=rekommenderad sekundär väg": "hazmat=designated"
     },
-    "NVDB_DKSlitlager": {
+    "NVDB-Slitlager": {
         # note: surface=paved would be more correct, but asphalt is so dominant in Sweden that we use that
         "TYP=belagd": "surface=asphalt",
 
@@ -1305,44 +1309,45 @@ TAG_TRANSLATIONS = {
         # grus is used for all roads that are not paved.
         "TYP=grus":   "surface=unpaved"
     },
-    "NVDB_DKTillganglighet": {
+    "NVDB-Tillganglighet": {
         "KLASS=A": "NVDB_availability_class=1",
         "KLASS=B": "NVDB_availability_class=2",
         "KLASS=C": "NVDB_availability_class=3",
         "KLASS=D": "NVDB_availability_class=4"
     },
-    "NVDB_DKVagbredd": {
+    "NVDB-Vagbredd": {
         "BREDD": "width",
         "MÄTMETOD": None
     },
-#    "NVDB_DKVaghallare": {
+#    "NVDB-Vaghallare": {
 #        "VAEHAALAMN": "NVDB_maintainer_name",
 #        "VAEHAALAYP": "NVDB_maintainer_type",
 #        "FOEVALNIRM": "NVDB_management_type",
 #        "AVVKANEUAR": None,
 #        "ORGNISTIER": None
 #    },
-    "NVDB_DKVagnummer": {
-        "translator_function": tag_translation_DKVagnummer,
+    "NVDB-Vagnummer": {
+        "translator_function": tag_translation_Vagnummer,
         "RIKTNING": None,
         "ORDNING": None,
-        "ROLL": "NVDB_road_role",
-        "VARD": None,
+        "LANKROLL": "NVDB_road_role",
+        "SEQ_NO": None,
+        "VARDVAG": None,
     },
-    "TRV_EVB_DKDriftbidrag_statligt": {
+    "EVB-Driftbidrag_statligt": {
         "add_keys_and_values": "NVDB_government_funded=yes",
         "VAGDELSN1": None,
         "VAGNR1": None,
         "SLITLAG1": None,
         "TRAFIKKL1": None,
     },
-    "VIS_DKFunktionellt_priovagnat": {},
-    "VIS_DKOmkorningsforbud": {
+    "VIS-Funktionellt_priovagnat": {},
+    "VIS-Omkorningsforbud": {
         "RIKTNING=Med":         "overtaking:forward=no",
         "RIKTNING=Mot":         "overtaking:backward=no",
         "RIKTNING=Med och mot": "overtaking=no",
     },
-    "VIS_DKSlitlager": {
+    "VIS-Slitlager": {
         "TYP=0": None,                  # Uppgift saknas
         "TYP=1": "surface=asphalt",     # Bituminös
         "TYP=2": "surface=asphalt",     # Oljegrus
@@ -1352,7 +1357,7 @@ TAG_TRANSLATIONS = {
         "TYP=6": "surface=asphalt",     # Y1G
         "TYP=7": "surface=asphalt"      # Förseglat grus
     },
-    "NVDB_DKFarthinder": {
+    "NVDB-Farthinder": {
         # Ideally TYP=1 should be with priority=* (to differ from TYP=3) but there's no info on which
         # side the choker is unfortunately.
         "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
@@ -1370,7 +1375,7 @@ TAG_TRANSLATIONS = {
         "TYP=11": "traffic_calming=dynamic_bump", # Dynamiskt passivt farthinder
         "LAEGE": None
     },
-    "NVDB_DKGCM_passage": {
+    "NVDB-GCM_passage": {
         "REFGPASAGE=ja": "crossing:island=yes",
         "REFGPASAGE=nej": None,
         "REFGPASAGE=okänt": None,
@@ -1378,15 +1383,15 @@ TAG_TRANSLATIONS = {
         "PASSAGETYP=annan ordnad passage i plan": None,
         "PASSAGETYP=planskild passage underfart": None,
         "PASSAGETYP=planskild passage överfart": None,
-        "PASSAGETYP=signalreglerat övergångsställe och/eller signalreg": [ "highway=crossing", "crossing=traffic_signals" ],
-        "PASSAGETYP=övergångsställe och/eller cykelpassage/cykelöverfa": [ "highway=crossing", "crossing=marked" ],
+        "PASSAGETYP=övergångsställe och/eller cykelpassage/cykelöverfart i plan": [ "highway=crossing", "crossing=marked" ],
+        "PASSAGETYP=signalreglerat övergångsställe och/eller signalreglerad cykelpassage/cykelöverfart i plan": [ "highway=crossing", "crossing=traffic_signals" ],
     },
-    "NVDB_DKHojdhinder45dm": {
+    "NVDB-Hojdhinder45dm": {
         "FRIHOJD": "maxheight",
         "HOJDID": None,
         "TYP": None
     },
-    "NVDB_DKKorsning": {
+    "NVDB-Korsning": {
         "GENRALSEYP": "NVDB_generaliseringstyp",
         "SIGALRGLNG=ja":    [ "highway=traffic_signals" ],
         "SIGALRGLNG=nej":   None,
@@ -1397,27 +1402,27 @@ TAG_TRANSLATIONS = {
         "XKOORDINAT": None,
         "YKOORDINAT": None
     },
-    "NVDB_DKStopplikt": {
+    "NVDB-Stopplikt": {
         "add_keys_and_values":  "highway=stop",
         "RIKTNING=Med":         "direction=forward",
         "RIKTNING=Mot":         "direction=backward",
         "RIKTNING=Med och mot": None
     },
-    "NVDB_DKVaghinder": {
-        "translator_function": tag_translation_DKVaghinder
+    "NVDB-Vaghinder": {
+        "translator_function": tag_translation_Vaghinder
     },
-    "NVDB_DKVajningsplikt": {
+    "NVDB-Vajningsplikt": {
         "add_keys_and_values":  "highway=give_way",
         "RIKTNING=Med":         "direction=forward",
         "RIKTNING=Mot":         "direction=backward",
         "RIKTNING=Med och mot": None
     },
-#    "NVDB_DKVandmojlighet": {
+#    "NVDB-Vandmojlighet": {
 #        "add_keys_and_values": "highway=turning_circle",
 #        "KLASS": None,
 #        "TYP": None,
 #    },
-    "VIS_DKJarnvagskorsning": {
+    "VIS-Jarnvagskorsning": {
         "PLAKORNIID": None,              # Plankorsnings-Id
         "JVGBANDEL": None,               # Jvg-bandel
         "JVGILOETER": None,              # Jvg-kilometer
@@ -1443,11 +1448,11 @@ TAG_TRANSLATIONS = {
         "YKOORDINAT": None,   # Y-koordinat
         "SENSTANDAD": None    # Senast ändrad
     },
-    "VIS_DKP_ficka": {
-        "translator_function": tag_translation_DKP_ficka
+    "VIS-P_ficka": {
+        "translator_function": tag_translation_P_ficka
     },
-    "VIS_DKRastplats" : {
-        "translator_function": tag_translation_DKRastplats,
+    "VIS-Rastplats" : {
+        "translator_function": tag_translation_Rastplats,
     }
 }
 

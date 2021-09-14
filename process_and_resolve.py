@@ -71,7 +71,7 @@ def find_overlapping_and_remove_duplicates(data_src_name, ways):
         # overlapping segments are quite normal, but may be interesting to print, except for some
         # data layers when there's always lots of overlaps (it must be for some layers, for directional speed limits
         # for example)
-        if isinstance(way.way, list) and data_src_name not in ("NVDB_DKHastighetsgrans", "NVDB_DKVagnummer"):
+        if isinstance(way.way, list) and data_src_name not in ("NVDB-Hastighetsgrans", "NVDB-Vagnummer"):
             it = iter(way.way)
             prev = next(it)
             for p in it:
@@ -132,11 +132,11 @@ def preprocess_laybys(points, way_db):
 
 # preprocess_footcycleway_crossings
 #
-# NVDB NVDB_DKGCM_passage (crossings for cycleways and footways) points are often placed a bit
+# NVDB NVDB-GCM_passage (crossings for cycleways and footways) points are often placed a bit
 # beside the actual crossings so we need scan the geometry and find which crossings they belong
 # and align.
 #
-# NVDB_DKGCM_vagtyp data must be in the database for this function to work.
+# NVDB-GCM_vagtyp data must be in the database for this function to work.
 #
 def preprocess_footcycleway_crossings(points, way_db):
 
@@ -334,7 +334,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
 
 # process_street_crossings()
 #
-# Process the NVDB point layer DKKorsning and geometry it affects. This includes
+# Process the NVDB point layer Korsning and geometry it affects. This includes
 # setting names on roundabouts and snapping the points to actual crossings in the
 # line geometry.
 #
@@ -744,7 +744,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             else:
                 raise RuntimeError("Unknown gatutyp %s" % gatutyp)
         elif "KLASS" in way.tags:
-            # KLASS (from DKFunkVagklass) on it's own is used here last as a fallback
+            # KLASS (from FunkVagklass) on it's own is used here last as a fallback
             # when there is no other information to rely on. KLASS is a metric on how
             # important a road is, and it depends on context. KLASS 8 can for example
             # be used both on forestry roads in rural areas and on living and pedestrian
@@ -757,9 +757,9 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             #
             # City roads should normally already been resolved by other layers, so here
             # we apply the highway tag as best suited in rural areas. Exception:
-            # The NVDB_DKGatunamn which provides NVDB_road_role tag is used to differ
+            # The NVDB-Gatunamn which provides NVDB_road_role tag is used to differ
             # between service/unclassified and track on KLASS 8 and 9. (Names on forestry
-            # and other private roads comes from NVDB_DKOvrigt_vagnamn and doesn't have
+            # and other private roads comes from NVDB-Ovrigt_vagnamn and doesn't have
             # role tag set)
             #
             # Special case for ferry routes (shouldn't have a highway tag)
@@ -803,7 +803,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
 
         # check if we should make this a link
         if tags.get("highway", None) in ["motorway", "trunk", "primary", "secondary", "tertiary"] and \
-           way.tags.get("NVDB_road_role", None) == "Gren" and way.tags.get("junction", None) != "roundabout":
+           way.tags.get("NVDB_road_role", None) == 4 and way.tags.get("junction", None) != "roundabout":
             tags['highway'] += "_link"
 
         if "fixme" in tags:
@@ -951,7 +951,7 @@ def upgrade_unclassified_stumps_connected_to_residential(way_db):
 #     - forest companies also maintain roads that we want to tag service
 #     - in many municipalities all väghållare is just the same for 8/9, "enskild" with no further
 #       information
-#   tillgänglighetsklass / availability class (NVDB_DKTillganglighet A,B,C,D):
+#   tillgänglighetsklass / availability class (NVDB-Tillganglighet A,B,C,D):
 #     - actual value has quirky contents in forestry network, many roads at a higher class than it
 #       should be
 #     - however if the value exists or not is a lead, value doesn't exist on driveways, unfortunately
@@ -1287,7 +1287,7 @@ def guess_upgrade_tracks(way_db):
 #
 # Sort road/street road names for segments that have more than one name.
 # The sorting try to figure out which name is more prominent by assuming the lower KLASS number
-# (from NVDB_DKFunkVagklass) is more prominent, and if that is the same, the longer way is used
+# (from NVDB-FunkVagklass) is more prominent, and if that is the same, the longer way is used
 #
 # For roundabouts it is assumed that the main name is correct (as we set that before this is called),
 # and then only the alt_name list is sorted

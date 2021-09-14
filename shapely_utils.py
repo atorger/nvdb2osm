@@ -64,3 +64,7 @@ def split_self_crossing_way(points):
         new_ways.append(way[:nl])
         way = way[nl-1:]
     return new_ways
+
+def way_is_inside_or_crossing(polygon, points):
+    ls = LineString(points)
+    return polygon.contains(ls) or polygon.intersects(ls)

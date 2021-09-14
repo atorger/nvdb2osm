@@ -48,12 +48,12 @@ def merge_tags(seg, src, data_src_name):
 
         # go through tags that can become lists first
         if not resolved:
-            if data_src_name == "NVDB_DKVagnummer":
+            if data_src_name == "NVDB-Vagnummer":
                 if k == "NVDB_vagnummer":
                     append_tag_value(dst, k, v)
                     solution = "list"
                     resolved = True
-            elif data_src_name in [ "NVDB_DKGatunamn", "NVDB_DKOvrigt_vagnamn", "NVDB_DKKorsning" ]:
+            elif data_src_name in [ "NVDB-Gatunamn", "NVDB-Ovrigt_vagnamn", "NVDB-Korsning" ]:
                 if k == "name":
                     if v is None:
                         # unusual, but 'None' have been observed
@@ -72,8 +72,8 @@ def merge_tags(seg, src, data_src_name):
 
         # go through things we want to resolve before we look at the date
         prio_layers = {
-            "VIS_DKSlitlager": "NVDB_DKSlitlager",
-            "NVDB_DKGCM_passage": "NVDB_DKKorsning"
+            "VIS-Slitlager": "NVDB-Slitlager",
+            "NVDB-GCM_passage": "NVDB-Korsning"
         }
         if not resolved:
             if prio_layers.get(data_src_name, None) == seg.tag_src[k][0]:
@@ -96,38 +96,38 @@ def merge_tags(seg, src, data_src_name):
 
         # look at specific data sources and keys
         if not resolved:
-            if data_src_name == "NVDB_DKGatutyp":
+            if data_src_name == "NVDB-Gatutyp":
                 if k == "NVDB_gatutyp":
                     # if same date, just keep current, not too important and Gatutyp is a bit messy data
                     solution = "not deemed important, current value kept"
                     resolved = True
-            elif data_src_name == "NVDB_DKHastighetsgrans":
+            elif data_src_name == "NVDB-Hastighetsgrans":
                 if k in ("maxspeed", "maxspeed:forward", "maxspeed:backward"):
                     if ov > v:
                         dst[k] = v # keep smaller value
                     solution = "kept smaller value"
                     resolved = True
-            elif data_src_name in [ "NVDB_DKInskrTranspFarligtGods", "NVDB_DKRekomVagFarligtGods" ]:
-                # We've seen overlaps of these two layers (Malmö dataset), but as DKRekomVagFarligtGods is more
+            elif data_src_name in [ "NVDB-InskrTranspFarligtGods", "NVDB-RekomVagFarligtGods" ]:
+                # We've seen overlaps of these two layers (Malmö dataset), but as RekomVagFarligtGods is more
                 # specific we trust that layer more
                 if k == "hazmat":
                     if ov != "designated" and v == "designated":
                         dst[k] = v
                     solution = "kept designated"
                     resolved = True
-            elif data_src_name == "NVDB_DKVagbredd":
+            elif data_src_name == "NVDB-Vagbredd":
                 if k == "width":
                     if ov > v:
                         dst[k] = v
                     solution = "kept smaller value"
                     resolved = True
-            elif data_src_name == "NVDB_DKGagata":
+            elif data_src_name == "NVDB-Gagata":
                 if k == "NVDB_gagata_side":
                     if (ov == "left" and v == "right") or (ov == "right" and v == "left"):
                         dst[k] = "both"
                         solution = "merged to 'both'"
                         resolved = True
-            elif data_src_name == "NVDB_DKGCM_vagtyp":
+            elif data_src_name == "NVDB-GCM_vagtyp":
                 if k == "GCMTYP":
                     gcm_resolve = [
                         (11, 17, 17), # gångbana 11 => trappa 17
@@ -142,7 +142,7 @@ def merge_tags(seg, src, data_src_name):
                             solution = "used GCM resolve table"
                             resolved = True
                             break
-            elif data_src_name == "NVDB_DKFarthinder":
+            elif data_src_name == "NVDB-Farthinder":
                 if k == "traffic_calming":
                     if ov == "yes" and v != "yes":
                         dst[k] = v

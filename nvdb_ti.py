@@ -141,7 +141,7 @@ def merge_time_intervals(ti, rlid):
             return -1
         if day_type == "vardag":
             if day_interval is not None:
-                # rare case (observed in DKInskrTranspFarligtGods Stockholm)
+                # rare case (observed in InskrTranspFarligtGods Stockholm)
                 merge_str = "%s %s; PH off" % (day_interval, merge_str)
                 day_interval = None
             else:

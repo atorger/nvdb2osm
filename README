@@ -11,28 +11,27 @@ nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>
 
 Exempel:
 
-nvdb2osm.py -v --railway_file=Järnvägsnät_grundegenskaper.zip Luleå_kommun.zip luleå.osm
+Dela upp länsfilen till kommuner:
+split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_Shape.zip output
+
+Konvertera en kommun till OSM:
+nvdb2osm.py -v --municipality_filter Luleå \
+  --railway_file=Järnvägsnät_grundegenskaper.zip \
+  output/Luleå.zip luleå.osm
 
 Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
 exemplet används "-v" för att visa INFO-loggar.
 
 Det tar cirka en kvart att tugga igenom en kommun. Arkiven med
 shape-filer laddas ner från Trafikverket. Man går till
-https://lastkajen.trafikverket.se/ om man inte har ett konto finns det
-knapp att registrera sig där.
-
-Väl inne går man till Fillager->Vägdata->Kommuner/Län Shape och så
-väljer man län och kommun. Det går ladda ner hela län om man vill, men
-det blir orimligt mycket data att tugga på en gång.
-
-Det går att köra skriptet direkt på zip-arkivet man laddar ner, det är
-alltså inte nödvändigt att packa upp det, men även det fungerar.
+https://lastkajen.trafikverket.se/
+I skrivande stund är minsta filerna per län så de behöver delas upp
+först, vilket man kan göra med split_nvdb_data.py-skriptet.
 
 Skriptet lägger inte till järnväg (järnväg kartläggs lämpligen
 separat), men för att kunna lägga järnvägskorsningar på rätt position
 behöver skriptet ändå det nationella järnvägsnätet. Den filen hittas
-också på lastkajen:
-Fillager->Järnvägsdata->Järnvägsnät_grundegenskaper.zip
+också på lastkajen: Järnvägsnät_grundegenskaper.zip
 Det är en fil för hela Sverige så man använder samma för alla
 kommuner.
 
@@ -56,7 +55,8 @@ Hur importen går till
 ---------------------
 
 1. Ladda ner paketerat NVDB-data från https://lastkajen.trafikverket.se/
-2. Konvertera datat till OSM-format med Python-skriptet
+2. Dela upp datat i mindre delar med split_nvdb_data.py-skriptet
+2. Konvertera datat till OSM-format med nvdb2osm.py-skriptet
 3. Ladda in resultatet som ett eget lager i JOSM
    (dela upp det i mindre delar)
 4. Ladda ner existerande OSM-karta för motsvarande område till eget

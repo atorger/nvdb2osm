@@ -134,6 +134,16 @@ def log_version():
         path = os.path.join(os.path.dirname(__file__), fname)
         _log.info(f"  {fname:22} MD5: {md5(path)}")
 
+# get_municipality()
+#
+# Get the borders for the given municipality
+#
+def get_municipality(municipality_code_or_name):
+    gdf = read_epsg_shapefile("data/ak_riks.zip", "ak_riks")
+    for _, row in gdf.iterrows():
+        if str(row.KOM_KOD) == municipality_code_or_name or row.KOMMUNNAMN == municipality_code_or_name:
+            return row.geometry
+    return None
 
 # insert_rlid_elements()
 #
@@ -156,70 +166,71 @@ def insert_rlid_elements(way_db, ways, data_src_name, debug_ways=None, do_snap=T
 
 def main():
     """The main function, entry point of the program."""
-    master_geometry_name = "NVDB_DKReflinjetillkomst"
+    master_geometry_name = "NVDB-Reflinjetillkomst"
 
     # Note the order how the layers are merged is in part important, see comments
     # So be careful if you re-order
     line_names = [
-        # We always do FunkVagklass and GCM_vagtyp/DKCykVgKatier first, as experience tells us
+        # We always do FunkVagklass and GCM_vagtyp/CykelVgsKat first, as experience tells us
         # that if there is a problem with the reference geometry these layers will trigger it.
-        "NVDB_DKFunkVagklass", # all streets/roads
-        "NVDB_DKGCM_vagtyp",   # all footways/cycleways
-        "NVDB_DKCykVgKatier",  # most often redundant, otherwise complements DKGCM_vagtyp
+        "NVDB-FunkVagklass", # all streets/roads
+        "NVDB-GCM_vagtyp",   # all footways/cycleways
+        "NVDB-CykelVgsKat",  # most often redundant, otherwise complements GCM_vagtyp
 
         # just alphabetical order
-        "NVDB_DKAntal_korfalt2",
-        "NVDB_DKBarighet",
-        "NVDB_DKBegrAxelBoggiTryck",
-        "NVDB_DKBegrBruttovikt",
-        "NVDB_DKBegrFordBredd",
-        "NVDB_DKBegrFordLangd",
-        "NVDB_DKBro_och_tunnel",
-        "NVDB_DKCirkulationsplats",
-        "NVDB_DKFarjeled",
-        "NVDB_DKForbjudenFardriktning",
-        "NVDB_DKForbudTrafik",
-        "NVDB_DKGagata",
-        "NVDB_DKGangfartsomrade",
-        "NVDB_DKGatunamn",
-        "NVDB_DKGatutyp",
-        "NVDB_DKGCM_belyst",
-        "NVDB_DKGCM_separation",
-        "NVDB_DKHastighetsgrans",
-        "NVDB_DKHuvudled",
-        "NVDB_DKInskrTranspFarligtGods",
-        "NVDB_DKKollektivkorfalt",
-        # "NVDB_DKMiljozon", experimental tags, excluding them for now
-        "NVDB_DKMotortrafikled",
-        "NVDB_DKMotorvag",
-        "NVDB_DKOvrigt_vagnamn",
-        "NVDB_DKRekomVagFarligtGods",
-        "NVDB_DKSlitlager",
-        "NVDB_DKTillganglighet",
-        "NVDB_DKVagbredd",
-        "NVDB_DKVagnummer",
-        "TRV_EVB_DKDriftbidrag_statligt",
-        "VIS_DKFunktionellt_priovagnat",
-        "VIS_DKOmkorningsforbud",
-        "VIS_DKSlitlager"
+        "NVDB-Antal_korfalt2",
+        "NVDB-Barighet",
+        "NVDB-BegrAxelBoggiTryck",
+        "NVDB-BegrBruttovikt",
+        "NVDB-BegrFordBredd",
+        "NVDB-BegrFordLangd",
+        "NVDB-Bro_och_tunnel",
+        "NVDB-Cirkulationsplats",
+        "NVDB-Farjeled",
+        "NVDB-ForbjudenFardriktning",
+        "NVDB-ForbudTrafik",
+        "NVDB-Gagata",
+        "NVDB-Gangfartsomrade",
+        "NVDB-Gatunamn",
+        "NVDB-Gatutyp",
+        "NVDB-GCM_belyst",
+        "NVDB-GCM_separation",
+        "NVDB-Hastighetsgrans",
+        "NVDB-Huvudled",
+        "NVDB-InskrTranspFarligtGods",
+        "NVDB-Kollektivkorfalt",
+        # "NVDB-Miljozon", experimental tags, excluding them for now
+        "NVDB-Motortrafikled",
+        "NVDB-Motorvag",
+        "NVDB-Ovrigt_vagnamn",
+        "NVDB-RekomVagFarligtGods",
+        "NVDB-Slitlager",
+        "NVDB-Tillganglighet",
+        "NVDB-Vagbredd",
+        "NVDB-Vagnummer",
+        "EVB-Driftbidrag_statligt",
+        "VIS-Funktionellt_priovagnat",
+        "VIS-Omkorningsforbud",
+        "VIS-Slitlager"
     ]
 
     point_names = [
-        "NVDB_DKFarthinder",
-        "NVDB_DKGCM_passage",
-        "NVDB_DKHojdhinder45dm",
-        "NVDB_DKKorsning",
-        "NVDB_DKStopplikt",
-        "NVDB_DKVaghinder",
-        "NVDB_DKVajningsplikt",
-        "VIS_DKJarnvagskorsning",
-        "VIS_DKP_ficka",
-        "VIS_DKRastplats",
+        "NVDB-Farthinder",
+        "NVDB-GCM_passage",
+        "NVDB-Hojdhinder45dm",
+        "NVDB-Korsning",
+        "NVDB-Stopplikt",
+        "NVDB-Vaghinder",
+        "NVDB-Vajningsplikt",
+        "VIS-Jarnvagskorsning",
+        "VIS-P_ficka",
+        "VIS-Rastplats",
     ]
     parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
     parser.add_argument('--dump_layers', help="Write an OSM XML file for each layer", action='store_true')
     parser.add_argument('--skip_railway', help="Don't require railway geometry (leads to worse railway crossing handling)", action='store_true')
     parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network *.shp (usually Järnvägsnät_grundegenskaper.zip)")
+    parser.add_argument('--municipality_filter', help="Code or name of municipality which all geometry should be inside", default=None)
     parser.add_argument('--rlid', help="Include RLID in output", action='store_true')
     parser.add_argument('--small_road_resolve', help="Specify small road resolve algorithm", default="default")
     parser.add_argument('--skip_self_test', help="Skip self tests", action='store_true')
@@ -257,8 +268,16 @@ def main():
     directory_or_zip = args.shape_file
     output_filename = args.osm_file
     railway_filename = args.railway_file
+    municipality = args.municipality_filter
     perform_self_testing = not args.skip_self_test
     small_road_resolve_algorithm = args.small_road_resolve
+
+    if municipality is not None:
+        geo = get_municipality(municipality)
+        if geo is None:
+            _log.error(f"could not get municipality {municipality}")
+            sys.exit(1)
+        municipality = geo
 
     if small_road_resolve_algorithm not in SMALL_ROAD_RESOLVE_ALGORITHMS:
         _log.error(f"small_road_resolve parameter must be one of {SMALL_ROAD_RESOLVE_ALGORITHMS}")
@@ -296,7 +315,7 @@ def main():
             write_osmxml(ways, [], name + ".osm")
 
         debug_ways = None
-        if name == "NVDB_DKBro_och_tunnel":
+        if name == "NVDB-Bro_och_tunnel":
             ways = preprocess_bridges_and_tunnels(ways, way_db)
             if debug_dump_layers:
                 write_osmxml(ways, [], name + "-preproc.osm")
@@ -312,6 +331,8 @@ def main():
 
     way_db.join_segments_with_same_tags()
     way_db.remove_short_sub_segments()
+    if municipality is not None:
+        way_db.remove_segments_outside_area(municipality)
 
     way_db.setup_geometry_search()
 
@@ -324,11 +345,11 @@ def main():
         points = find_overlapping_and_remove_duplicates(name, points)
 
         do_snap = True
-        if name == "NVDB_DKGCM_passage":
+        if name == "NVDB-GCM_passage":
             points = preprocess_footcycleway_crossings(points, way_db)
-        elif name == "NVDB_DKKorsning":
+        elif name == "NVDB-Korsning":
             points = process_street_crossings(points, way_db, name)
-        elif name == "VIS_DKJarnvagskorsning":
+        elif name == "VIS-Jarnvagskorsning":
             if len(points) > 0:
                 railways = []
                 if not skip_railway:
@@ -347,7 +368,7 @@ def main():
                     if debug_dump_layers:
                         write_osmxml(railways, [], "local-railway.osm")
                 points = preprocess_railway_crossings(points, way_db, railways)
-        elif name == "VIS_DKP_ficka":
+        elif name == "VIS-P_ficka":
             points = preprocess_laybys(points, way_db)
             do_snap = False
 
