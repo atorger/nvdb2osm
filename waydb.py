@@ -930,8 +930,12 @@ class WayDatabase:
                         _log.error(f"Way with RLID {way.rlid} {latlon_str(point)} has no existing geometry within {max_snap_distance} meters")
                         self._fix_after_failed_adapt_geometry_way_insert()
                         return None, []
+                else:
+                    _log.error(f"Failed to adapt geometry of way with RLID {way.rlid} at {latlon_str(point)}")
+                    self._fix_after_failed_adapt_geometry_way_insert()
+                    return None, []
 
-            if self._perform_self_testing and ref_way is not None:
+            if self._perform_self_testing:
                 self._test_way_dist(ref_way)
             if p != prev:
                 # sometimes close points are merged to the same position
