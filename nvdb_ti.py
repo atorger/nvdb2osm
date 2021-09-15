@@ -9,7 +9,7 @@ import logging
 from sortedcontainers import SortedDict
 from scanf import scanf
 
-_log = logging.getLogger("nvdb")
+_log = logging.getLogger("nvdb_ti")
 time_interval_strings = set()
 
 
@@ -139,18 +139,18 @@ def merge_time_intervals(ti, rlid):
         if day_interval is not None and day_type != "vardag":
             _log.warning(f"day_interval ({day_interval}) and day_type ({day_type}) set at the same time (RLID {rlid})")
             return -1
-        if day_type == "vardag":
+        if day_type in ["vardag", 1]:
             if day_interval is not None:
                 # rare case (observed in InskrTranspFarligtGods Stockholm)
                 merge_str = "%s %s; PH off" % (day_interval, merge_str)
                 day_interval = None
             else:
                 merge_str = "Mo-Sa %s; PH off" % merge_str
-        elif day_type == 'vardag före sön- och helgdag':
+        elif day_type in ['vardag före sön- och helgdag', 2]:
             merge_str = "Sa %s; PH -1 day %s; PH off" % (merge_str, merge_str)
-        elif day_type == "vardag utom dag före sön- och helgdag":
+        elif day_type in ["vardag utom dag före sön- och helgdag", 3]:
             merge_str = "Mo-Fr %s; PH -1 day off; PH off" % merge_str
-        elif day_type == "sön- och helgdag":
+        elif day_type in ["sön- och helgdag", 4]:
             merge_str = "Su %s; PH %s" % (merge_str, merge_str)
         else:
             _log.warning(f"unknown day type {day_type} (RLID {rlid})")

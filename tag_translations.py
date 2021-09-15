@@ -195,7 +195,6 @@ def parse_direction(tags):
 #
 def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
     del_tags = []
-    add_tags = []
     vtypes = []
     fixme = None
     for key in tags:
@@ -210,13 +209,13 @@ def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
                     purpose_list.append(v.split()[1])
                 else:
                     _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
-                    fixme = f"{key_base} contains conditional element";
+                    fixme = f"{key_base} contains conditional element"
             elif v.startswith("USER"):
                 if user_list is not None:
                     user_list.append(v.split()[1])
                 else:
                     _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
-                    fixme = f"{key_base} contains conditional element";
+                    fixme = f"{key_base} contains conditional element"
             else:
                 vtypes.append(v)
         if key.startswith(key_base):

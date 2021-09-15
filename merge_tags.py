@@ -72,8 +72,10 @@ def merge_tags(seg, src, data_src_name):
 
         # go through things we want to resolve before we look at the date
         prio_layers = {
+            # prioritized layers to the left
             "VIS-Slitlager": "NVDB-Slitlager",
-            "NVDB-GCM_passage": "NVDB-Korsning"
+            "NVDB-GCM_passage": "NVDB-Korsning",
+            "NVDB-Vagnummer": "NVDB-Gatunamn" # often conflicting value for LANKROLL
         }
         if not resolved:
             if prio_layers.get(data_src_name, None) == seg.tag_src[k][0]:
@@ -99,6 +101,11 @@ def merge_tags(seg, src, data_src_name):
             if data_src_name == "NVDB-Gatutyp":
                 if k == "NVDB_gatutyp":
                     # if same date, just keep current, not too important and Gatutyp is a bit messy data
+                    solution = "not deemed important, current value kept"
+                    resolved = True
+            elif data_src_name == "NVDB-Gatunamn":
+                if k == "NVDB_road_role":
+                    # if same date, just keep current, not too important
                     solution = "not deemed important, current value kept"
                     resolved = True
             elif data_src_name == "NVDB-Hastighetsgrans":
