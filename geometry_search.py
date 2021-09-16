@@ -55,7 +55,7 @@ class GeometrySearch:
                 if p.dist != -1:
                     _log.error(f"{way.way}")
                     _log.error(f"{way}")
-                    raise RuntimeError("Expected way to not have set dist on points %s")
+                    raise RuntimeError("Expected way to not have set dist on points")
                 self_points.add(p)
                 p.dist = prev.dist + dist2d(prev, p)
             line_length = dist2d(prev, p)
@@ -114,6 +114,10 @@ class GeometrySearch:
             return p
 
         raise RuntimeError(f"Insertion point not found for {way.rlid} {point}")
+
+    def snap_point_to_geometry(self, point, realpoint_snap_distance):
+        _, p, _ = self._realpoints.find_nearest_within(point, realpoint_snap_distance)
+        return p
 
     def snap_point_into_geometry(self, point, realpoint_snap_distance, max_snap_distance):
         dist, p, _ = self._realpoints.find_nearest_within(point, realpoint_snap_distance)
@@ -208,6 +212,7 @@ class GeometrySearch:
 
     # this function is not efficient, but not meant to be used often
     def extend_geometry(self, ref_way, ext_way, update_dist_segs):
+
         _log.debug("Extend geometry")
         _log.debug(f"update_dist_segs: {update_dist_segs}")
         _log.debug(f"ref_way: {ref_way.way}")
@@ -224,12 +229,51 @@ class GeometrySearch:
             _log.debug("Extension does not connect to reference")
             return False
 
+        # Get all ways with the same RLID (sometimes more than one)
         update_set = set()
         for ref_set in self._realpoints:
             for w in ref_set:
                 if w.rlid == ref_way.rlid:
                     update_set.add(w)
         _log.debug(f"Update set: {update_set}")
+
+        # Join ways after the extension, if possible
+        remove_ways = set()
+        removed_ways = []
+        while True:
+            for w0 in update_set:
+                for w1 in update_set:
+                    if w0 != w1 and w1 not in remove_ways and w0 not in remove_ways and w1 != ref_way:
+                        if w0.way[-1] == w1.way[0]:
+                            w0.way = w0.way[:-1] + w1.way
+                            remove_ways.add(w1)
+                            _log.info(f"Joined ways after extension for RLID {w0.rlid}")
+                        elif w0.way[0] == w1.way[-1]:
+                            w0.way = w1.way[:-1] + w0.way
+                            remove_ways.add(w1)
+                            _log.info(f"Joined ways after extension for RLID {w0.rlid}")
+            for w in remove_ways:
+                update_set.remove(w)
+                removed_ways.append(w)
+                for p in w.way:
+                    if p in self._self_cross_points:
+                        ref_set = self._self_cross_points[p]
+                        if w is ref_set:
+                            ref_set.remove(w)
+                            if len(ref_set) == 0:
+                                del self._self_cross_points[p]
+                    try:
+                        self._realpoints.remove(p, w)
+                    except IndexError:
+                        pass
+            if len(remove_ways) > 0:
+                remove_ways = set()
+            else:
+                break
+        for w in removed_ways:
+            self._fillpoints.remove_ref(w)
+
+        # Get points that may need their dist value updated
         update_map = {}
         if self._use_dist:
             del self._rlid2startdist[ref_way.rlid]
@@ -237,13 +281,17 @@ class GeometrySearch:
                 for idx, p in enumerate(seg.way):
                     for w in update_set:
                         for p1 in w.way:
-                            if p1 == p and p1.dist == p.dist:
+                            if p1 == p:
                                 update_map[(seg, idx)] = p1
         _log.debug(f"Update map: {update_map}")
+
+        # Re-insert ways to update
         for w in update_set:
             for p in w.way:
                 p.dist = -1
             self.insert(w)
+
+        # Update distances
         for k, p in update_map.items():
             seg = k[0]
             idx = k[1]
@@ -253,6 +301,7 @@ class GeometrySearch:
             else:
                 _log.debug(f"no change in dist {p.dist}")
             seg.way[idx].dist = p.dist
+
         return True
 
     def _test_way_dist(self, way):
@@ -265,17 +314,17 @@ class GeometrySearch:
             if prev == p:
                 _log.error(f"way.way: {way.way}")
                 _log.error(f"way: {way}")
-                raise RuntimeError("Duplicate point %s" % p)
+                raise RuntimeError(f"Duplicate point {p}")
             dist = dist2d(prev, p)
             if dist < 0.05:
                 _log.error(f"way.way: {way.way}")
                 _log.error(f"way: {way}")
-                raise RuntimeError("Point closer placed than snap distance at %s in ref_way %s" % (p, dist))
+                raise RuntimeError(f"Point closer placed than snap distance at {p} in ref_way {way}")
             ref_dist += dist
             if abs(p.dist - ref_dist) > 1e-6:
                 _log.error(f"way.way: {way.way}")
                 _log.error(f"way: {way}")
-                raise RuntimeError("Bad dist in ref_way %s (expected %s got %s)" % (p, ref_dist, p.dist))
+                raise RuntimeError(f"Bad dist in ref_way {way} (expected {ref_dist} got {p.dist})")
             ref_dist = p.dist
             prev = p
 

@@ -22,7 +22,8 @@ nvdb2osm.py -v --municipality_filter Luleå \
 Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
 exemplet används "-v" för att visa INFO-loggar.
 
-Det tar cirka en kvart att tugga igenom en kommun. Arkiven med
+Det tar cirka en kvart att tugga igenom en kommun (lägger man till
+parametern --skip_self_test går det betydligt fortare). Arkiven med
 shape-filer laddas ner från Trafikverket. Man går till
 https://lastkajen.trafikverket.se/
 I skrivande stund är minsta filerna per län så de behöver delas upp

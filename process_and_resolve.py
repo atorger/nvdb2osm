@@ -1054,7 +1054,7 @@ def guess_upgrade_tracks(way_db):
     ROAD_TAGS.remove("track")
     DW_DISTANCE = 300
 
-    _log.info("Making best guesses of upgrading highway=track to highway=unclasified or service...")
+    _log.info("Making best guesses of upgrading highway=track to highway=unclassified or service...")
 
     #
     # Go through all roads and pick up all tracks that may be upgraded and put it in the "undecided" set
@@ -1278,7 +1278,7 @@ def guess_upgrade_tracks(way_db):
         current_service_roads_gs.insert(way)
     undecided -= upgraded
 
-    _log.info(f"  {len(upgraded)} tracks upgraded to service they form short links between roads and driveways")
+    _log.info(f"  {len(upgraded)} tracks upgraded to service as they form short links between roads and driveways")
 
     _log.info(f"done ({orig_count - len(undecided)} of {orig_count} tracks upgraded to service)")
 

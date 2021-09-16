@@ -841,66 +841,52 @@ class WayDatabase:
         # will not work for closed loops, or self-crossing stuff
         new_way = []
         snapped = []
-        ref_way = None
         snap_count = 0
         for way_idx, point in enumerate(way.way):
             p, rway = self._ref_gs.snap_waypoint_into_geometry(way, way_idx, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE)
             if p is not None:
-                new_way.append(p)
-                snapped.append(True)
-                ref_way = rway
+                new_way.append(Point(p.x, p.y))
+                snapped.append(rway)
                 snap_count += 1
             else:
-                # snap to other way if possible, using short snap distance
-                _, p, rway = self._ref_gs.snap_point_into_geometry(point, self.POINT_SNAP_DISTANCE, self.POINT_SNAP_DISTANCE)
+                # snap to other point if possible, using short snap distance
+                p = self._ref_gs.snap_point_to_geometry(point, self.POINT_SNAP_DISTANCE)
                 if p is not None:
-                    new_way.append(p)
+                    new_way.append(Point(p.x, p.y))
                 else:
-                    new_way.append(point)
-                snapped.append(False) # only count points snap to self RLID
-        if ref_way is None:
+                    new_way.append(Point(point.x, point.y))
+                snapped.append(None) # only count points snap to self RLID
+        if snap_count == 0:
             _log.info(f"Way with RLID {way.rlid} could not be snapped to reference geometry")
             return False
-        assert ref_way.rlid == way.rlid
 
-        _log.info(f"must extend reference geometry for RLID {way.rlid} (only {snap_count} of {len(way.way)} points could be snapped)")
-        first_snap = 0
-        for idx, is_snap in enumerate(snapped):
-            if is_snap:
-                first_snap = idx
-                break
-        last_snap = len(new_way)
-        for idx in range(0, len(snapped)):
-            if snapped[len(snapped) - 1 - idx]:
-                last_snap = len(snapped) - 1 - idx
-                break
-        _log.debug(f"snapped {snapped}")
-        _log.debug(f"snappoints {first_snap} {last_snap}")
-        for way_idx, point in enumerate(way.way):
-            if way_idx <= first_snap or way_idx >= last_snap:
+        # This situation is common close to area borders where the reference geometry may have small
+        # segments missing outside the border while other layers have longer contiguous segments.
+        _log.info(f"Extending reference geometry for RLID {way.rlid} ({snap_count} of {len(way.way)} points snapped to existing geometry)")
+
+        ext_way = []
+        ext_ref_way = None
+        for idx, ref_way in enumerate(snapped):
+            if ref_way is None:
+                ext_way.append(new_way[idx])
                 continue
-            if not snapped[way_idx]:
-                # this means snap failure in the middle too not just an extension problem
-                _log.info(f"Way with RLID {way.rlid} could not be snapped to reference geometry")
-                return False
-        extend_way_start = []
-        extend_way_end = []
-        for idx, point in enumerate(new_way):
-            if idx < first_snap:
-                extend_way_start.append(point)
-            if idx > last_snap:
-                extend_way_end.append(point)
-
-        current_segs = self.way_db.get(way.rlid, [])
-        if len(extend_way_start) > 0:
-            extend_way_start.append(new_way[first_snap])
-            if not self._ref_gs.extend_geometry(ref_way, extend_way_start, current_segs):
-                return False
-
-        if len(extend_way_end) > 0:
-            extend_way_end.insert(0, new_way[last_snap])
-            if not self._ref_gs.extend_geometry(ref_way, extend_way_end, current_segs):
-                return False
+            if len(ext_way) > 0:
+                if ext_ref_way is None:
+                    ext_ref_way = ref_way
+                else:
+                    ext_way.insert(0, ext_ref_way.way[-1])
+                ext_way.append(ref_way.way[0])
+                current_segs = self.way_db.get(way.rlid, [])
+                if not self._ref_gs.extend_geometry(ext_ref_way, ext_way, current_segs):
+                    raise RuntimeError("Failed to extend geometry")
+                ext_way = []
+            ext_ref_way = ref_way
+        if len(ext_way) > 0:
+            assert ext_ref_way is not None
+            ext_way.insert(0, ext_ref_way.way[-1])
+            current_segs = self.way_db.get(way.rlid, [])
+            if not self._ref_gs.extend_geometry(ext_ref_way, ext_way, current_segs):
+                raise RuntimeError("Failed to extend geometry")
         return True
 
     def _adapt_way_into_reference_geometry(self, way, data_src_name, is_retry=False):

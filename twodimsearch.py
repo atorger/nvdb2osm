@@ -62,10 +62,13 @@ class TwoDimSearch:
             ymap = self.xmap[point_x]
             if point_y in ymap:
                 refs = ymap[point_y]
-                refs.remove(ref)
-                if len(refs) == 0:
-                    del ymap[point_y]
-                    self._len -= 1
+                try:
+                    refs.remove(ref)
+                    if len(refs) == 0:
+                        del ymap[point_y]
+                        self._len -= 1
+                except KeyError as e:
+                    raise IndexError('ref does not exist for point') from e
                 return
         raise IndexError('point does not exist')
 
@@ -80,6 +83,21 @@ class TwoDimSearch:
                 self._len -= 1
                 return
         raise IndexError('point does not exist')
+
+    # traverses all points/sets and removes all occurances of ref. Warning: slow
+    def remove_ref(self, ref):
+        for ymap in self.xmap.values():
+            del_refs = []
+            for point_y, refs in ymap.items():
+                try:
+                    refs.remove(ref)
+                    if len(refs) == 0:
+                        del_refs.append(point_y)
+                except KeyError:
+                    pass
+            for point_y in del_refs:
+                del ymap[point_y]
+                self._len -= 1
 
     def find_nearest_within(self, point, distance, exclude_self = False):
         if len(self.xmap) == 0:
