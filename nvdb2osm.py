@@ -18,6 +18,7 @@ from shapely_utils import shapely_linestring_to_way
 from waydb import WayDatabase, print_progress
 from osmxml import waydb2osmxml, write_osmxml
 from nvdb_ti import time_interval_strings
+from splitosm import splitosm
 
 _log = logging.getLogger("nvdb2osm")
 
@@ -230,6 +231,8 @@ def main():
     parser.add_argument('--dump_layers', help="Write an OSM XML file for each layer", action='store_true')
     parser.add_argument('--skip_railway', help="Don't require railway geometry (leads to worse railway crossing handling)", action='store_true')
     parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network *.shp (usually Järnvägsnät_grundegenskaper.zip)")
+    parser.add_argument('--split_file', type=pathlib.Path, help="Path to geojson with polygons of subareas for splitting the output")
+    parser.add_argument('--split_dir', type=pathlib.Path, help="Path to store subarea output")
     parser.add_argument('--municipality_filter', help="Code or name of municipality which all geometry should be inside", default=None)
     parser.add_argument('--rlid', help="Include RLID in output", action='store_true')
     parser.add_argument('--small_road_resolve', help="Specify small road resolve algorithm", default="default")
@@ -268,16 +271,18 @@ def main():
     directory_or_zip = args.shape_file
     output_filename = args.osm_file
     railway_filename = args.railway_file
-    municipality = args.municipality_filter
+    split_areas_filename = args.split_file
+    split_dir = args.split_dir
+    municipality_filter = args.municipality_filter
     perform_self_testing = not args.skip_self_test
     small_road_resolve_algorithm = args.small_road_resolve
 
-    if municipality is not None:
-        geo = get_municipality(municipality)
-        if geo is None:
-            _log.error(f"could not get municipality {municipality}")
+    municipality = None
+    if municipality_filter is not None:
+        municipality = get_municipality(municipality_filter)
+        if municipality is None:
+            _log.error(f"could not get municipality {municipality_filter}")
             sys.exit(1)
-        municipality = geo
 
     if small_road_resolve_algorithm not in SMALL_ROAD_RESOLVE_ALGORITHMS:
         _log.error(f"small_road_resolve parameter must be one of {SMALL_ROAD_RESOLVE_ALGORITHMS}")
@@ -424,8 +429,17 @@ def main():
 
     way_db.simplify_geometry()
     _log.info(f"Writing output to {output_filename}")
-    waydb2osmxml(way_db, output_filename, write_rlid=write_rlid)
+    waydb2osmxml(way_db, output_filename, boundary_polygon=municipality, write_rlid=write_rlid)
     _log.info("done writing output")
+
+    if split_areas_filename is not None:
+        if municipality is not None:
+            basename = municipality_filter
+        else:
+            basename = "mapdata"
+        if split_dir is None:
+            split_dir = "."
+        splitosm(way_db, split_areas_filename, split_dir, basename, write_rlid=write_rlid)
 
     _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete.")
     _log.info("Remember to validate the OSM file (JOSM validator) and check any fixme tags.")

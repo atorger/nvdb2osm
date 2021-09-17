@@ -2,18 +2,29 @@ import html
 import logging
 from geometry_basics import *
 from proj_xy import sweref99_transformer, latlon_str
-from shapely_utils import way_is_self_crossing, split_self_crossing_way
+from shapely_utils import way_is_self_crossing, split_self_crossing_way, shortest_way_inside_or_crossing, way_is_inside_or_crossing
 
 _log = logging.getLogger("waydb")
 
 
-def waydb2osmxml(way_db, filename, write_rlid=True):
+def waydb2osmxml(way_db, filename, boundary_polygon=None, write_rlid=True):
     ways = []
     points = []
     for segs in way_db.way_db.values():
-        ways += segs
+        if boundary_polygon is not None:
+            for seg in segs:
+                w = shortest_way_inside_or_crossing(boundary_polygon, seg.way)
+                if w is not None:
+                    ways.append(seg.make_copy_new_way(w))
+        else:
+            ways += segs
     for segs in way_db.point_db.values():
-        points += segs
+        if boundary_polygon is not None:
+            for point in segs:
+                if way_is_inside_or_crossing(boundary_polygon, point.way):
+                    points.append(point)
+        else:
+            points += segs
     write_osmxml(ways, points, filename, write_rlid)
 
 

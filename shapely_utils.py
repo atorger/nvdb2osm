@@ -1,4 +1,5 @@
 from shapely.geometry import LineString
+from shapely.geometry import Point as shapely_Point
 from geometry_basics import *
 
 # shapely_linestring_to_way
@@ -66,5 +67,29 @@ def split_self_crossing_way(points):
     return new_ways
 
 def way_is_inside_or_crossing(polygon, points):
+    if not isinstance(points, list):
+        return polygon.contains(shapely_Point(points.x, points.y))
     ls = LineString(points)
     return polygon.contains(ls) or polygon.intersects(ls)
+
+def shortest_way_inside_or_crossing(polygon, points):
+    ls = LineString(points)
+    if not polygon.intersects(ls):
+        if not polygon.contains(ls):
+            return None
+        return points.copy()
+    fp = shapely_Point(points[0].x, points[0].y)
+    lp = shapely_Point(points[-1].x, points[-1].y)
+    if len(points) <= 2 or (polygon.contains(fp) and polygon.contains(lp)):
+        return points.copy()
+    if not polygon.contains(lp):
+        idx = len(points) - 2
+        while not polygon.contains(shapely_Point(points[idx].x, points[idx].y)):
+            idx -= 1
+        points = points[:idx+2]
+    if not polygon.contains(fp):
+        idx = 1
+        while not polygon.contains(shapely_Point(points[idx].x, points[idx].y)):
+            idx += 1
+        points = points[idx-1:]
+    return points.copy()
