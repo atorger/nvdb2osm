@@ -18,7 +18,7 @@ from shapely_utils import shapely_linestring_to_way
 from waydb import WayDatabase, print_progress
 from osmxml import waydb2osmxml, write_osmxml
 from nvdb_ti import time_interval_strings
-from splitosm import splitosm
+from splitosm import splitosm, read_geojson_with_polygons
 
 _log = logging.getLogger("nvdb2osm")
 
@@ -277,6 +277,10 @@ def main():
     perform_self_testing = not args.skip_self_test
     small_road_resolve_algorithm = args.small_road_resolve
 
+    if split_areas_filename is not None:
+        _log.info(f"Reading {split_areas_filename} (to be used for splitting output)");
+        split_area_polygons = read_geojson_with_polygons(split_areas_filename)
+
     municipality = None
     if municipality_filter is not None:
         municipality = get_municipality(municipality_filter)
@@ -439,7 +443,7 @@ def main():
             basename = "mapdata"
         if split_dir is None:
             split_dir = "."
-        splitosm(way_db, split_areas_filename, split_dir, basename, write_rlid=write_rlid)
+        splitosm(way_db, split_area_polygons, split_dir, basename, write_rlid=write_rlid)
 
     _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete.")
     _log.info("Remember to validate the OSM file (JOSM validator) and check any fixme tags.")
