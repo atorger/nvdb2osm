@@ -1783,6 +1783,20 @@ def postprocess_miscellaneous_tags(tags):
         tags.pop("tunnel", None)
         tags["covered"] = "yes"
 
+    # fix rounding errors in source data floating point values
+    for k, v in tags.items():
+        if not isinstance(v, float):
+            try:
+                v = float(v)
+            except (ValueError, TypeError):
+                continue
+        if k in ["SLUTAVST", "STARTAVST"]:
+            continue
+        new_v = round(v, 1)
+        if new_v != v:
+            _log.info(f'rounding {k}={v} to {new_v}')
+            tags[k] = new_v
+
 # final_pass_postprocess_miscellaneous_tags()
 #
 # Lastly, make a pass over all tags to fixup stuff that isn't dealt with in more specialized functions
