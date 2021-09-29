@@ -443,7 +443,7 @@ def main():
             basename = "mapdata"
         if split_dir is None:
             split_dir = "."
-        splitosm(way_db, split_area_polygons, split_dir, basename, write_rlid=write_rlid)
+        splitosm(way_db, municipality, split_area_polygons, split_dir, basename, write_rlid=write_rlid)
 
     _log.info("Conversion is complete. Don't expect NVDB data to be perfect or complete.")
     _log.info("Remember to validate the OSM file (JOSM validator) and check any fixme tags.")

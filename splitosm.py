@@ -45,7 +45,7 @@ def read_geojson_with_polygons(filename):
         polygons.append(Polygon(row.geometry))
     return sort_polygons(polygons)
 
-def splitosm(way_db, polygons, output_dir, basename, write_rlid=True):
+def splitosm(way_db, outer_polygon, polygons, output_dir, basename, write_rlid=True):
 
     for idx, polygon in enumerate(polygons):
         _log.info(f"Getting all ways and points that is inside or intersects area {idx+1} (of {len(polygons)})")
@@ -54,6 +54,7 @@ def splitosm(way_db, polygons, output_dir, basename, write_rlid=True):
         for segs in way_db.way_db.values():
             for seg in segs:
                 w = shortest_way_inside_or_crossing(polygon, seg.way)
+                w = shortest_way_inside_or_crossing(outer_polygon, w)
                 if w is not None:
                     ways.append(seg.make_copy_new_way(w))
         for segs in way_db.point_db.values():

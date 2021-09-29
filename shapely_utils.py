@@ -73,6 +73,10 @@ def way_is_inside_or_crossing(polygon, points):
     return polygon.contains(ls) or polygon.intersects(ls)
 
 def shortest_way_inside_or_crossing(polygon, points):
+    if points is None:
+        return None
+    if polygon is None:
+        return points.copy()
     ls = LineString(points)
     if not polygon.intersects(ls):
         if not polygon.contains(ls):
@@ -84,12 +88,12 @@ def shortest_way_inside_or_crossing(polygon, points):
         return points.copy()
     if not polygon.contains(lp):
         idx = len(points) - 2
-        while not polygon.contains(shapely_Point(points[idx].x, points[idx].y)):
+        while not polygon.contains(shapely_Point(points[idx].x, points[idx].y)) and idx > 0:
             idx -= 1
         points = points[:idx+2]
-    if not polygon.contains(fp):
+    if not polygon.contains(fp) and len(points) > 2:
         idx = 1
-        while not polygon.contains(shapely_Point(points[idx].x, points[idx].y)):
+        while not polygon.contains(shapely_Point(points[idx].x, points[idx].y)) and idx < len(points):
             idx += 1
         points = points[idx-1:]
     return points.copy()
