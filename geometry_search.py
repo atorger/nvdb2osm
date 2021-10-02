@@ -285,8 +285,19 @@ class GeometrySearch:
                                 update_map[(seg, idx)] = p1
         _log.debug(f"Update map: {update_map}")
 
-        # Re-insert ways to update
-        for w in update_set:
+        # Re-insert ways to update, sort in same order concerning distances as update_dist_segs
+        update_list = list(update_set)
+        def update_dist_segs_order(w):
+            if len(update_dist_segs) == 0:
+                return 0
+            for p in w.way:
+                for w0 in update_dist_segs:
+                    for p0 in w0.way:
+                        if p == p0:
+                            return p0.dist
+            return update_dist_segs[-1].way[-1].dist + 1
+        update_list.sort(key=update_dist_segs_order)
+        for w in update_list:
             for p in w.way:
                 p.dist = -1
             self.insert(w)
@@ -302,6 +313,9 @@ class GeometrySearch:
                 _log.debug(f"no change in dist {p.dist}")
             seg.way[idx].dist = p.dist
 
+        if self._perform_self_testing and self._use_dist:
+            for k, _ in update_map.items():
+                self._test_way_dist(k[0])
         return True
 
     def _test_way_dist(self, way):

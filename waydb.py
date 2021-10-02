@@ -100,6 +100,9 @@ def remove_short_segments_and_redundant_points(way1, min_seg_len, point_keepers=
         return way
     return new_way
 
+def copy_point(p):
+    return Point(p.x, p.y)
+
 def copy_way(way):
     new_way = []
     for p in way:
@@ -775,6 +778,9 @@ class WayDatabase:
         prev = next(it)
         for seg in it:
             if seg.way[0].dist < prev.way[-1].dist:
+                _log.error(f"prev.way: {prev.way}")
+                _log.error(f"seg.way : {seg.way}")
+                _log.error(f"seg     : {seg}")
                 raise RuntimeError("Bad order")
             prev = seg
 
@@ -874,8 +880,8 @@ class WayDatabase:
                 if ext_ref_way is None:
                     ext_ref_way = ref_way
                 else:
-                    ext_way.insert(0, ext_ref_way.way[-1])
-                ext_way.append(ref_way.way[0])
+                    ext_way.insert(0, copy_point(ext_ref_way.way[-1]))
+                ext_way.append(copy_point(ref_way.way[0]))
                 current_segs = self.way_db.get(way.rlid, [])
                 if not self._ref_gs.extend_geometry(ext_ref_way, ext_way, current_segs):
                     raise RuntimeError("Failed to extend geometry")
@@ -883,7 +889,7 @@ class WayDatabase:
             ext_ref_way = ref_way
         if len(ext_way) > 0:
             assert ext_ref_way is not None
-            ext_way.insert(0, ext_ref_way.way[-1])
+            ext_way.insert(0, copy_point(ext_ref_way.way[-1]))
             current_segs = self.way_db.get(way.rlid, [])
             if not self._ref_gs.extend_geometry(ext_ref_way, ext_way, current_segs):
                 raise RuntimeError("Failed to extend geometry")

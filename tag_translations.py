@@ -1060,9 +1060,9 @@ def tag_translation_Vaghinder(tags):
 #
 def preprocess_name(name):
 
-    if not isinstance(name, str):
-        # sometimes NAMN is set to None
-        return name
+    if not isinstance(name, str) or name == "-1":
+        # sometimes NAMN is set to None or -1
+        return None
 
     # strip leading/trailing whitespace in name (rare, but happens)
     name = name.strip()

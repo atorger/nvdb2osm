@@ -278,7 +278,7 @@ def main():
     small_road_resolve_algorithm = args.small_road_resolve
 
     if split_areas_filename is not None:
-        _log.info(f"Reading {split_areas_filename} (to be used for splitting output)");
+        _log.info(f"Reading {split_areas_filename} (to be used for splitting output)")
         split_area_polygons = read_geojson_with_polygons(split_areas_filename)
 
     municipality = None
