@@ -458,7 +458,11 @@ def preprocess_railway_crossings(points, way_db, railways):
             # Snap to suitable crossing(s)
             track_count = node.tags.get("NVDB_rwc_tracks", 1)
             for i in range(0, track_count):
-                dist = cp[i][0]
+                try:
+                    dist = cp[i][0]
+                except IndexError:
+                    _log.warning(f"More tracks than crossings {track_count} {i} {cp}")
+                    dist = 500
                 # as we match RLID it's low risk to get the crossing wrong, so we can use a large max dist
                 # Offset errors of 150 meters have been observed (Lycksele data set)
                 if dist > 200:
