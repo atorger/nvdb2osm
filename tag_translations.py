@@ -1111,7 +1111,10 @@ def process_tag_translations(tags, tag_translations):
         name = tags["NAMN"]
         new_name = preprocess_name(name)
         if new_name != name:
-            _log.info(f"Changed name: '{name}' => '{new_name}'")
+            if new_name is None:
+                _log.info(f"Removed invalid name: '{name}'")
+            else:
+                _log.info(f"Changed name: '{name}' => '{new_name}'")
             tags["NAMN"] = new_name
 
     if "translator_function" in tag_translations:
