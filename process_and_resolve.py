@@ -1745,12 +1745,6 @@ def resolve_lanes(way_db):
             way.tags["bus"] = way.tags.get("bus", "yes")
             _log.debug(f"Added access restrictions to {way.rlid} due to all being bus lanes")
 
-        # remove redundant lanes=1 or lanes=2
-        if "lanes" in way.tags:
-            lanes = way.tags["lanes"]
-            if (is_oneway and lanes == 1) or (not is_oneway and lanes == 2):
-                way.tags.pop("lanes", None)
-
     _log.info("done")
 
 
