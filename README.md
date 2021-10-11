@@ -1,29 +1,26 @@
 
-Import av Trafikverkets NVDB-data till OpenStreetMap
-----------------------------------------------------
+# Import av Trafikverkets NVDB-data till OpenStreetMap
 
 Detta är README-filen till nvdb2osm.py, ett skript som konverterar
 nedladdat NVDB-data (i SHP-format) till en OSM XML-fil.
 
 Det körs på kommandoraden:
 
-nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>
+`nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>`
 
 Exempel:
 
 Dela upp länsfilen till kommuner:
-split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_Shape.zip output
+`split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_Shape.zip output`
 
 Konvertera en kommun till OSM:
-nvdb2osm.py -v --municipality_filter Luleå \
-  --railway_file=Järnvägsnät_grundegenskaper.zip \
-  output/Luleå.zip luleå.osm
+`nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper.zip output/Luleå.zip luleå.osm`
 
 Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
-exemplet används "-v" för att visa INFO-loggar.
+exemplet används `-v` för att visa INFO-loggar.
 
 Det tar cirka en kvart att tugga igenom en kommun (lägger man till
-parametern --skip_self_test går det betydligt fortare). Arkiven med
+parametern `--skip_self_test` går det betydligt fortare). Arkiven med
 shape-filer laddas ner från Trafikverket. Man går till
 https://lastkajen.trafikverket.se/
 I skrivande stund är minsta filerna per län så de behöver delas upp
@@ -37,7 +34,7 @@ Det är en fil för hela Sverige så man använder samma för alla
 kommuner.
 
 Skriptet kräver vissa tredjepartsmoduler, listade i requirements.txt,
-installera med pip install -r requirements.txt
+installera med `pip install -r requirements.txt`
 
 För generell Python-användning och installation får man Googla :-)
 
