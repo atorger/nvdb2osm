@@ -1626,6 +1626,11 @@ def cleanup_highway_widths(way_db):
                 remove_count += 1
                 continue
 
+        # More detailed than necessary/reasonable, round values
+        width = way.tags["width"]
+        if width >= 2 and "bridge" not in way.tags and "tunnel" not in way.tags:
+            way.tags["width"] = int(round(width, 0))
+
     _log.info(f"done (removed {remove_count} of {total_count} highway widths)")
 
 
