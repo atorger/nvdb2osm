@@ -11,10 +11,15 @@ Det körs på kommandoraden:
 Exempel:
 
 Dela upp länsfilen till kommuner:
-`split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_Shape.zip output`
+`split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_Shape.zip split_files`
 
 Konvertera en kommun till OSM:
-`nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper.zip output/Luleå.zip luleå.osm`
+`nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper.zip split_files/Luleå.zip luleå.osm`
+
+Även om `Luleå.zip` ovan innehåller bara vägar som är inom kommunen, 
+så vill man ändå ange `--municipality_filter Luleå` då det ser till att
+vägar som går över kommungränsen faktiskt också skärs av vid gränsen, 
+annars kan de gå ganska långt in i nästa kommun.
 
 Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
 exemplet används `-v` för att visa INFO-loggar.
