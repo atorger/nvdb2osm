@@ -1626,12 +1626,106 @@ def cleanup_highway_widths(way_db):
                 remove_count += 1
                 continue
 
-        # More detailed than necessary/reasonable, round values
+        # NVDB data has shown to sometimes have width values like 4.099999999999999
         width = way.tags["width"]
-        if width >= 2 and "bridge" not in way.tags and "tunnel" not in way.tags:
-            way.tags["width"] = int(round(width, 0))
+        new_width = round(width, 1)
+        if new_width != width:
+            _log.info(f'rounding width {width} to {new_width}')
+            way.tags["width"] = new_width
 
     _log.info(f"done (removed {remove_count} of {total_count} highway widths)")
+
+# round_highway_widths
+#
+# Sometimes varying road widths lead to lots of short segments, with
+# overkill precision on width. This function rounds and averages road
+# widths to reduce the number of segments in the final output.
+#
+def round_highway_widths(way_db):
+    _log.info("Rounding/averaging highway widths...")
+
+    processed = set()
+
+    def criteria_fun(way):
+        return way not in processed and \
+            way.tags.get("width", 0) >= 2 and \
+            "highway" in way.tags and \
+            "bridge" not in way.tags and \
+            "tunnel" not in way.tags
+
+    def get_connecting_way(selfw, wset):
+        # may be more than one, but we just pick the first one matching our criteria,
+        # any other will be processed later and put to a different road list
+        for w in wset:
+            if w != selfw and \
+               criteria_fun(w) and \
+               w.tags["highway"] == selfw.tags["highway"] and \
+               w.tags.get("lanes", None) == selfw.tags.get("lanes", None) and \
+               w.tags.get("maxspeed", None) == selfw.tags.get("maxspeed", None) and \
+               (w.way[-1] == selfw.way[0] or w.way[-1] == selfw.way[-1] or w.way[0] == selfw.way[0] or w.way[0] == selfw.way[-1]):
+                return w
+        return None
+
+    roads = []
+    for way in way_db:
+        if not criteria_fun(way):
+            continue
+        road = [ way ]
+        while True:
+            cw = get_connecting_way(road[0], way_db.gs.find_all_connecting_ways(road[0].way[0]))
+            if cw is not None:
+                road.insert(0, cw)
+                processed.add(cw)
+            else:
+                cw = get_connecting_way(road[-1], way_db.gs.find_all_connecting_ways(road[-1].way[-1]))
+                if cw is not None:
+                    road.append(cw)
+                    processed.add(cw)
+                else:
+                    break
+        if len(road) > 1:
+            roads.append(road)
+
+    _log.info(f"Found {len(roads)} connected roads to consider for width averaging and rounding")
+
+    def round_roads(roads):
+        large_span_roads = []
+        for road in roads:
+            max_width = min_width = road[0].tags["width"]
+            for way in road:
+                width = way.tags["width"]
+                if width > max_width:
+                    max_width = width
+                if width < min_width:
+                    min_width = width
+            if max_width == min_width:
+                continue
+            avg = round((max_width + min_width) / 2, 1)
+            if avg / min_width > 1.15 or avg - min_width > 1.5:
+                #_log.info(f"Road: {len(road)} elements, width range {min_width} to {max_width} spanning {max_width - min_width}")
+                large_span_roads.append(road)
+                continue
+            # use whole meters if we can still keep within 15%
+            if round(avg, 0) / min_width <= 1.15 and max_width / round(avg, 0) <= 1.15:
+                avg = int(round(avg, 0))
+            for way in road:
+                way.tags["width"] = avg
+            _log.info(f"Road: {len(road)} segments, width range {min_width} to {max_width} changed to width {avg} for all segments")
+        return large_span_roads
+
+    large_span_roads = round_roads(roads)
+    for road in large_span_roads:
+        start = 0
+        while len(road) - start > 1:
+            for i in range(len(road)-start):
+                test_road = road[start:len(road)-i]
+                if len(test_road) < 2:
+                    start += 1
+                    break
+                lsr = round_roads([ test_road ])
+                if len(lsr) == 0:
+                    start = len(road)-i
+                    break
 
 
 # simplify_oneway()
