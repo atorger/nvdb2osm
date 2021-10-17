@@ -249,13 +249,8 @@ VEHICLES_AND_ROAD_USERS_TRANSLATIONS = {
     "fordon i linjetrafik":  "bus",
     "fordon i linjetrafik vid på- och avstigning":        "bus",
     "fordon med särskilt tillstånd":                      "USER permit_holder",
-
-    # full length: "fordon eller fordonståg vars längd, lasten inräknad, överstiger 10 meter"
-    "fordon eller fordonståg vars längd, lasten inräkna": "lhv",
-
-    # full length: "fordon som används av rörelsehindrade med särskilt tillstånd"
+    "fordon eller fordonståg vars längd, lasten inräknad, överstiger 10 meter": "lhv",
     "fordon som används av rörelsehindrade med särskilt tillstånd": "USER disabled",
-
     "fordon som används för distribution av post":        "IGNORE",
     "fyrhjulig moped":       "atv",
     "färdtjänstfordon":      "psv",
@@ -272,8 +267,7 @@ VEHICLES_AND_ROAD_USERS_TRANSLATIONS = {
     "moped klass I":         "moped",
     "moped klass II":        "mofa",
     "motorcykel":            "motorcycle",
-    # full length: "motordrivet fordon med tillkopplad släpvagn annat än påhängsvagn eller enaxlig släpvagn"
-    "motordrivet fordon med tillkopplad släpvagn annat": "hgv",
+    "motordrivet fordon med tillkopplad släpvagn annat än påhängsvagn eller enaxlig släpvagn": "hgv",
     "motordrivna fordon":    "motor_vehicle",
     "motorfordon":           "motor_vehicle",
     "motorredskap":          "IGNORE",
