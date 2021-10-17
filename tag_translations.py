@@ -386,9 +386,12 @@ def tag_translation_Barighet(tags):
     }
     process_tag_translations(tags, tag_translations)
     if winter_bk:
-        start_winter = parse_range_date(tags["STATDAUMO3"])
-        stop_winter = parse_range_date(tags["SLUDATMVOD"])
-        tags["maxweight:conditional"] = str(tags["wc"]) + " @ (" + start_winter + "-" + stop_winter + ")"
+        if tags.get("STATDAUMO3", None) is None or tags.get("SLUDATMVOD", None) is None:
+            _log.warning(f"Winter-specific maxweight without date range for RLID {tags['RLID']}")
+        else:
+            start_winter = parse_range_date(tags["STATDAUMO3"])
+            stop_winter = parse_range_date(tags["SLUDATMVOD"])
+            tags["maxweight:conditional"] = str(tags["wc"]) + " @ (" + start_winter + "-" + stop_winter + ")"
     _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3"]]
 
 # tag_translation_BegrAxelBoggiTryck()
