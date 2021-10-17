@@ -111,7 +111,7 @@ _log = logging.getLogger("translations")
 def append_fixme_value(tags, fixme_value):
     if fixme_value is None:
         return
-    if "fixme" not in tags:
+    if tags.get("fixme", None) is None:
         tags["fixme"] = "NVDB import: " + fixme_value
     else:
         tags["fixme"] = tags["fixme"] + "; " + fixme_value
@@ -196,12 +196,12 @@ def parse_direction(tags):
 def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
     del_tags = []
     vtypes = []
-    fixme = None
+    fixme_tags = { "fixme": tags.get("fixme", None) }
     for key in tags:
         if key.startswith(key_base) and tags[key] != -1:
             v = tag_translation_fordon_trafikant(tags[key], tags["RLID"])
             if v == "FIXME":
-                append_fixme_value(tags, "Unknown tag %s" % tags[key])
+                append_fixme_value(fixme_tags, f"Unknown tag {tags[key]}")
             elif v == "IGNORE":
                 pass
             elif v.startswith("PURPOSE"):
@@ -209,20 +209,21 @@ def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
                     purpose_list.append(v.split()[1])
                 else:
                     _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
-                    fixme = f"{key_base} contains conditional element"
+                    append_fixme_value(fixme_tags, f"{key_base} contains conditional element")
             elif v.startswith("USER"):
                 if user_list is not None:
                     user_list.append(v.split()[1])
                 else:
                     _log.warning(f"{key_base} contains conditional element (RLID {tags['RLID']})")
-                    fixme = f"{key_base} contains conditional element"
+                    append_fixme_value(fixme_tags, f"{key_base} contains conditional element")
             else:
                 vtypes.append(v)
         if key.startswith(key_base):
             del_tags.append(key)
     for k in del_tags:
         del tags[k]
-    append_fixme_value(tags, fixme)
+    if fixme_tags.get("fixme", None) is not None:
+        tags["fixme"] = fixme_tags["fixme"]
     return vtypes
 
 # Translation table used by the tag_translation_fordon_trafikant() function
