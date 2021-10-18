@@ -199,10 +199,11 @@ def parse_date_interval(values):
     return di
 
 def parse_day_interval(values):
-    day_map = { "måndag": "Mo", "tisdag": "Tu", "onsdag": "We", "torsdag": "Th", "fredag": "Fr", "lördag": "Sa", "söndag": "Su" }
+    day_map = { "måndag": "Mo", "tisdag": "Tu", "onsdag": "We", "torsdag": "Th", "fredag": "Fr", "lördag": "Sa", "söndag": "Su", \
+                "1": "Mo", "2": "Tu", "3": "We", "4": "Th", "5": "Fr", "6": "Sa", "7": "Su" }
     if values[1] is None:
-        return day_map[values[0]]
-    return day_map[values[0]] + "-" + day_map[values[1]]
+        return day_map[str(values[0])]
+    return day_map[str(values[0])] + "-" + day_map[str(values[1])]
 
 def parse_day_type(values):
     return values[0] # fix at merge
