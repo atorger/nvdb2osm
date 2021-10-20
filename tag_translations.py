@@ -1092,6 +1092,10 @@ def preprocess_name(name):
     for k, v in replace_table.items():
         name = name.replace(k, v)
 
+    if name.startswith("Cpl ") and "rondell" in name:
+        # Cpl is redundant if name contains rondell
+        name = name[4:]
+
     return name
 
 # process_tag_translations()
