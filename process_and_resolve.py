@@ -1244,6 +1244,18 @@ def guess_upgrade_tracks(way_db):
         current_service_roads_gs.insert(way)
     undecided -= upgraded
 
+    # Upgrade tracks with asphalt surface to service
+    upgraded = set()
+    for way in undecided:
+        if way.tags.get("surface", "unpaved") == "asphalt":
+            way.tags["highway"] = "service"
+            upgraded.add(way)
+    for way in upgraded:
+        current_service_roads.add(way)
+        current_service_roads_gs.insert(way)
+    undecided -= upgraded
+    _log.info(f"  {len(upgraded)} tracks upgraded to service as they have asphalt surface")
+
     # Upgrade tracks that form links between larger road and current service roads, but only if they
     # do so within a single segment.
     # There are cases when more segments could be followed, but they are few enough to not care,
