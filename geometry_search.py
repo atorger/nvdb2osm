@@ -228,6 +228,7 @@ class GeometrySearch:
         else:
             _log.debug("Extension does not connect to reference")
             return False
+        _log.debug(f"ref_way after extension: {ref_way.way}")
 
         # Get all ways with the same RLID (sometimes more than one)
         update_set = set()
@@ -282,8 +283,12 @@ class GeometrySearch:
                     for w in update_set:
                         for p1 in w.way:
                             if p1 == p:
-                                update_map[(seg, idx)] = p1
-        _log.debug(f"Update map: {update_map}")
+                                _log.debug(f"update_map {id(seg)} {idx} {p1} {id(p1)}")
+                                if (seg, idx) in update_map:
+                                    # circular way
+                                    _log.debug(f"point already added")
+                                else:
+                                    update_map[(seg, idx)] = p1
 
         # Re-insert ways to update, sort in same order concerning distances as update_dist_segs
         update_list = list(update_set)
@@ -297,6 +302,7 @@ class GeometrySearch:
                             return p0.dist
             return update_dist_segs[-1].way[-1].dist + 1
         update_list.sort(key=update_dist_segs_order)
+        _log.debug(f"Update list: {update_list}")
         for w in update_list:
             for p in w.way:
                 p.dist = -1

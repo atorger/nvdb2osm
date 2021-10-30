@@ -812,7 +812,7 @@ class WayDatabase:
                     _log.error(f"seg.way: {seg.way}")
                     _log.error(f"ref_way: {ref_way}")
                     _log.error(f"seg    : {seg}")
-                    raise RuntimeError("Dist mismatch got %s expected %s (ref_idx %s)" % (p.dist, ref_way.way[ref_idx].dist, ref_idx))
+                    raise RuntimeError(f"Dist mismatch at {p} got {p.dist} expected {ref_way.way[ref_idx].dist} (ref_idx {ref_idx})")
                 ref_idx += 1
                 prev = p
 
