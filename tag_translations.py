@@ -879,7 +879,7 @@ def tag_translation_Rastplats(tags):
 
     # remove all keys with value No or Unknown or -1
     for k, v in list(tags.items()):
-        if v in [None, "nej", "Nej", "okänt", "Okänt"] or (isinstance(v, (int, float)) and v == -1):
+        if v in [None, "nej", "Nej", "okänt", "Okänt", "-1"] or (isinstance(v, (int, float)) and v == -1):
             del_keys.append(k)
 
     for k in del_keys:
