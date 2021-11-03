@@ -56,7 +56,7 @@ def write_osmxml(way_list, point_list, filename, write_rlid=True):
     with open(filename, 'w', encoding="utf-8") as stream:
         # header
         stream.write("<?xml version='1.0' encoding='UTF-8'?>")
-        stream.write("<osm version='0.6' generator='nvdb2osm.py'>")
+        stream.write("<osm version='0.6' upload='never' generator='nvdb2osm.py'>")
 
         # all nodes with tags (points)
         for seg in point_list:
