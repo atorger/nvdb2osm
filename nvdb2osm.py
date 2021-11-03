@@ -402,6 +402,7 @@ def main():
     cleanup_highway_widths(way_db)
     round_highway_widths(way_db)
     remove_redundant_cycleway_names(way_db)
+    merge_nearby_same_nodes(way_db, way_db.point_db)
 
     # Note: simplify_oneway() may reverse some ways, causing functions depending on that ways
     # with the same RLID is oriented in the same direction to not work

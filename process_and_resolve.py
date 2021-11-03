@@ -3,6 +3,7 @@ from functools import cmp_to_key
 
 from geometry_basics import *
 from geometry_search import GeometrySearch, snap_to_closest_way
+from twodimsearch import TwoDimSearch
 from merge_tags import merge_tags, append_fixme_value
 from nvdb_segment import *
 from proj_xy import latlon_str
@@ -1738,6 +1739,69 @@ def round_highway_widths(way_db):
                 if len(lsr) == 0:
                     start = len(road)-i
                     break
+
+
+# merge_nearby_same_nodes()
+#
+# Some nodes are multiplied in the source data in slightly different positions
+# These are merged to one here
+#
+def merge_nearby_same_nodes(way_db, point_db):
+
+    def find_all_connecting_ways(point):
+        # geometry search is setup before point layers are merged, can't search for connected ways directly
+        node_ways = []
+        nearby_node_ways = way_db.gs.find_all_nearby_ways(point)
+        for way in nearby_node_ways:
+            for p in way.way:
+                if p == point:
+                    node_ways.append(way)
+                    break
+        return node_ways
+
+    _log.info("Merge nearby nodes that are actually the same...")
+
+    # setup 2D search for all nodes
+    node_search = TwoDimSearch()
+    for node_list in point_db.values():
+        for node in node_list:
+            node_search.insert(node.way, node)
+
+    remove_set = set()
+    for node_list in point_db.values():
+        for node in node_list:
+            # only consider node types that we know is problematic in source data
+            if node.tags.get("highway", None) not in ["stop", "give_way"] or node in remove_set:
+                continue
+            # get all nearby nodes and filter out those that are connected to the same way and have matching tags
+            nearby_list = node_search.find_all_within_list(node.way, 8)
+            if len(nearby_list) <= 1:
+                continue
+            node_ways = find_all_connecting_ways(node.way)
+            if len(node_ways) == 0:
+                continue
+            filtered_list = []
+            for (_, node_set) in nearby_list:
+                for n in node_set:
+                    if n.tags.get("highway", None) != node.tags["highway"] or \
+                       n.tags.get("direction", None) != node.tags.get("direction", None) or \
+                       n in remove_set:
+                        continue
+                    n_ways = find_all_connecting_ways(n.way)
+                    found = False
+                    for way in n_ways:
+                        if way in node_ways:
+                            found = True
+                            break
+                    if found:
+                        filtered_list.append(n)
+            # remove all duplicates
+            for n in filtered_list:
+                if n != node:
+                    remove_set.add(n)
+    for node in remove_set:
+        del point_db[node.way]
+    _log.info(f"done ({len(remove_set)} nodes were removed)")
 
 
 # simplify_oneway()
