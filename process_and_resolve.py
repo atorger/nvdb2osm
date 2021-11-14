@@ -122,7 +122,7 @@ def preprocess_laybys(points, way_db):
             oldlen = dist2d(prev, p)
             xd = (p.x - prev.x) / oldlen * LAYBY_OFFSET
             yd = (p.y - prev.y) / oldlen * LAYBY_OFFSET
-            if node.tags["NVDB_layby_side"] == "right":
+            if node.tags.get("NVDB_layby_side", None) == "right":
                 node.way.x = snap.x - xd
                 node.way.y = snap.y - yd
             else:

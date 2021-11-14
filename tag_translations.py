@@ -803,6 +803,7 @@ def tag_translation_P_ficka(tags):
     elif tags["SIDA"] == "Vänster":
         tags["NVDB_layby_side"] = "left"
     else:
+        # Note: "Mitt" has been observed in Rättvik
         _log.warning(f"unknown SIDA {tags} (RLID {tags['RLID']})")
         append_fixme_value(tags, "P_ficka: unknown SIDA value")
 
