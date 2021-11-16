@@ -248,7 +248,7 @@ def preprocess_bridges_and_tunnels(ways, way_db):
             tunnels.append(way)
             tunnels_lcs.insert(way)
         else:
-            raise RuntimeError("Unhandled tag name %s" % konst)
+            raise RuntimeError(f"Unhandled tag name {konst}")
 
     # First go through under passages, and convert to tunnel if needed.
     _log.info(f"Checking {len(underways)} under-passages relation to {len(bridges)} bridge segments...")
@@ -553,6 +553,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
         klass = int(way.tags.get("KLASS", -1))
         tags = {}
         if "GCMTYP" in way.tags:
+            # Note GCM-typ values was changed by Trafikverket in November 2021. This code handles both new and old values
             gcmtyp = way.tags["GCMTYP"]
 
             if gcmtyp == 1: # Cykelbana (C)
@@ -655,8 +656,64 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             elif gcmtyp == 29: # Cykelbana ej lämplig för gång (C)
                 tags["highway"] = "cycleway"
                 tags["foot"] = "no"
+            # New GCM typ values from Nov 2021 below
+            elif gcmtyp == 100: # Gång- och cykelbana
+                tags["highway"] = "cycleway"
+            elif gcmtyp == 105: # Gång- och cykelbana, uppdelad
+                tags["highway"] = "cycleway"
+                tags["segregated"] = "yes"
+            elif gcmtyp == 110: # Cykelbana, påbjuden
+                tags["highway"] = "cycleway"
+                tags["foot"] = "no"
+            elif gcmtyp == 115: # Gångbana
+                tags["highway"] = "footway"
+            elif gcmtyp == 120: # Cykelfält
+                tags["highway"] = "cycleway"
+            elif gcmtyp == 125: # Cykelpassage och övergångsställe
+                tags["crossing"] = "marked"
+                tags["highway"] = "path" # refined later
+            elif gcmtyp == 130: # Cykelöverfart och övergångsställe
+                tags["highway"] = "cycleway"
+                tags["cycleway"] = "crossing"
+                tags["crossing"] = "marked"
+            elif gcmtyp == 135: # Cykelpassage
+                tags["highway"] = "cycleway"
+            elif gcmtyp == 140: # Cykelöverfart
+                tags["highway"] = "cycleway"
+                tags["cycleway"] = "crossing"
+                tags["crossing"] = "marked"
+            elif gcmtyp == 145: # Övergångsställe
+                tags["crossing"] = "marked"
+                tags["highway"] = "path" # refined later
+            elif gcmtyp == 150: # Gatupassage utan utmärkning
+                tags["crossing"] = "unmarked"
+                tags["highway"] = "path" # refined later
+            elif gcmtyp == 155: # Trappa
+                tags["highway"] = "steps"
+            elif gcmtyp == 160: # Torg/Öppen yta
+                tags["highway"] = "cycleway"
+            elif gcmtyp == 165: # Annan cykelbar förbindelse
+                # This type unfortunately has multi-uses. In larger cities it's commonly used to
+                # connect disconnected cycleways, eg in places you need to pass 10 - 20 meters of
+                # pavement to get on to the next section. But it's also used for longer sections
+                # of unpaved tracks that make practical links for cyclists but are not really
+                # maintained as cycleways (this is the official definition in NVDB).
+                #
+                # To differ between these we look at road surface, and if it's marked oneway
+                # (happens in some cases in cities) we also upgrade it to cycleway
+                #
+                if "oneway" in way.tags or way.tags.get("surface", "unpaved") != "unpaved":
+                    tags["highway"] = "cycleway"
+                else:
+                    tags["highway"] = "path"
+                    tags["bicycle"] = "yes"
+            elif gcmtyp == 170: # Annan ej cykelbar förbindelse
+                # These may be ridable anyway, so we don't dare to set bicycle=no
+                tags["highway"] = "path"
+            elif gcmtyp == 175: # Hiss
+                tags["highway"] = "elevator"
             else:
-                raise RuntimeError("Unknown GCM-typ %s" % gcmtyp)
+                raise RuntimeError(f"Unknown GCM-typ {gcmtyp}")
 
         elif "NVDB_cykelvagkat" in way.tags:
             # value is one of "Regional cykelväg", "Huvudcykelväg", "Lokal cykelväg", we tag all the same
@@ -747,7 +804,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             elif gatutyp == "Småväg":
                 tags["highway"] = "unclassified"
             else:
-                raise RuntimeError("Unknown gatutyp %s" % gatutyp)
+                raise RuntimeError(f"Unknown gatutyp {gatutyp}")
         elif "KLASS" in way.tags:
             # KLASS (from FunkVagklass) on it's own is used here last as a fallback
             # when there is no other information to rely on. KLASS is a metric on how
