@@ -136,6 +136,8 @@ def merge_time_intervals(ti, rlid):
     if merge_str is None:
         merge_str = "00:00-24:00"
     if day_type is not None:
+        if day_interval == "Mo-Fr" and day_type in ["vardag utom dag före sön- och helgdag", 3]:
+            day_interval = None
         if day_interval is not None and day_type != "vardag":
             _log.warning(f"day_interval ({day_interval}) and day_type ({day_type}) set at the same time (RLID {rlid})")
             return -1
