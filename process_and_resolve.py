@@ -553,146 +553,56 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
         klass = int(way.tags.get("KLASS", -1))
         tags = {}
         if "GCMTYP" in way.tags:
-            # Note GCM-typ values was changed by Trafikverket in November 2021. This code handles both new and old values
+            # Note GCM-typ values was changed by Trafikverket in November 2021. This code handles only the new values
             gcmtyp = way.tags["GCMTYP"]
-
-            if gcmtyp == 1: # Cykelbana (C)
+            if gcmtyp in (100, "Gång- och cykelbana"):
                 tags["highway"] = "cycleway"
-            elif gcmtyp == 2: # Cykelfält (C)
-                tags["highway"] = "cycleway"
-            elif gcmtyp == 3: # Cykelpassage (C)
-                tags["highway"] = "cycleway"
-                tags["cycleway"] = "crossing"
-                tags["crossing"] = "marked"
-            elif gcmtyp == 4: # Övergångsställe (C+G)
-                # note: may in some cases be marked only with traffic sign,
-                # OSM "marked" actually refers to marking on road surface
-                tags["crossing"] = "marked"
-                tags["highway"] = "path" # refined later
-                gcm_resolve_crossings.append(way)
-            elif gcmtyp == 5: # Gatupassage utan märkning (C+G)
-                tags["crossing"] = "unmarked"
-                tags["highway"] = "path" # refined later
-                gcm_resolve_crossings.append(way)
-            # elif gcmtyp == 6: not used by NVDB
-            # elif gcmtyp == 7: not used by NVDB
-            elif gcmtyp == 8: # Koppling till annat nät (C+G)
-                tags["highway"] = "path" # refined later
-                gcm_resolve_crossings.append(way)
-            elif gcmtyp == 9: # Annan cykelbar förbindelse (C)
-                # This type unfortunately has multi-uses. In larger cities it's commonly used to
-                # connect disconnected cycleways, eg in places you need to pass 10 - 20 meters of
-                # pavement to get on to the next section. But it's also used for longer sections
-                # of unpaved tracks that make practical links for cyclists but are not really
-                # maintained as cycleways.
-                #
-                # To differ between these we look at road surface, and if it's marked oneway
-                # (happens in some cases in cities) we also upgrade it to cycleway
-                #
-                if "oneway" in way.tags or way.tags.get("surface", "unpaved") != "unpaved":
-                    tags["highway"] = "cycleway"
-                else:
-                    tags["highway"] = "path"
-                    tags["bicycle"] = "yes"
-            elif gcmtyp == 10: # Annan ej cykelbar förbindelse (C+G)
-                tags["highway"] = "path"
-            elif gcmtyp == 11: # Gångbana (G)
-                tags["highway"] = "footway"
-            elif gcmtyp == 12: # Trottoar (G)
-                tags["highway"] = "footway"
-                tags["footway"] = "sidewalk"
-            elif gcmtyp == 13: # Fortsättning i nätet (C+G)
-                # generally a logical continuation of a sidewalk broken up by a parking lot
-                tags["highway"] = "path" # refined later
-                gcm_resolve_crossings.append(way)
-            elif gcmtyp == 14: # Passage genom byggnad (G)
-                tags["highway"] = "footway"
-                tags["tunnel"] = "building_passage"
-            elif gcmtyp == 15: # Ramp (G)
-                tags["highway"] = "footway"
-                tags["incline"] = "up"
-                tags["wheelchair"] = "yes"
-                tags["fixme"] = "could not resolve incline"
-            elif gcmtyp == 16: # Perrong (G)
-                tags["railway"] = "platform"
-            elif gcmtyp == 17: # Trappa (C+G)
-                tags["highway"] = "steps"
-            elif gcmtyp == 18: # Rulltrappa (G)
-                tags["highway"] = "steps"
-                tags["conveying"] = "yes"
-            elif gcmtyp == 19: # Rullande trottoar (G)
-                tags["highway"] = "footway"
-                tags["footway"] = "sidewalk"
-                tags["conveying"] = "yes"
-            elif gcmtyp == 20: # Hiss (G)
-                tags["highway"] = "elevator"
-            elif gcmtyp == 21: # Snedbanehiss (G)
-                tags["highway"] = "elevator"
-            elif gcmtyp == 22: # Linbana (G)
-                tags["aerialway"] = "cablecar"
-            elif gcmtyp == 23: # Bergbana (G)
-                tags["railway"] = "funicular"
-            elif gcmtyp == 24: # Torg (C+G)
-                tags["highway"] = "footway"
-            elif gcmtyp == 25: # Kaj (C+G)
-                tags["highway"] = "footway"
-            elif gcmtyp == 26: # Öppen yta (C+G)
-                tags["highway"] = "path" # refined later
-                gcm_resolve_crossings.append(way)
-            elif gcmtyp == 27: # Färja (C+G)
-                tags["route"] = "ferry"
                 tags["foot"] = "yes"
-                tags["motor_vehicle"] = "no"
-            elif gcmtyp == 28: # Cykelpassage och övergångsställe (C+G)
-
-                # While these are indeed segregated between cycleway and footway, it will split up the geometry
-                # a lot without any significant value added, especially if cycleway crossing simplification
-                # is used
-                # tags["segregated"] = "yes"
-
-                tags["highway"] = "cycleway"
-                tags["cycleway"] = "crossing"
-                tags["crossing"] = "marked"
-            elif gcmtyp == 29: # Cykelbana ej lämplig för gång (C)
-                tags["highway"] = "cycleway"
-                tags["foot"] = "no"
-            # New GCM typ values from Nov 2021 below
-            elif gcmtyp == 100: # Gång- och cykelbana
-                tags["highway"] = "cycleway"
-            elif gcmtyp == 105: # Gång- och cykelbana, uppdelad
+            elif gcmtyp in (105, "Gång- och cykelbana, uppdelad"):
                 tags["highway"] = "cycleway"
                 tags["segregated"] = "yes"
-            elif gcmtyp == 110: # Cykelbana, påbjuden
+                tags["foot"] = "yes"
+            elif gcmtyp in (110, "Cykelbana, påbjuden"):
                 tags["highway"] = "cycleway"
                 tags["foot"] = "no"
-            elif gcmtyp == 115: # Gångbana
+            elif gcmtyp in (115, "Gångbana"):
                 tags["highway"] = "footway"
-            elif gcmtyp == 120: # Cykelfält
+            elif gcmtyp in (120, "Cykelfält"):
                 tags["highway"] = "cycleway"
-            elif gcmtyp == 125: # Cykelpassage och övergångsställe
-                tags["crossing"] = "marked"
-                tags["highway"] = "path" # refined later
-            elif gcmtyp == 130: # Cykelöverfart och övergångsställe
+            elif gcmtyp in (125, "Cykelpassage och övergångsställe"):
+                # TODO difference with cykelöverfart not seen. Cykelpassage = bilar har ingen väjningsplikt för cyklar
                 tags["highway"] = "cycleway"
                 tags["cycleway"] = "crossing"
                 tags["crossing"] = "marked"
-            elif gcmtyp == 135: # Cykelpassage
-                tags["highway"] = "cycleway"
-            elif gcmtyp == 140: # Cykelöverfart
+                tags["foot"] = "yes"
+            elif gcmtyp in (130, "Cykelöverfart och övergångsställe"):
                 tags["highway"] = "cycleway"
                 tags["cycleway"] = "crossing"
                 tags["crossing"] = "marked"
-            elif gcmtyp == 145: # Övergångsställe
+                tags["foot"] = "yes"
+            elif gcmtyp in (135, "Cykelpassage"):
+                tags["highway"] = "cycleway"
+            elif gcmtyp in (140, "Cykelöverfart"):
+                tags["highway"] = "cycleway"
+                tags["cycleway"] = "crossing"
+                tags["crossing"] = "marked"
+            elif gcmtyp in (145, "Övergångsställe"):
+                # Defined as footway only, but unfortunately in many places in NVDB it's also used for cycleways
                 tags["crossing"] = "marked"
                 tags["highway"] = "path" # refined later
-            elif gcmtyp == 150: # Gatupassage utan utmärkning
+                gcm_resolve_crossings.append(way)
+            elif gcmtyp in (150, "Gatupassage utan utmärkning"):
+                # This is mostly used for unmarked footway crossings, but in some situations
+                # it's also a cycleway crossing, we need to resolve that by looking at connecting ways
                 tags["crossing"] = "unmarked"
                 tags["highway"] = "path" # refined later
-            elif gcmtyp == 155: # Trappa
+                gcm_resolve_crossings.append(way)
+            elif gcmtyp in (155, "Trappa"):
                 tags["highway"] = "steps"
-            elif gcmtyp == 160: # Torg/Öppen yta
+            elif gcmtyp in (160, "Torg/Öppen yta"):
                 tags["highway"] = "cycleway"
-            elif gcmtyp == 165: # Annan cykelbar förbindelse
+                tags["foot"] = "yes"
+            elif gcmtyp in (165, "Annan cykelbar förbindelse"): # Annan cykelbar förbindelse
                 # This type unfortunately has multi-uses. In larger cities it's commonly used to
                 # connect disconnected cycleways, eg in places you need to pass 10 - 20 meters of
                 # pavement to get on to the next section. But it's also used for longer sections
@@ -704,13 +614,14 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 #
                 if "oneway" in way.tags or way.tags.get("surface", "unpaved") != "unpaved":
                     tags["highway"] = "cycleway"
+                    tags["foot"] = "yes"
                 else:
                     tags["highway"] = "path"
                     tags["bicycle"] = "yes"
-            elif gcmtyp == 170: # Annan ej cykelbar förbindelse
+            elif gcmtyp in (170, "Annan ej cykelbar förbindelse"):
                 # These may be ridable anyway, so we don't dare to set bicycle=no
                 tags["highway"] = "path"
-            elif gcmtyp == 175: # Hiss
+            elif gcmtyp in (175, "Hiss"):
                 tags["highway"] = "elevator"
             else:
                 raise RuntimeError(f"Unknown GCM-typ {gcmtyp}")
@@ -718,12 +629,14 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
         elif "NVDB_cykelvagkat" in way.tags:
             # value is one of "Regional cykelväg", "Huvudcykelväg", "Lokal cykelväg", we tag all the same
             tags["highway"] = "cycleway"
+            tags["foot"] = "yes"
         elif "NVDB_gagata" in way.tags:
             # We ignore NVDB_gagata_side, from investigations it doesn't seem to provide any valuable information
             tags["highway"] = "pedestrian"
             if way.tags.get("width", 1000) < 3:
                 # JOSM doesn't like pedestrian roads narrower than 3 meters
                 tags["highway"] = "cycleway"
+                tags["foot"] = "yes"
                 way.tags.pop("maxspeed", None) # cycleways shouldn't have maxspeed
         elif "NVDB_gangfartsomrode" in way.tags:
             # We ignore NVDB_gangfartsomrode_side, from investigations it seems that even if
@@ -873,75 +786,54 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
         merge_translated_tags(way, tags)
 
     # Second pass for things we couldn't resolve in the first pass
+
     if len(gcm_resolve_crossings) > 0:
-        # Rules for marking road/street crossings:
-        #  if cycleway on both ends: make cycleway
-        #  else if footway on both ends: make footway
-        #  else if footway in one and and cycleway in the other: make footway
-        #  else: make path
-        endpoints = way_db.get_endpoint_map()
-        tag_single_sided_as_cycleway = False
-        tag_unconnected_as_footway = False
-        while len(gcm_resolve_crossings) > 0:
-            unconnected = []
-            match = False
-            has_single_sided = False
-            for way in gcm_resolve_crossings:
-                connecting_ways = ([], [])
-                for idx, ep in enumerate([ way.way[0], way.way[-1] ]):
-                    ways = endpoints.get(ep, []).copy()
-                    ways.remove(way)
+        # group together all crossing segments that are connected to eachother
+        crossings = []
+        processed_set = set()
+        _log.debug(f"Resolving {len(gcm_resolve_crossings)} GCM crossing segments")
+        for way in gcm_resolve_crossings:
+            if way in processed_set:
+                continue
+            crossings.append([ way ])
+            processed_set.add(way)
+            for ep in [ way.way[0], way.way[-1] ]:
+                ways = way_db.gs.find_all_connecting_ways(ep)
+                ways.remove(way)
+                for w in ways:
+                    if w in gcm_resolve_crossings and w not in processed_set:
+                        crossings[-1].append(w)
+                        processed_set.add(w)
+        _log.debug(f"Resolving {len(crossings)} GCM crossings")
+
+        # if the crossing has two or more cycleway connections at different endpoints, make cycleway,
+        # if the crossing has only one cycleway connection but no footway connection (at a different endpoint), still make cycleway,
+        # otherwise make footway
+        for crossing in crossings:
+            cw_count = 0
+            fw_count = 0
+            for way in crossing:
+                for ep in [ way.way[0], way.way[-1] ]:
+                    ways = way_db.gs.find_all_connecting_ways(ep)
+                    connected_to_footway = False
                     for w in ways:
-                        hval = w.tags.get("highway", "")
-                        if hval in ("cycleway", "footway"):
-                            connecting_ways[idx].append(hval)
-
-                tags = {}
-                if len(connecting_ways[0]) == 0:
-                    connecting_ways = tuple(reversed(connecting_ways))
-                if len(connecting_ways[0]) == 0:
-                    # not connected to cycleway/footway (usually middle segment in a crossing split in three or more segments
-                    if tag_unconnected_as_footway:
-                        tags["highway"] = "footway"
-                    else:
-                        unconnected.append(way)
-                        continue
-                if len(connecting_ways[1]) == 0:
-                    # connected only on one side, usually due to crossing split in two or more segments
-                    if "footway" in connecting_ways[0]:
-                        tags["highway"] = "footway"
-                    elif tag_single_sided_as_cycleway:
-                        tags["highway"] = "cycleway"
-                    else:
-                        # could be joined by footway on other end, so we don't know yet how to tag
-                        unconnected.append(way)
-                        has_single_sided = True
-                        continue
+                        if w.tags.get("highway", None) == "cycleway":
+                            cw_count += 1
+                            connected_to_footway = False # If connected to both, we only count cycleway
+                            break
+                        if w.tags.get("highway", None) == "footway":
+                            connected_to_footway = True
+                    if connected_to_footway:
+                        fw_count += 1
+            _log.debug(f"Crossing {crossing[0].rlid} has {cw_count} cw and {fw_count} fw")
+            for way in crossing:
+                if (cw_count == 1 and fw_count == 0) or cw_count > 1:
+                    way.tags["highway"] = "cycleway"
+                    way.tags["cycleway"] = "crossing"
+                    way.tags["foot"] = "yes"
                 else:
-                    # connected on both sides, single-segment crossing
-                    if "cycleway" in connecting_ways[0] and "cycleway" in connecting_ways[1]:
-                        tags["highway"] = "cycleway"
-                    else:
-                        tags["highway"] = "footway"
-                if way.tags.get("crossing", None) is not None:
-                    tags[tags["highway"]] = "crossing"
-                way.tags.pop("highway", None)
-                assert "highway" in tags
-                merge_translated_tags(way, tags)
-                match = True
-
-            if not match:
-                if has_single_sided:
-                    tag_single_sided_as_cycleway = True
-                    gcm_resolve_crossings = unconnected
-                elif len(unconnected) > 0:
-                    tag_unconnected_as_footway = True
-
-            gcm_resolve_crossings = unconnected
-
-            if len(unconnected) > 0:
-                _log.info(f"{len(unconnected)} unconnected crossings, making an additional pass")
-        _log.info("all crossings resolved")
+                    way.tags["highway"] = "footway"
+                    way.tags["footway"] = "crossing"
 
     if fixme_count > 0:
         _log.warning(f"could not resolve tags for {fixme_count} highway segments, added fixme tags")
@@ -2018,7 +1910,7 @@ def postprocess_miscellaneous_tags(tags):
 
     # oneway tag is redundant for roundabouts
     if tags.get("junction", None) == "roundabout":
-       tags.pop("oneway", None)
+        tags.pop("oneway", None)
 
     # building passage is a good guess 90% of the time, but if it's a bridge, it's not a tunnel...
     if tags.get("tunnel", None) == "building_passage" and "bridge" in tags:
