@@ -2015,6 +2015,11 @@ def postprocess_miscellaneous_tags(tags):
         if not has_bicycle:
             tags["bicycle"] = "yes"
 
+
+    # oneway tag is redundant for roundabouts
+    if tags.get("junction", None) == "roundabout":
+       tags.pop("oneway", None)
+
     # building passage is a good guess 90% of the time, but if it's a bridge, it's not a tunnel...
     if tags.get("tunnel", None) == "building_passage" and "bridge" in tags:
         tags.pop("tunnel", None)
