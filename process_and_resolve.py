@@ -624,7 +624,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             elif gcmtyp in (175, "Hiss"):
                 tags["highway"] = "elevator"
             else:
-                raise RuntimeError(f"Unknown GCM-typ {gcmtyp}")
+                raise RuntimeError(f"Unknown GCM-typ {gcmtyp} for {way.rlid}")
 
         elif "NVDB_cykelvagkat" in way.tags:
             # value is one of "Regional cykelväg", "Huvudcykelväg", "Lokal cykelväg", we tag all the same
