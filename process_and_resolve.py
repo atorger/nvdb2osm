@@ -111,6 +111,10 @@ def preprocess_laybys(points, way_db):
     for node in points:
         ways = way_db.gs.find_all_nearby_ways(node.way)
         _, snap, way = snap_to_closest_way(ways, node.way)
+        if way is None:
+            # this can happen near borders where roads have been cut but laybys kept
+            _log.warning(f"Did not find nearby way for layby {node.rlid}, keeping position as is")
+            continue
         for idx, p in enumerate(way.way):
             if idx == 0:
                 continue
