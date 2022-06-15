@@ -120,7 +120,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bou
 
     _log.debug(f"Keys in shapefile {name}:")
     for k in all_tags:
-        _log.debug(f"  '{k}'");
+        _log.debug(f"  '{k}'")
     return ways
 
 # log_version()
@@ -150,10 +150,13 @@ def log_version():
 #
 def get_municipality(municipality_code_or_name):
     gdf = read_epsg_shapefile("data/ak_riks.zip", "ak_riks")
+    geo = []
     for _, row in gdf.iterrows():
         if str(row.KOM_KOD) == municipality_code_or_name or row.KOMMUNNAMN == municipality_code_or_name:
-            return row.geometry
-    return None
+            geo.append(row.geometry)
+    if len(geo) == 0:
+        return None
+    return geo
 
 # insert_rlid_elements()
 #
@@ -305,7 +308,7 @@ def main():
         _log.error("File with national railway geometry not provided (use --railway_file). Can be skipped by adding --skip_railway parameter, but then railway crossings will be somewhat misaligned")
         sys.exit(1)
 
-    _log.debug("Starting!");
+    _log.debug("Starting!")
     nvdb_total_bounds = [10000000, 10000000, 0, 0] # init to outside max range of SWEREF99
     # First setup a complete master geometry and refine it so we have a good geometry to merge the rest of the data with
     name = master_geometry_name
@@ -445,7 +448,7 @@ def main():
 
     way_db.simplify_geometry()
     _log.info(f"Writing output to {output_filename}")
-    waydb2osmxml(way_db, output_filename, boundary_polygon=municipality, write_rlid=write_rlid)
+    waydb2osmxml(way_db, output_filename, boundary_polygons=municipality, write_rlid=write_rlid)
     _log.info("done writing output")
 
     if split_areas_filename is not None:

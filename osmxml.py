@@ -7,22 +7,26 @@ from shapely_utils import way_is_self_crossing, split_self_crossing_way, shortes
 _log = logging.getLogger("waydb")
 
 
-def waydb2osmxml(way_db, filename, boundary_polygon=None, write_rlid=True):
+def waydb2osmxml(way_db, filename, boundary_polygons=None, write_rlid=True):
     ways = []
     points = []
     for segs in way_db.way_db.values():
-        if boundary_polygon is not None:
+        if boundary_polygons is not None:
             for seg in segs:
-                w = shortest_way_inside_or_crossing(boundary_polygon, seg.way)
-                if w is not None:
-                    ways.append(seg.make_copy_new_way(w))
+                for poly in boundary_polygons:
+                    w = shortest_way_inside_or_crossing(poly, seg.way)
+                    if w is not None:
+                        ways.append(seg.make_copy_new_way(w))
+                        break
         else:
             ways += segs
     for segs in way_db.point_db.values():
-        if boundary_polygon is not None:
+        if boundary_polygons is not None:
             for point in segs:
-                if way_is_inside_or_crossing(boundary_polygon, point.way):
-                    points.append(point)
+                for poly in boundary_polygons:
+                    if way_is_inside_or_crossing(poly, point.way):
+                        points.append(point)
+                        break
         else:
             points += segs
     write_osmxml(ways, points, filename, write_rlid)

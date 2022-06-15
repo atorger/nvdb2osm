@@ -1456,7 +1456,12 @@ class WayDatabase:
         for rlid, segs in self.way_db.items():
             remove_segs = []
             for seg in segs:
-                if not way_is_inside_or_crossing(geometry, seg.way):
+                found = False
+                for geo in geometry:
+                    if way_is_inside_or_crossing(geo, seg.way):
+                        found = True
+                        break
+                if not found:
                     remove_segs.append(seg)
                     remove_count += 1
             for seg in remove_segs:
