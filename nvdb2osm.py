@@ -71,6 +71,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bou
         nvdb_total_bounds[3] = bounds[3]
 
     ways = []
+    all_tags = set()
     skip_count = 0
     last_print = 0
     for index, row in gdf.iterrows():
@@ -92,6 +93,10 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bou
             skip_count += 1
             continue
 
+        for k in way.keys():
+            if k not in all_tags:
+                all_tags.add(k)
+
         process_tag_translations(way, tag_translations)
 
         if geometry.type == "Point":
@@ -112,6 +117,10 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bou
         _log.info("done")
     else:
         _log.info(f"done ({len(ways)} segments kept, {skip_count} skipped)")
+
+    _log.debug(f"Keys in shapefile {name}:")
+    for k in all_tags:
+        _log.debug(f"  '{k}'");
     return ways
 
 # log_version()
