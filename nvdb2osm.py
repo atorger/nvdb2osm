@@ -296,6 +296,7 @@ def main():
         _log.error("File with national railway geometry not provided (use --railway_file). Can be skipped by adding --skip_railway parameter, but then railway crossings will be somewhat misaligned")
         sys.exit(1)
 
+    _log.debug("Starting!");
     nvdb_total_bounds = [10000000, 10000000, 0, 0] # init to outside max range of SWEREF99
     # First setup a complete master geometry and refine it so we have a good geometry to merge the rest of the data with
     name = master_geometry_name
