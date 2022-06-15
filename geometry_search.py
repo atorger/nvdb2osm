@@ -218,12 +218,16 @@ class GeometrySearch:
         _log.debug(f"ref_way: {ref_way.way}")
         _log.debug(f"ext_way: {ext_way}")
         if ext_way[0] == ref_way.way[-1]:
+            _log.debug("exact append")
             ref_way.way += ext_way[1:]
         elif ext_way[-1] == ref_way.way[0]:
+            _log.debug("exact preend")
             ref_way.way = ext_way[:-1] + ref_way.way
         elif snap_to_line(ref_way.way[-1], ext_way[0], ext_way[1]) is not None:
+            _log.debug("approx append")
             ref_way.way += ext_way[1:]
         elif snap_to_line(ref_way.way[0], ext_way[-2], ext_way[-1]) is not None:
+            _log.debug("approx prepend")
             ref_way.way = ext_way[:-1] + ref_way.way
         else:
             _log.debug("Extension does not connect to reference")
@@ -286,7 +290,7 @@ class GeometrySearch:
                                 _log.debug(f"update_map {id(seg)} {idx} {p1} {id(p1)}")
                                 if (seg, idx) in update_map:
                                     # circular way
-                                    _log.debug(f"point already added")
+                                    _log.debug("point already added")
                                 else:
                                     update_map[(seg, idx)] = p1
 
@@ -322,6 +326,17 @@ class GeometrySearch:
         if self._perform_self_testing and self._use_dist:
             for k, _ in update_map.items():
                 self._test_way_dist(k[0])
+
+        # if update_dist_segs is longer than ref segs, it may need reordering
+        if len(update_dist_segs) > 1:
+            pre_dist = update_dist_segs[0].way[0].dist
+            def segs_order(w):
+                return w.way[-1].dist + 1
+            update_dist_segs.sort(key=segs_order)
+            post_dist = update_dist_segs[0].way[0].dist
+            if pre_dist != post_dist:
+                _log.debug(f"update_dist_segs was reordered {update_dist_segs}")
+
         return True
 
     def _test_way_dist(self, way):
@@ -362,13 +377,13 @@ class GeometrySearch:
     @staticmethod
     def _filter_reference_way(ref_set, rlid, allow_multiple_copies=False):
         if ref_set is None:
-            raise RuntimeError("Empty reference set for RLID %s" % rlid)
+            raise RuntimeError(f"Empty reference set for RLID {rlid}")
         ref_ways = [w for w in ref_set if w.rlid == rlid]
         if allow_multiple_copies:
             return ref_ways
         if len(ref_ways) == 0:
             return None
-        assert (len(ref_ways) == 1), "Multiple copies of RLID %s in reference geometry" % rlid
+        assert (len(ref_ways) == 1), f"Multiple copies of RLID {rlid} in reference geometry"
         return ref_ways[0]
 
     def find_reference_way(self, point, rlid):
