@@ -797,7 +797,8 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 continue
             crossings.append([ way ])
             processed_set.add(way)
-            for ep in [ way.way[0], way.way[-1] ]:
+            # in rare occasions way is a loop, the set() trick makes sure we don't run the same endpoint twice
+            for ep in set([ way.way[0], way.way[-1] ]):
                 ways = way_db.gs.find_all_connecting_ways(ep)
                 ways.remove(way)
                 for w in ways:
@@ -813,7 +814,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             cw_count = 0
             fw_count = 0
             for way in crossing:
-                for ep in [ way.way[0], way.way[-1] ]:
+                for ep in set([ way.way[0], way.way[-1] ]):
                     ways = way_db.gs.find_all_connecting_ways(ep)
                     connected_to_footway = False
                     for w in ways:
