@@ -936,11 +936,11 @@ class WayDatabase:
             prev = p
 
         if max_snap_distance == self.EMERGENCY_SNAP_DISTANCE:
-            _log.warning(f"had to use emergency snap distance ({max_snap_distance}m) for {way.rlid} to get it "
-                            f"to match reference geometry")
+            _log.warning(f"had to use emergency snap distance ({max_snap_distance}m) for {way.rlid} to get it to match reference geometry")
         way.way = new_way
         if len(way.way) == 1:
             #_log.info("RLID %s reduced to a point" % way.rlid)
+            self._fix_after_failed_adapt_geometry_way_insert()
             return ref_way, [ way ]
 
         if ref_way.way[0] == ref_way.way[-1]:
@@ -1012,8 +1012,8 @@ class WayDatabase:
         assert ref_p == way.way[0]
         new_way = []
         #_log.info(way.rlid)
-        #_log.info("ref_way", ref_way.way)
-        #_log.info("way.way", way.way)
+        #_log.info(f"ref_way {ref_way.way}")
+        #_log.info(f"way.way {way.way}")
         for p in way.way:
             while ref_p != p:
                 assert p.dist >= 0
@@ -1101,7 +1101,7 @@ class WayDatabase:
                 while seg_idx < len(seg.way):
                     if seg.way[seg_idx].dist != ref_way.way[ref_idx].dist:
                         seg.way.insert(seg_idx, ref_way.way[ref_idx])
-                        _log.info("Inserting extra point in geometry to compensate failed insert")
+                        _log.info("Inserting extra point in geometry to compensate failed or reduced insert")
                     ref_idx += 1
                     seg_idx += 1
 
