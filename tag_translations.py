@@ -392,7 +392,7 @@ def tag_translation_Barighet(tags):
             start_winter = parse_range_date(tags["STATDAUMO3"])
             stop_winter = parse_range_date(tags["SLUDATMVOD"])
             tags["maxweight:conditional"] = str(tags["wc"]) + " @ (" + start_winter + "-" + stop_winter + ")"
-    _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3"]]
+    _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3", "BETECKNING"]]
 
 # tag_translation_BegrAxelBoggiTryck()
 #
@@ -426,7 +426,8 @@ def tag_translation_BegrAxelBoggiTryck(tags):
 
         tags.pop("TRYCK" + str(i), None)
         tags.pop("TYPTRYCK" + str(i), None)
-    _ = [tags.pop(key, None) for key in [ "AARTAL1", "AARTAL2", "LOEPNUMME1", "LOEPNUMME2", "MEDELADEON", "ORGNISTI1", "ORGNISTI2" ]]
+    # FIXME: we should probably not ignore the new field FORDTRAF (restriction does not apply to vehicle type XYZ)
+    _ = [tags.pop(key, None) for key in [ "AARTAL1", "AARTAL2", "LOEPNUMME1", "LOEPNUMME2", "MEDELADEON", "ORGNISTI1", "ORGNISTI2", "BETECKNING", "FORDTRAF" ]]
 
 # tag_translation_BegrBruttovikt()
 #
@@ -438,6 +439,8 @@ def tag_translation_BegrBruttovikt(tags):
     value = tags["BRUTTOVIKT"]
     tags.pop("RIKTNING", None) # ignored
     tags.pop("FORD_TAG", None) # ignored
+    tags.pop("BETECKNING", None) # ignored
+    tags.pop("FORDTRAF", None) # ignored, FIXME probably should not be ignored
     tags.pop("BRUTTOVIKT", None)
     tag_translation_single_value_with_time_interval(tags, key, value)
 
