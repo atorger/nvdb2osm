@@ -376,9 +376,11 @@ def main():
                 railways = []
                 if not skip_railway:
                     _log.info(f"There are {len(points)} railway crossings, reading railway geometry to have something to snap them to")
-                    gdf = read_epsg_shapefile(railway_filename, "Järnvägsnät_med_grundegenskaper")
+                    gdf = read_epsg_shapefile(railway_filename, "Järnvägsnät_med_grundegenskaper2_0")
                     if gdf is None:
-                        raise RuntimeError("Railway geometry missing")
+                        gdf = read_epsg_shapefile(railway_filename, "Järnvägsnät_med_grundegenskaper") # old name
+                        if gdf is None:
+                            raise RuntimeError("Railway geometry missing")
                     _log.info(f"Filtering out railway segments for bounding box {nvdb_total_bounds}...")
                     for index, row in gdf.iterrows():
                         if bounds_intersect(row.geometry.bounds, nvdb_total_bounds):
