@@ -13,6 +13,7 @@ import os
 import glob
 import sys
 import geopandas
+import fiona
 
 _log = logging.getLogger("split_nvdb_data")
 
@@ -24,6 +25,55 @@ def print_progress(last_print, idx, data_len, progress_text="work"):
         last_print = progress
         _log.info(f"{progress_text}: {progress}%")
     return last_print
+
+def is_gpkg_file(filename):
+    if zipfile.is_zipfile(filename):
+        zf = zipfile.ZipFile(filename)
+        files = [fn for fn in zf.namelist() if fn.endswith(".gpkg")]
+        return len(files) > 0
+    return str(filename).endswith(".gpkg")
+
+def read_gpkg_layer_names(filename, layer_names):
+    if zipfile.is_zipfile(filename):
+        zf = zipfile.ZipFile(filename)
+        files = [fn for fn in zf.namelist() if fn.endswith(".gpkg")]
+        if len(files) > 0:
+            filename = "zip://" + str(filename) + "!" + files[0]
+
+    layer_map = {}
+    _log.info(f"Reading layer list from {filename}")
+    files = fiona.listlayers(filename)
+    for layer_name in layer_names:
+        name = layer_name
+        split_name = name.split('*')
+        if len(split_name) == 1:
+            prefix = ""
+        else:
+            prefix = split_name[0]
+            name = split_name[1]
+        matching_files = [fn for fn in files if prefix in fn and fn.endswith(name)]
+        if len(matching_files) > 0:
+            layer_map[layer_name] = matching_files[0]
+            _log.info(f"{layer_name} matches layer {matching_files[0]}")
+        else:
+            _log.info(f"no matching layer for {layer_name}")
+    for layer in files:
+        if layer not in layer_map.values():
+            _log.info(f"{layer} unsused")
+
+    return layer_map
+
+def read_gpkg_layer(filename, layer_name):
+    if zipfile.is_zipfile(filename):
+        zf = zipfile.ZipFile(filename)
+        files = [fn for fn in zf.namelist() if fn.endswith(".gpkg")]
+        if len(files) > 0:
+            filename = "zip://" + str(filename) + "!" + files[0]
+    _log.info(f"Reading layer {layer_name} from file {filename}")
+    gdf = geopandas.read_file(filename, encoding='cp1252', layer=layer_name)
+    _log.info(f"done ({len(gdf)} segments)")
+    assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
+    return gdf
 
 def read_epsg_shapefile(directory_or_zip, name):
     if not os.path.exists(directory_or_zip):
@@ -149,8 +199,8 @@ def main():
     logging.getLogger("fiona.collection").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description='Split NVDB-data from Trafikverket into smaller files')
-    parser.add_argument('shape_file', type=pathlib.Path, help="zip or dir with NVDB *.shp files")
-    parser.add_argument('output_dir', type=pathlib.Path, help="directory to save output *.shp files")
+    parser.add_argument('geo_file', type=pathlib.Path, help="zip/dir/gpkg with NVDB *.shp/*.gpkg")
+    parser.add_argument('output_dir', type=pathlib.Path, help="directory to save output geometry files")
     parser.add_argument('--lanskod_filter', help="Only include municipalities belonging to länskod", default="-1")
     parser.add_argument(
         '-d', '--debug',
@@ -160,7 +210,7 @@ def main():
     )
     args = parser.parse_args()
     _log.info(f"args are {args}")
-    shape_file = args.shape_file
+    geometry_file = args.geo_file
     output_dir = args.output_dir
     lanskod = int(args.lanskod_filter)
 
@@ -177,12 +227,21 @@ def main():
         sys.exit(1)
     _log.info(f"{len(municipalities)} areas used (länskod filter {lanskod})")
 
+    is_gpkg = is_gpkg_file(geometry_file)
+    if is_gpkg:
+        layer_map = read_gpkg_layer_names(geometry_file, layer_names)
+
     for layer_idx, layer_name in enumerate(layer_names):
-        _log.info(f"Reading layer {layer_name} ({layer_idx+1} of {len(layer_names)} layers) from {shape_file}")
-        # read layer
-        gdf = read_epsg_shapefile(shape_file, layer_name)
+        _log.info(f"Reading layer {layer_name} ({layer_idx+1} of {len(layer_names)} layers) from {geometry_file}")
+        gdf = None
+        if is_gpkg:
+            ln = layer_map.get(layer_name)
+            if ln is not None:
+                gdf = read_gpkg_layer(geometry_file, ln)
+        else:
+            gdf = read_epsg_shapefile(geometry_file, layer_name)
         if gdf is None:
-            _log.warning(f"{layer_name} is missing in {shape_file}")
+            _log.warning(f"{layer_name} is missing in {geometry_file}")
             continue
 
         # go through all segments and distribute them into the right municipality
@@ -209,11 +268,11 @@ def main():
                 # this should not happen -- all geodata should be in some municipality
                 _log.info(f"geometry with RLID {row.RLID} not contained nor intersecting with any municipality")
 
-        # write shapefiles for each municipality
+        # write geometry files for each municipality
         cleaned_layer_name = layer_name.replace('*', '-')
         for m in municipalities:
             if m.KOM_KOD in m_data:
-                _log.info(f"Saving {cleaned_layer_name}.shp for {m.KOMMUNNAMN}")
+                _log.info(f"Saving {cleaned_layer_name}.gkpg for {m.KOMMUNNAMN}")
 
                 empty_copy = gdf.drop(gdf.index)
                 mgdf = empty_copy
@@ -222,7 +281,7 @@ def main():
                 path = os.path.join(output_dir, m.KOMMUNNAMN)
                 if not os.path.exists(path):
                     os.mkdir(path)
-                path = os.path.join(path, f"{cleaned_layer_name}.shp")
+                path = os.path.join(path, f"{cleaned_layer_name}.gpkg")
                 mgdf.to_file(path)
 
     # Create zip archives for each municipality
