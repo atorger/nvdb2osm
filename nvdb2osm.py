@@ -22,39 +22,41 @@ from splitosm import splitosm, read_geojson_with_polygons
 
 _log = logging.getLogger("nvdb2osm")
 
-# read_epsg_shapefile()
+# read_geometry_from_file()
 #
 #
-def read_epsg_shapefile(directory_or_zip, name):
+def read_geometry_from_file(directory_or_zip, name):
     if zipfile.is_zipfile(directory_or_zip):
         zf = zipfile.ZipFile(directory_or_zip)
-        files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp")]
+        files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp") or fn.endswith(name + ".gpkg")]
         if len(files) > 0:
             filename = files[0]
             gdf_filename = "zip://" + str(directory_or_zip) + "!" + filename
     else:
-        pattern = os.path.join(directory_or_zip, "*" + name + ".shp")
+        pattern = os.path.join(directory_or_zip, "*" + name + ".gpkg")
         files = glob.glob(pattern)
+        if len(files) == 0:
+            pattern = os.path.join(directory_or_zip, "*" + name + ".shp")
+            files = glob.glob(pattern)
         if len(files) > 0:
             filename = files[0]
             gdf_filename = files[0]
 
     if len(files) == 0:
-        _log.warning(f"No file name *{name}.shp in {directory_or_zip}")
+        _log.info(f"No file name *{name}.gpkg (or .shp) in {directory_or_zip}")
         return None
 
     _log.info(f"Reading file {filename}")
     gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
     _log.info(f"done ({len(gdf)} segments)")
-    assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
     return gdf
 
-# read_nvdb_shapefile()
+# read_nvdb_geometry()
 #
-# Read a NVDB shapefile and apply tag translations.
+# Read a NVDB geometry file and apply tag translations.
 #
-def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bounds):
-    gdf = read_epsg_shapefile(directory_or_zip, name)
+def read_nvdb_geometry(directory_or_zip, name, tag_translations, nvdb_total_bounds):
+    gdf = read_geometry_from_file(directory_or_zip, name)
     if gdf is None:
         return []
     _log.info(f"Parsing {len(gdf)} segments...")
@@ -118,7 +120,7 @@ def read_nvdb_shapefile(directory_or_zip, name, tag_translations, nvdb_total_bou
     else:
         _log.info(f"done ({len(ways)} segments kept, {skip_count} skipped)")
 
-    _log.debug(f"Keys in shapefile {name}:")
+    _log.debug(f"Keys in geometry file {name}:")
     for k in all_tags:
         _log.debug(f"  '{k}'")
     return ways
@@ -149,7 +151,7 @@ def log_version():
 # Get the borders for the given municipality
 #
 def get_municipality(municipality_code_or_name):
-    gdf = read_epsg_shapefile("data/ak_riks.zip", "ak_riks")
+    gdf = read_geometry_from_file("data/ak_riks.zip", "ak_riks")
     geo = []
     for _, row in gdf.iterrows():
         if str(row.KOM_KOD) == municipality_code_or_name or row.KOMMUNNAMN == municipality_code_or_name:
@@ -242,7 +244,7 @@ def main():
     parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
     parser.add_argument('--dump_layers', help="Write an OSM XML file for each layer", action='store_true')
     parser.add_argument('--skip_railway', help="Don't require railway geometry (leads to worse railway crossing handling)", action='store_true')
-    parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network *.shp (usually Järnvägsnät_grundegenskaper.zip)")
+    parser.add_argument('--railway_file', type=pathlib.Path, help="Path to zip or dir with national railway network (usually Järnvägsnät_grundegenskaper.zip)")
     parser.add_argument('--split_file', type=pathlib.Path, help="Path to geojson with polygons of subareas for splitting the output")
     parser.add_argument('--split_dir', type=pathlib.Path, help="Path to store subarea output")
     parser.add_argument('--municipality_filter', help="Code or name of municipality which all geometry should be inside", default=None)
@@ -312,7 +314,7 @@ def main():
     nvdb_total_bounds = [10000000, 10000000, 0, 0] # init to outside max range of SWEREF99
     # First setup a complete master geometry and refine it so we have a good geometry to merge the rest of the data with
     name = master_geometry_name
-    ref_ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
+    ref_ways = read_nvdb_geometry(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
     if debug_dump_layers:
         write_osmxml(ref_ways, [], "raw_reference_geometry.osm")
     ref_ways = find_overlapping_and_remove_duplicates(name, ref_ways)
@@ -327,7 +329,7 @@ def main():
     for name in all_line_names:
         if name is None:
             break
-        ways = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
+        ways = read_nvdb_geometry(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
         ways = find_overlapping_and_remove_duplicates(name, ways)
         did_insert_new_ref_geometry = way_db.insert_missing_reference_geometry_if_any(ways)
 
@@ -363,7 +365,7 @@ def main():
     for name in point_names:
         if name is None:
             break
-        points = read_nvdb_shapefile(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
+        points = read_nvdb_geometry(directory_or_zip, name, TAG_TRANSLATIONS[name], nvdb_total_bounds)
         points = find_overlapping_and_remove_duplicates(name, points)
 
         do_snap = True
@@ -376,11 +378,13 @@ def main():
                 railways = []
                 if not skip_railway:
                     _log.info(f"There are {len(points)} railway crossings, reading railway geometry to have something to snap them to")
-                    gdf = read_epsg_shapefile(railway_filename, "Järnvägsnät_med_grundegenskaper2_0")
+                    gdf = None
+                    for rw_name in ["Järnvägsnät_grundegenskaper2_0_GeoPackage", "Järnvägsnät_med_grundegenskaper2_0", "Järnvägsnät_med_grundegenskaper"]:
+                        gdf = read_geometry_from_file(railway_filename, rw_name)
+                        if gdf is not None:
+                            break
                     if gdf is None:
-                        gdf = read_epsg_shapefile(railway_filename, "Järnvägsnät_med_grundegenskaper") # old name
-                        if gdf is None:
-                            raise RuntimeError("Railway geometry missing")
+                        raise RuntimeError("Railway geometry missing")
                     _log.info(f"Filtering out railway segments for bounding box {nvdb_total_bounds}...")
                     for index, row in gdf.iterrows():
                         if bounds_intersect(row.geometry.bounds, nvdb_total_bounds):
