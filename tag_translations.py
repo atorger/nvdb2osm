@@ -1084,17 +1084,31 @@ def preprocess_name(name):
             "Stick": "stick",
             "Väg": "väg",
             "Tunnel": "tunnel",
-            "Körbana": "körbana"
+            "Körbana": "körbana",
+            "Vsf": "vsf",
+            "Stv": "stv",
+            "Grv": "grv"
         }
         for k, v in replace_table.items():
             name = name.replace(k, v)
 
     replace_table = {
         "CPL ": "Cpl ", # cirkulationsplats
+        " VSF": " vsf", # vägsamfällighetsförening
+        " Vsf": " vsf",
+        "vsf.": "vsf",
+        "stv.": "stv",
+        "grv.": "grv",
         ";": ":" # ';' not compatible with OSM, for example "G;a" instead of "G:a" as abbreviation of "Gamla" has been observed
     }
-    for k, v in replace_table.items():
-        name = name.replace(k, v)
+    did_change = True
+    while did_change:
+        did_change = False
+        for k, v in replace_table.items():
+            old_name = name
+            name = name.replace(k, v)
+            if name != old_name:
+                did_change = True
 
     if name.startswith("Cpl ") and "rondell" in name:
         # Cpl is redundant if name contains rondell
