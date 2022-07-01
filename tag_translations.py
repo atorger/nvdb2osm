@@ -175,7 +175,7 @@ def parse_speed_limit(tags, key):
 # Parse NVDB direction and convert to OSM :forward/:backward or nothing.
 #
 def parse_direction(tags):
-    if not "RIKTNING" in tags or tags["RIKTNING"] == "Med och mot" or tags["RIKTNING"] is None:
+    if tags.get("RIKTNING", None) in ["Med och mot", None, "", -1, "-1"]:
         dir_str = ""
     elif tags["RIKTNING"] == "Med":
         dir_str = ":forward"
@@ -198,7 +198,7 @@ def parse_vehicle_types(tags, key_base, purpose_list=None, user_list=None):
     vtypes = []
     fixme_tags = { "fixme": tags.get("fixme", None) }
     for key in tags:
-        if key.startswith(key_base) and tags[key] != -1:
+        if key.startswith(key_base) and tags[key] not in [None, "", -1, "-1"]:
             v = tag_translation_fordon_trafikant(tags[key], tags["RLID"])
             if v == "FIXME":
                 append_fixme_value(fixme_tags, f"Unknown tag {tags[key]}")
@@ -369,7 +369,7 @@ def tag_translation_single_value_with_time_interval(tags, key, value):
 #  - "Särskilda villkor" (specific conditions) not documented in NVDB so cannot be translated
 #
 def tag_translation_Barighet(tags):
-    winter_bk = tags["BAEIGHTSOD"] is not None and tags["BAEIGHTSOD"] != tags["BAEIGHTSSS"]
+    winter_bk = tags["BAEIGHTSOD"] not in [None, "", -1, "-1"] and tags["BAEIGHTSOD"] != tags["BAEIGHTSSS"]
     tag_translations = {
         "BAEIGHTSSS=BK 1": "maxweight=64",
         "BAEIGHTSSS=BK 2": "maxweight=51.4",
@@ -387,7 +387,7 @@ def tag_translation_Barighet(tags):
     process_tag_translations(tags, tag_translations)
     if winter_bk:
         if tags.get("STATDAUMO3", None) is None or tags.get("SLUDATMVOD", None) is None:
-            _log.warning(f"Winter-specific maxweight without date range for RLID {tags['RLID']}")
+            _log.warning(f"Winter-specific maxweight without date range for RLID {tags['RLID']}. All tags: {tags}")
         else:
             start_winter = parse_range_date(tags["STATDAUMO3"])
             stop_winter = parse_range_date(tags["SLUDATMVOD"])
@@ -494,7 +494,7 @@ def tag_translation_ForbudTrafik(tags):
         return
 
     for k, v in list(tags.items()):
-        if v is None:
+        if v in [None, "", -1, "-1"]:
             del tags[k]
     _log.debug(f"ForbudTrafik input: {tags} {ti}")
 
@@ -508,8 +508,8 @@ def tag_translation_ForbudTrafik(tags):
     if exemption_ti == "00:00-00:00":
         exemption_ti = None
 
-    only_applies_to_passing_through = tags["GENOMFART"] == "sant"
-    total_weight = tags["TOTALVIKT"]
+    only_applies_to_passing_through = tags.get("GENOMFART", None) == "sant"
+    total_weight = tags.get("TOTALVIKT", -1)
     direction = parse_direction(tags)
 
     vtypes = parse_vehicle_types(tags, "FORDTYP")
@@ -609,7 +609,7 @@ def tag_translation_GCM_separation(tags):
     elif tags["SIDA"] == "Vänster och höger": # rare, but exists
         key = "separation:left"
         key2 = "separation:right"
-    elif tags["SIDA"] == "Mitt" or tags["SIDA"] is None: # rare, but exists, we ignore these
+    elif tags["SIDA"] in ["Mitt", None, "", -1, "-1"]:
         _log.info(f"ignoring separation with SIDA {tags['SIDA']} (RLID {tags['RLID']})")
     else:
         _log.warning(f"unknown SIDA {tags['SIDA']} (RLID {tags['RLID']})")
@@ -825,7 +825,7 @@ def tag_translation_P_ficka(tags):
         "YKOORDINAT"
     ]
     for k, v in tags.items():
-        if v is None or v == "Finns ej" or v == "Okänt":
+        if v in [None, "", -1, "-1", "Finns ej", "Okänt"]:
             del_keys.append(k)
     for k in del_keys:
         tags.pop(k, None)
@@ -883,7 +883,7 @@ def tag_translation_Rastplats(tags):
 
     # remove all keys with value No or Unknown or -1
     for k, v in list(tags.items()):
-        if v in [None, "nej", "Nej", "okänt", "Okänt", "-1"] or (isinstance(v, (int, float)) and v == -1):
+        if v in [None, "", "nej", "Nej", "okänt", "Okänt", "-1", -1]:
             del_keys.append(k)
 
     for k in del_keys:
@@ -1132,7 +1132,8 @@ def process_tag_translations(tags, tag_translations):
         new_name = preprocess_name(name)
         if new_name != name:
             if new_name is None:
-                _log.info(f"Removed invalid name: '{name}'")
+                if name not in ["-1", -1, None]:
+                    _log.info(f"Removed invalid name: '{name}'")
             else:
                 _log.info(f"Changed name: '{name}' => '{new_name}'")
             tags["NAMN"] = new_name

@@ -22,25 +22,25 @@ def parse_time_interval_tags(tags):
     interval_keys = [
         {
             "keys": [ "STTIM", "STMIN", "SLTIM", "SLMIN" ],
-            "not_used_values": [ -1, None ],
+            "not_used_value": -1,
             "output_key": "hourmin_interval",
             "parser": parse_hourmin_interval,
         },
         {
             "keys": [ "STDAT", "SLDAT" ],
-            "not_used_values": [ -1, None ], # most common not used == "1899-12-29" x 2, handled in parser
+            "not_used_value": -1, # most common not used == "1899-12-29" x 2, handled in parser
             "output_key": "date_interval",
             "parser": parse_date_interval
         },
         {
             "keys": [ "STDAG", "SLDAG" ],
-            "not_used_values": [ None, -1 ],
+            "not_used_value": None,
             "output_key": "day_interval",
             "parser": parse_day_interval
         },
         {
             "keys": [ "DAGSL" ],
-            "not_used_values": [ None, -1 ],
+            "not_used_value": None,
             "output_key": "day_type",
             "parser": parse_day_type
         }
@@ -56,7 +56,7 @@ def parse_time_interval_tags(tags):
                     prefix = split[0] + "/"
                     suffix = split[-1]
                     if str(int(suffix)) != suffix or len(split) > 2:
-                        _log.warning(f"unexpected time interval key {k} (RLID {tags['RLID']})")
+                        _log.warning(f"unexpected time interval key {k}. All tags: {tags}")
                         return -1
                     if not prefix is max_suffix_len or len(suffix) > max_suffix_len[prefix]:
                         max_suffix_len[prefix] = len(suffix)
@@ -80,16 +80,15 @@ def parse_time_interval_tags(tags):
             not_used_count = 0
             for key in item["keys"]:
                 ckey = prefix[:-1] + key + suffix
-                values.append(tags.get(ckey, item["not_used_values"][0]))
-                if values[-1] in item["not_used_values"]:
+                values.append(tags.get(ckey, item["not_used_value"]))
+                if values[-1] in [ None, -1, "-1", "" ]:
                     not_used_count += 1
             if 0 < not_used_count < len(values):
                 if item["output_key"] == "day_interval" and values[0] is not None:
                     # exemption: day interval can be specified without SLDAG if it only specifies a single weekday
                     pass
                 else:
-                    _log.warning(f"mixed used and not used values in time interval keys {item['keys']}"
-                                 f" (RLID {tags['RLID']})")
+                    _log.warning(f"mixed used and not used values in time interval keys {item['keys']}. All tags: {tags}")
                     return -1
             output_key = item["output_key"]
             if len(suffix) == max_suffix_len[prefix]:
@@ -122,7 +121,7 @@ def merge_time_intervals(ti, rlid):
     hourmin_int1 = ti.get("hourmin_interval1", None)
     hourmin_int2 = ti.get("hourmin_interval2", None)
     if hourmin_int1 is None and hourmin_int2 is not None:
-        _log.warning(f"bad hourmin interval combination (RLID {rlid})")
+        _log.warning(f"bad hourmin interval combination. (RLID {rlid} TI {ti})")
         return -1
     if hourmin_int1 is not None and hourmin_int2 is not None:
         hourmin_int = hourmin_int1 + "," + hourmin_int2
@@ -139,7 +138,7 @@ def merge_time_intervals(ti, rlid):
         if day_interval == "Mo-Fr" and day_type in ["vardag utom dag före sön- och helgdag", 3]:
             day_interval = None
         if day_interval is not None and day_type != "vardag":
-            _log.warning(f"day_interval ({day_interval}) and day_type ({day_type}) set at the same time (RLID {rlid})")
+            _log.warning(f"day_interval ({day_interval}) and day_type ({day_type}) set at the same time (RLID {rlid} TI {ti})")
             return -1
         if day_type in ["vardag", 1]:
             if day_interval is not None:
