@@ -1,5 +1,5 @@
-Shapely==1.7.1
-sortedcontainers==2.1.0
-geopandas>=0.8.2
+Shapely==1.8.2
+sortedcontainers==2.4.0
+geopandas==0.11.0
 scanf==1.5.2
-pyproj==3.0.0
+pyproj==3.3.1
