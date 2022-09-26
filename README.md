@@ -2,7 +2,7 @@
 # Import av Trafikverkets NVDB-data till OpenStreetMap
 
 Detta är README-filen till nvdb2osm.py, ett skript som konverterar
-nedladdat NVDB-data (i SHP-format) till en OSM XML-fil.
+nedladdat NVDB-data (i Shape eller GeoPackage-format) till en OSM XML-fil.
 
 Det körs på kommandoraden:
 
@@ -16,9 +16,9 @@ Dela upp länsfilen till kommuner:
 Konvertera en kommun till OSM:
 `nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper.zip split_files/Luleå.zip luleå.osm`
 
-Även om `Luleå.zip` ovan innehåller bara vägar som är inom kommunen, 
+Även om `Luleå.zip` ovan innehåller bara vägar som är inom kommunen,
 så vill man ändå ange `--municipality_filter Luleå` då det ser till att
-vägar som går över kommungränsen faktiskt också skärs av vid gränsen, 
+vägar som går över kommungränsen faktiskt också skärs av vid gränsen,
 annars kan de gå ganska långt in i nästa kommun.
 
 Kör kommandot utan argument för att se vilka flaggor man kan sätta. I
