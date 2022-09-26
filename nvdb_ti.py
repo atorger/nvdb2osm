@@ -78,15 +78,19 @@ def parse_time_interval_tags(tags):
         for item in interval_keys:
             values = []
             not_used_count = 0
+            none_values = [ None, -1, "-1", "" ]
             for key in item["keys"]:
                 ckey = prefix[:-1] + key + suffix
                 values.append(tags.get(ckey, item["not_used_value"]))
-                if values[-1] in [ None, -1, "-1", "" ]:
+                if values[-1] in none_values:
                     not_used_count += 1
             if 0 < not_used_count < len(values):
-                if item["output_key"] == "day_interval" and values[0] is not None:
-                    # exemption: day interval can be specified without SLDAG if it only specifies a single weekday
-                    pass
+                if item["output_key"] == "day_interval" and (values[0] not in none_values or values[1] not in none_values):
+                    # exemption: day interval can be specified without SLDAG or STDAG if it only specifies a single weekday
+                    if values[0] in none_values:
+                        # for easier parsing, always put the valid value first
+                        values[0] = values[1]
+                        values[1] = None
                 else:
                     _log.warning(f"mixed used and not used values in time interval keys {item['keys']}. All tags: {tags}")
                     return -1
