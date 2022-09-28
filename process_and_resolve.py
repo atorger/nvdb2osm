@@ -1597,7 +1597,7 @@ def cleanup_highway_widths(way_db):
         width = way.tags["width"]
         new_width = round(width, 1)
         if new_width != width:
-            _log.info(f'rounding width {width} to {new_width}')
+            _log.debug(f'rounding width {width} to {new_width}')
             way.tags["width"] = new_width
 
     _log.info(f"done (removed {remove_count} of {total_count} highway widths)")
