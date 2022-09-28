@@ -33,6 +33,9 @@ def read_geometry_from_file(directory_or_zip, name):
             filename = files[0]
             gdf_filename = "zip://" + str(directory_or_zip) + "!" + filename
     else:
+        if not os.path.isdir(directory_or_zip):
+            _log.error(f"'{directory_or_zip}' is neither a directory or a zip file.")
+            sys.exit(1)
         pattern = os.path.join(directory_or_zip, "*" + name + ".gpkg")
         files = glob.glob(pattern)
         if len(files) == 0:
