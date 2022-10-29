@@ -17,6 +17,30 @@ SMALL_ROAD_RESOLVE_ALGORITHMS = ['default', 'prefer_track', 'prefer_track_static
 MAJOR_HIGHWAYS = [ "trunk", "motorway", "primary", "secondary", "tertiary", "trunk_link", "motorway_link", "primary_link", "secondary_link", "tertiary_link" ]
 MINOR_HIGHWAYS = [ "residential", "unclassified", "service", "track" ]
 
+NVDB_USED_KEYS = [
+    "NVDB_vagnummer",
+    "NVDB_gagata",
+    "NVDB_gangfartsomrode",
+    "NVDB_gangfartsomrode_side",
+    "NVDB_gatutyp",
+    "NVDB_motorvag",
+    "NVDB_motortrafikled",
+    "NVDB_generaliseringstyp",
+    "NVDB_cykelvagkat",
+    "NVDB_guess_lanes",
+    "NVDB_gagata_side",
+    "NVDB_layby_side",
+    "NVDB_rwc_tracks",
+    "NVDB_road_role",
+    "NVDB_government_funded",
+    "NVDB_availability_class",
+    "KLASS",
+    "FPVKLASS",
+    "GCMTYP",
+    "KONTRUTION",
+    "OEPNINSBAR"
+]
+
 # merge_translated_tags()
 #
 # Help function to merge tags with special case for fix me tag.
@@ -1439,6 +1463,78 @@ def simplify_cycleway_crossings(way_db):
 
     _log.info(f"done (converted {count} crossings, skipped {skipped_count} as node crossings already existed, {no_crossing_count} had no crossing roads)")
 
+# bridge_footway_and_cycleway_separations()
+#
+# separation:left/right=* often have gaps over crossings which splits
+# the cycleway/footway in many segments. This function assumes that
+# leaving a gap over crossings is overkill and simplifies the tagging
+# by keeping the separation tag over crossings.
+#
+def bridge_footway_and_cycleway_separations(way_db):
+
+    def has_same_tags(ways, exclude_tags):
+        ref_tags = []
+        w = ways[0]
+        for k, v in list(w.tags.items()):
+            if k not in exclude_tags:
+                kv = f"{k} {v}"
+                ref_tags.append(kv)
+        for w in ways[1:]:
+            match_count = 0
+            for k, v in list(w.tags.items()):
+                if k not in exclude_tags:
+                    kv = f"{k} {v}"
+                    if kv not in ref_tags:
+                        return False
+                    match_count += 1
+            if match_count < len(ref_tags):
+                return False
+        return True
+
+    _log.info("Bridge cycleway/footway separations...")
+    GCM = ["cycleway", "footway", "path" ]
+    MAX_GAP_LENGTH = 13
+    SEPARATIONS_TO_BRIDGE = [ "separation_kerb", "solid_line" ]
+    KEYL = "separation:left"
+    KEYR = "separation:right"
+    count = 0
+    exclude_tags = set([KEYL, KEYR])
+    exclude_tags.update(NVDB_GEOMETRY_TAGS)
+    exclude_tags.update(NVDB_USED_KEYS)
+    for way in way_db:
+        if way.tags.get("highway", None) not in GCM or KEYL in way.tags or KEYR in way.tags:
+            continue
+        dist, _ = calc_way_length(way.way)
+        if dist > MAX_GAP_LENGTH:
+            continue
+        candidates1 = []
+        candidates2 = []
+        for w in way_db.gs.find_all_connecting_ways(way.way[0]):
+            if (w.tags.get(KEYL, None) in SEPARATIONS_TO_BRIDGE or w.tags.get(KEYR, None) in SEPARATIONS_TO_BRIDGE) and has_same_tags([w, way], exclude_tags):
+                candidates1.append(w)
+        for w in way_db.gs.find_all_connecting_ways(way.way[-1]):
+            if (w.tags.get(KEYL, None) in SEPARATIONS_TO_BRIDGE or w.tags.get(KEYR, None) in SEPARATIONS_TO_BRIDGE) and has_same_tags([w, way], exclude_tags):
+                candidates2.append(w)
+        if len(candidates1) == 0 or len(candidates2) == 0:
+            continue
+        separation = None
+        for c1 in candidates1:
+            for c2 in candidates2:
+                for tag in [KEYL, KEYR]:
+                    same_direction = (c1.way[-1] == way.way[0] and c2.way[0] == way.way[-1]) or (c1.way[0] == way.way[-1] and c2.way[-1] == way.way[0])
+                    if same_direction and tag in c1.tags and tag in c2.tags and c1.tags[tag] == c2.tags[tag]:
+                        separation = (tag, c1.tags[tag])
+                        break
+                if separation is not None:
+                    break
+            if separation is not None:
+                break
+        if separation is not None:
+            way.tags[separation[0]] = separation[1]
+            count += 1
+    _log.info(f"done (filled in {count} separation gaps)")
+
+
 # remove_redundant_cycleway_names()
 #
 # Remove names of cycleways that are named the same as neighboring street
@@ -1951,32 +2047,9 @@ def final_pass_postprocess_miscellaneous_tags(way_db):
 # Remove all tags that have been used when resolving various things
 #
 def cleanup_used_nvdb_tags(way_db_ways, in_use):
-    used_keys = [
-        "NVDB_vagnummer",
-        "NVDB_gagata",
-        "NVDB_gangfartsomrode",
-        "NVDB_gangfartsomrode_side",
-        "NVDB_gatutyp",
-        "NVDB_motorvag",
-        "NVDB_motortrafikled",
-        "NVDB_generaliseringstyp",
-        "NVDB_cykelvagkat",
-        "NVDB_guess_lanes",
-        "NVDB_gagata_side",
-        "NVDB_layby_side",
-        "NVDB_rwc_tracks",
-        "NVDB_road_role",
-        "NVDB_government_funded",
-        "NVDB_availability_class",
-        "KLASS",
-        "FPVKLASS",
-        "GCMTYP",
-        "KONTRUTION",
-        "OEPNINSBAR"
-    ]
     for ways in way_db_ways.values():
         for way in ways:
-            for key in used_keys:
+            for key in NVDB_USED_KEYS:
                 way.tags.pop(key, None)
             for key in NVDB_GEOMETRY_TAGS:
                 way.tags.pop(key, None)

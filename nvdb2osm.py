@@ -419,6 +419,7 @@ def main():
     # converts cycleway way crossings to node crossing, which is optional, both ways to map are correct
     simplify_cycleway_crossings(way_db)
 
+    bridge_footway_and_cycleway_separations(way_db)
     simplify_speed_limits(way_db)
     remove_redundant_speed_limits(way_db)
     cleanup_highway_widths(way_db)
