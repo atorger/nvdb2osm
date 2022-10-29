@@ -585,7 +585,9 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 tags["crossing"] = "marked"
                 tags["foot"] = "yes"
             elif gcmtyp in (135, "Cykelpassage"):
+                # Defined as for cycling only, but in some places it's connected to "gång- och cykelbana" on both sides
                 tags["highway"] = "cycleway"
+                gcm_resolve_crossings.append(way)
             elif gcmtyp in (140, "Cykelöverfart"):
                 tags["highway"] = "cycleway"
                 tags["cycleway"] = "crossing"
