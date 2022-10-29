@@ -11,7 +11,7 @@ def keep_end_stub(way):
 # Return True if the tags allow that the way is reversed, otherwise False
 #
 def way_may_be_reversed(way):
-    return "oneway" not in way.tags
+    return "oneway" not in way.tags and way.tags.get("junction", None) != "roundabout" and way.tags.get("highway", None) != "steps"
 
 
 # get_directional_nodes()
