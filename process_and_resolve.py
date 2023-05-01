@@ -694,12 +694,18 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 #print("Warning: KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
                 tags["fixme"] = "could not resolve highway tag"
             else:
-                fpvklass = int(way.tags.get("FPVKLASS", -1))
-                if fpvklass in (1,2,3):
-                    # secondary, primary or trunk.
-                    fpv_level = fpvklass - 1
-                else:
+                fpvklass_translations = {
+                    "Nationella vägar": 0,
+                    "Regionalt viktiga vägar": 1,
+                    "Kompletterande regionalt viktiga vägar": 2,
+                    1: 0,
+                    2: 1,
+                    3: 2
+                }
+                if way.tags.get("FPVKLASS", -1) not in fpvklass_translations:
                     fpv_level = 1000
+                else:
+                    fpv_level = fpvklass_translations[way.tags.get("FPVKLASS", -1)]
 
                 klass = int(way.tags["KLASS"])
                 if klass <= 1:
