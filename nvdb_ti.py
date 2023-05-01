@@ -5,6 +5,7 @@
 # strings
 #
 import logging
+import pandas as pd
 
 from sortedcontainers import SortedDict
 from scanf import scanf
@@ -58,7 +59,7 @@ def parse_time_interval_tags(tags):
                     if str(int(suffix)) != suffix or len(split) > 2:
                         _log.warning(f"unexpected time interval key {k}. All tags: {tags}")
                         return -1
-                    if not prefix is max_suffix_len or len(suffix) > max_suffix_len[prefix]:
+                    if not prefix in max_suffix_len or len(suffix) > max_suffix_len[prefix]:
                         max_suffix_len[prefix] = len(suffix)
                     presuffixes.add(prefix + suffix)
                     del_keys.append(k)
@@ -218,9 +219,14 @@ def parse_day_type(values):
 # Translate NVDB range date to OSM syntax (exapmle: "1899-10-11" => "Oct 10")
 #
 def parse_range_date(date_str):
-    date_str = date_str.split("-")
-    mon = int(date_str[1])
-    day = date_str[2]
+    if isinstance(date_str, pd.Timestamp):
+        mon = date_str.month
+        day = str(date_str.day)
+    else:
+        # old string format
+        date_str = date_str.split("-")
+        mon = int(date_str[1])
+        day = date_str[2]
     mon_str = [ "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ][mon]
     return mon_str + " " + day
 
