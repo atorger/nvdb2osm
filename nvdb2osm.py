@@ -12,7 +12,7 @@ import geopandas
 from sortedcontainers import SortedDict
 
 from process_and_resolve import *
-from tag_translations import TAG_TRANSLATIONS, process_tag_translations
+from tag_translations import TAG_TRANSLATIONS, process_tag_translations, preprocess_tags
 from nvdb_segment import NvdbSegment, NVDB_GEOMETRY_TAGS
 from shapely_utils import shapely_linestring_to_way
 from waydb import WayDatabase, print_progress
@@ -83,6 +83,8 @@ def read_nvdb_geometry(directory_or_zip, name, tag_translations, nvdb_total_boun
         if len(gdf) > 50:
             last_print = print_progress(last_print, index, len(gdf), progress_text=f"Parsing {len(gdf)} segments")
         way = row.to_dict()
+
+        preprocess_tags(way)
 
         way.pop("TILL_DATUM", None)
         restore_set = {}

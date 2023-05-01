@@ -100,6 +100,8 @@
 
 import logging
 import string
+import math
+import pandas
 
 from nvdb_ti import parse_time_interval_tags, parse_range_date
 
@@ -161,7 +163,12 @@ def parse_speed_limit(tags, key):
     # is not the same as living street.
     if speed == "gångfart":
         speed = 5
-    elif not isinstance(speed, int):
+    elif isinstance(speed, str):
+        speed = int(speed)
+    elif speed is None:
+        speed = -1
+
+    if not (isinstance(speed, int) or isinstance(speed, float)):
         _log.warning(f"unexpected speed value {key} {speed} (RLID {tags['RLID']})")
         append_fixme_value(tags, "Bad %s speed value" % key)
         speed = 5
@@ -355,6 +362,8 @@ def tag_translation_fordon_trafikant(tag, rlid):
 # time interval
 #
 def tag_translation_single_value_with_time_interval(tags, key, value):
+    if value is None:
+        return
     time_intervals = parse_time_interval_tags(tags)
     if time_intervals == -1:
         append_fixme_value(tags, "time interval parse failure")
@@ -407,7 +416,7 @@ def tag_translation_BegrAxelBoggiTryck(tags):
 
     for i in range(1, 4): # i = 1..3
         weight = tags.get("TRYCK" + str(i), -1)
-        if weight > 0 and "TYPTRYCK" + str(i) in tags:
+        if weight is not None and weight > 0 and "TYPTRYCK" + str(i) in tags:
             typ = tags["TYPTRYCK" + str(i)]
             if time_interval is None:
                 if typ == "axeltryck":
@@ -461,12 +470,33 @@ def tag_translation_BegrFordBredd(tags):
 # Maxlength
 #
 def tag_translation_BegrFordLangd(tags):
-    key = "maxlength"
-    value = tags["FORD_LGD"]
+
+    maxlength = tags["FORD_LGD"]
     tags.pop("FORD_LGD", None)
+
+    applies_to_passage_only = tags.get("GENOMFART", None) == "sant"
+    tags.pop("GENOMFART", None)
+
     for i in range(1, 4):
         tags.pop("FORDTRAF" + str(i), None) # doesn't seem to be used
-    tag_translation_single_value_with_time_interval(tags, key, value)
+
+    if maxlength is None:
+        return
+
+    time_intervals = parse_time_interval_tags(tags)
+
+    if time_intervals == -1:
+        append_fixme_value(tags, "time interval parse failure")
+        return
+
+    if time_intervals is not None and applies_to_passage_only:
+        tags["maxlength:conditional"] = f"{maxlength} @ ({time_intervals}); none @ (destination)"
+    elif time_intervals is not None:
+        tags["maxlength:conditional"] = f"{maxlength} @ ({time_intervals})"
+    elif applies_to_passage_only:
+        tags["access:conditional"] = f"destination @ (maxlength>{maxlength})"
+    else:
+        tags["maxlength"] = maxlength
 
 # tag_translation_ForbudTrafik()
 #
@@ -510,6 +540,8 @@ def tag_translation_ForbudTrafik(tags):
 
     only_applies_to_passing_through = tags.get("GENOMFART", None) == "sant"
     total_weight = tags.get("TOTALVIKT", -1)
+    if total_weight is None:
+        total_weight = -1
     direction = parse_direction(tags)
 
     vtypes = parse_vehicle_types(tags, "FORDTYP")
@@ -616,12 +648,19 @@ def tag_translation_GCM_separation(tags):
         append_fixme_value(tags, "GCM_separation: unknown SIDA value")
 
     trans_separation = {
+        # NVDB has been using both numeric and string enumeration
         1: "separation_kerb", # kantsten
         2: None, # skiljeremsa
         3: "railing", # räcke
         4: None, # friliggande
         5: "solid_line", # vägmarkering
         99: None, # okänt
+        "kantsten": "separation_kerb",
+        "skiljeremsa": None,
+        "räcke": "railing",
+        "friliggande": None,
+        "vägmarkering": "solid_line",
+        "okänt": None
     }
     separation = tags.pop("SEPARATION", None)
     tags.pop("SIDA", None)
@@ -649,6 +688,8 @@ def tag_translation_Hastighetsgrans(tags):
     maxspeed = parse_speed_limit(tags, "HTHAST")
     alt_maxspeed = parse_speed_limit(tags, "HAVHAST1")
     max_weight = tags.get("TOTALVIKT1", -1)
+    if max_weight is None:
+        max_weight = -1
 
     only_applies_to_these_vehicles = tags["HAVGIE1"] == 2
     doesnt_apply_to_these_vehicles = tags["HAVGIE1"] == 1
@@ -706,6 +747,7 @@ def tag_translation_Hastighetsgrans(tags):
 #
 def tag_translation_InskrTranspFarligtGods(tags):
     may_not = tags["FARINTE"]
+    applies_to_passage_only = tags.get("GENOMFART", None) == "sant"
     # we translate all values to hazmat=no
     if may_not not in ("föras", "stannas", "parkeras", "stannas eller parkeras"):
         _log.warning(f"unknown FARINTE value {tags} (RLID {tags['RLID']})")
@@ -715,12 +757,19 @@ def tag_translation_InskrTranspFarligtGods(tags):
     if time_intervals == -1:
         append_fixme_value(tags, "time interval parse failure")
         return
-    if time_intervals is None:
-        tags["hazmat"] = "no"
-    else:
-        tags["hazmat:conditional"] = "no @ %s" % time_intervals
 
-    del tags["FARINTE"]
+    if time_intervals is not None and applies_to_passage_only:
+        tags["hazmat:conditional"] = f"no @ ({time_intervals}); yes @ (destination)"
+    if time_intervals is not None:
+        tags["hazmat:conditional"] = f"no @ ({time_intervals})"
+    elif applies_to_passage_only:
+        tags["hazmat"] = "no"
+        tags["hazmat:conditional"] = "yes @ (destination)"
+    else:
+        tags["hazmat"] = "no"
+
+    tags.pop("FARINTE", None)
+    tags.pop("GENOMFART", None)
 
     # FIXME: we don't care about these fields yet (are they ever used?)
     for i in range(1, 6):
@@ -813,8 +862,8 @@ def tag_translation_P_ficka(tags):
     # "Uppställbar längd", that is the number of meters that can be used for parking,
     # specified for about 1/3 of the laybys. There is no established OSM key for this
     # particular purpose, we use 'maxlength'here.
-    length = tags.get("UPPTAELBGD", -1)
-    if length > 0:
+    length = tags.get("UPPTAELBGD", None)
+    if length is not None and length > 0:
         tags["maxlength"] = length
 
     del_keys = [
@@ -977,11 +1026,11 @@ def tag_translation_Rastplats(tags):
 def tag_translation_Vagnummer(tags):
     huvudnr = tags["HUVUDNR"]
     undernr = tags.get("UNDERNR", None)
-    if undernr <= 0 or undernr is None:
+    if undernr is None or undernr <= 0:
         undernr_str = ""
     else:
         undernr_str = "." + str(undernr)
-    if tags["EUROPAVÄG"] == -1:
+    if tags.get("EUROPAVÄG", None) is None or tags["EUROPAVÄG"] == -1:
         # E road number with space (eg "E 4" instead of "E4") is not Swedish standard,
         # but we need to follow the standard used in OSM over Europe which is using
         # a space.
@@ -1028,7 +1077,7 @@ def tag_translation_Vagnummer(tags):
 def tag_translation_Vaghinder(tags):
     hindertyp = tags["HINDERTYP"]
     passbredd = tags["PASSBREDD"]
-    if passbredd >= 0:
+    if passbredd is not None and passbredd >= 0:
         tags["maxwidth"] = passbredd
 
     if hindertyp == "pollare":
@@ -1190,6 +1239,426 @@ def process_tag_translations(tags, tag_translations):
             except ValueError:
                 pass
 
+
+# preprocess_tags()
+#
+# Take care of name changes of tags etc
+# in long term the code should be adapted to handle new tag names
+def preprocess_tags(tags):
+
+    alt_tag_names = {
+        # common/generic tags
+        "ELEMENT_ID": "RLID",
+        "VALID_FROM": "FRAN_DATUM",
+        "VALID_TO": "TILL_DATUM",
+        "START_MEASURE": "STARTAVST",
+        "END_MEASURE": "SLUTAVST",
+        "MEASURE": "AVST",
+        "EXTENT_LENGTH": "SHAPE_LEN",
+
+        "DIRECTION": "RIKTNING",
+        "SIDE": "SIDA",
+        "Typ": "TYP",
+        "ROLE": "LANKROLL",
+        "SEQ_NO": "SEQ_NO",
+        "Namn": "NAMN",
+        "Beteckning": "BETECKNING",
+        "Galler_genomfart": "GENOMFART",
+        "X_koordinat": "XKOORDINAT",
+        "Y_koordinat": "YKOORDINAT",
+
+        # Antal_korfalt2
+        "Korfalt_i_vagens_bakriktning": "KOEFAETING",
+        "Korfalt_i_vagens_framriktning": "KOEFAETIN1",
+        "Korfaltsantal": "KOEFAETSAL",
+
+        # Barighet
+        "Barighetsklass": "BAEIGHTSSS",
+        "Barighetsklass_vinterperiod": "BAEIGHTSOD",
+        "Slutdatum_sommarperiod": "SLUDATMSOD",
+        "Slutdatum_vinterperiod": "SLUDATMVOD",
+        "Startdatum_sommarperiod": "STATDAUMOD",
+        "Startdatum_vinterperiod": "STATDAUMO3",
+
+        # BegrAxelBoggiTryck
+        "Axel_boggitrycks_begransning__Hogsta_tillatna_tryck1": "TRYCK1",
+        "Axel_boggitrycks_begransning__Hogsta_tillatna_tryck2": "TRYCK2",
+        "Axel_boggitrycks_begransning__Hogsta_tillatna_tryck3": "TRYCK3",
+        "Axel_boggitrycks_begransning__Tidsintervall__Dagslag11": "DAGSL11",
+        "Axel_boggitrycks_begransning__Tidsintervall__Dagslag21": "DAGSL21",
+        "Axel_boggitrycks_begransning__Tidsintervall__Dagslag31": "DAGSL31",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Minut111": "SLMIN111",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Minut112": "SLMIN112",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Minut211": "SLMIN211",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Minut212": "SLMIN212",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Minut311": "SLMIN311",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Minut312": "SLMIN312",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Timme111": "SLTIM111",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Timme112": "SLTIM112",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Timme211": "SLTIM211",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Timme212": "SLTIM212",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Timme311": "SLTIM311",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Sluttid__Timme312": "SLTIM312",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Minut111": "STMIN111",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Minut112": "STMIN112",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Minut211": "STMIN211",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Minut212": "STMIN212",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Minut311": "STMIN311",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Minut312": "STMIN312",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Timme111": "STTIM111",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Timme112": "STTIM112",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Timme211": "STTIM211",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Timme212": "STTIM212",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Timme311": "STTIM311",
+        "Axel_boggitrycks_begransning__Tidsintervall__Klockslag__Starttid__Timme312": "STTIM312",
+        "Axel_boggitrycks_begransning__Tidsintervall__Slutdag11": "SLDAG11",
+        "Axel_boggitrycks_begransning__Tidsintervall__Slutdag21": "SLDAG21",
+        "Axel_boggitrycks_begransning__Tidsintervall__Slutdag31": "SLDAG31",
+        "Axel_boggitrycks_begransning__Tidsintervall__Slutdatum11": "SLDAT11",
+        "Axel_boggitrycks_begransning__Tidsintervall__Slutdatum21": "SLDAT21",
+        "Axel_boggitrycks_begransning__Tidsintervall__Slutdatum31": "SLDAT31",
+        "Axel_boggitrycks_begransning__Tidsintervall__Startdag11": "STDAG11",
+        "Axel_boggitrycks_begransning__Tidsintervall__Startdag21": "STDAG21",
+        "Axel_boggitrycks_begransning__Tidsintervall__Startdag31": "STDAG31",
+        "Axel_boggitrycks_begransning__Tidsintervall__Startdatum11": "STDAT11",
+        "Axel_boggitrycks_begransning__Tidsintervall__Startdatum21": "STDAT21",
+        "Axel_boggitrycks_begransning__Tidsintervall__Startdatum31": "STDAT31",
+        "Axel_boggitrycks_begransning__Typ_av_tryck1": "TYPTRYCK1",
+        "Axel_boggitrycks_begransning__Typ_av_tryck2": "TYPTRYCK2",
+        "Axel_boggitrycks_begransning__Typ_av_tryck3": "TYPTRYCK3",
+        "Beteckning__Artal": "AARTAL1",
+        "Beteckning__Lopnummer": "LOEPNUMME1",
+        "Beteckning__Organisationskod": "ORGNISTI1",
+        "Foreskrift_som_upphor__Artal": "AARTAL2",
+        "Foreskrift_som_upphor__Lopnummer": "LOEPNUMME2",
+        "Foreskrift_som_upphor__Organisationskod": "ORGNISTI2",
+        "Galler_inte_fordon_trafikant": "FORDTRAF",
+
+        # BegrBruttovikt
+        "Avser_aven_fordonstag": "FORD_TAG",
+        "Galler_inte_fordon_trafikant": "FORDTRAF",
+        "Hogsta_tillatna_bruttovikt": "BRUTTOVIKT",
+
+        #"NVDB-BegrFordBredd"
+        "Galler_inte_fordon_trafikant1": "FORDTRAF1",
+        "Galler_inte_fordon_trafikant2": "FORDTRAF2",
+        "Galler_inte_fordon_trafikant3": "FORDTRAF3",
+        "Hogsta_tillatna_fordonsbredd": "FORD_BREDD",
+
+        #"NVDB-BegrFordLangd"
+        "Galler_inte_fordon_trafikant1": "FORDTRAF1",
+        "Galler_inte_fordon_trafikant2": "FORDTRAF2",
+        "Galler_inte_fordon_trafikant3": "FORDTRAF3",
+        "Hogsta_tillatna_fordonslangd": "FORD_LGD",
+
+        #"NVDB-Bro_och_tunnel"
+        "Identitet": "IDENTITET",
+        "Konstruktion": "KONTRUTION",
+        "Langd": "LAENGD",
+        "Oppningsbar": "OEPNINSBAR",
+
+        #"NVDB-Cirkulationsplats" - no specific tags
+
+        #"NVDB-CykelVgsKat"
+        "Forbindelsekategori": "FOEBINELRI",
+
+        #"NVDB-Farjeled"
+        "Farjeledsnamn": "LEDSNAMN",
+
+        #"NVDB-ForbjudenFardriktning" - no specific tags
+
+        # ForbudTrafik
+        "Beskrivning": "BESKRGFART",
+        "Galler_ej__Beskrivning1": "BSEKR_GEJ1",
+        "Galler_ej__Fordon_trafikant11": "FORDTRA11",
+        "Galler_ej__Fordon_trafikant110": "FORDTRA110",
+        "Galler_ej__Fordon_trafikant12": "FORDTRA12",
+        "Galler_ej__Fordon_trafikant13": "FORDTRA13",
+        "Galler_ej__Fordon_trafikant14": "FORDTRA14",
+        "Galler_ej__Fordon_trafikant15": "FORDTRA15",
+        "Galler_ej__Fordon_trafikant16": "FORDTRA16",
+        "Galler_ej__Fordon_trafikant17": "FORDTRA17",
+        "Galler_ej__Fordon_trafikant18": "FORDTRA18",
+        "Galler_ej__Fordon_trafikant19": "FORDTRA19",
+        "Galler_ej__Verksamhet11": "VERKSAMH11",
+        "Galler_ej__Verksamhet12": "VERKSAMH12",
+        "Galler_ej__Verksamhet13": "VERKSAMH13",
+        "Galler_ej__Verksamhet14": "VERKSAMH14",
+        "Galler_ej__Verksamhet15": "VERKSAMH15",
+        "Galler_ej__Verksamhet16": "VERKSAMH16",
+        "Galler_ej__Verksamhet17": "VERKSAMH17",
+        "Galler_fordon1": "FORDTYP1",
+        "Galler_fordon2": "FORDTYP2",
+        "Galler_fordon3": "FORDTYP3",
+        "Totalvikt": "TOTALVIKT",
+        "Galler_ej__Tidsintervall__Dagslag11": "GEDAGSL11",
+        "Galler_ej__Tidsintervall__Dagslag12": "GEDAGSL12",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Minut111": "GESLMIN111",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Minut112": "GESLMIN112",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Minut121": "GESLMIN121",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Minut122": "GESLMIN122",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Timme111": "GESLTIM111",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Timme112": "GESLTIM112",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Timme121": "GESLTIM121",
+        "Galler_ej__Tidsintervall__Klockslag__Sluttid__Timme122": "GESLTIM122",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Minut111": "GESTMIN111",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Minut112": "GESTMIN112",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Minut121": "GESTMIN121",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Minut122": "GESTMIN122",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Timme111": "GESTTIM111",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Timme112": "GESTTIM112",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Timme121": "GESTTIM121",
+        "Galler_ej__Tidsintervall__Klockslag__Starttid__Timme122": "GESTTIM122",
+        "Galler_ej__Tidsintervall__Slutdag11": "GESLDAG11",
+        "Galler_ej__Tidsintervall__Slutdag12": "GESLDAG12",
+        "Galler_ej__Tidsintervall__Slutdatum11": "GESLDAT11",
+        "Galler_ej__Tidsintervall__Slutdatum12": "GESLDAT12",
+        "Galler_ej__Tidsintervall__Startdag11": "GESTDAG11",
+        "Galler_ej__Tidsintervall__Startdag12": "GESTDAG12",
+        "Galler_ej__Tidsintervall__Startdatum11": "GESTDAT11",
+        "Galler_ej__Tidsintervall__Startdatum12": "GESTDAT12",
+
+        # "NVDB-FunkVagklass"
+        "Klass": "KLASS",
+
+        #"NVDB-Gagata" - no specific
+        #"NVDB-Gangfartsomrade" - no specific
+        #"NVDB-Gatunamn" - no specific
+
+        #"NVDB-Gatutyp"
+        "Avfartsvag_pafartsvag": "AVFRTSAEEG",
+        "Industrivag": "INDSTRVAEG",
+        "Uppsamlande": "UPPAMLNDDE",
+
+        #"NVDB-GCM_belyst" - no specific
+
+        #"NVDB-GCM_separation",
+        "Separation": "SEPARATION",
+
+        #"NVDB-GCM_vagtyp"
+        "Gcm_typ": "GCMTYP",
+
+        #"NVDB-Hastighetsgrans"
+        "Avvikande_hastighet__Fordonstyp11": "FORDTYP11",
+        "Avvikande_hastighet__Fordonstyp12": "FORDTYP12",
+        "Avvikande_hastighet__Fordonstyp13": "FORDTYP13",
+        "Avvikande_hastighet__Galler_inte_endast1": "HAVGIE1",
+        "Avvikande_hastighet__Hogsta_tillatna_hastighet1": "HAVHAST1",
+        "Avvikande_hastighet__Tidsintervall__Dagslag11": "DAGSL11",
+        "Avvikande_hastighet__Tidsintervall__Dagslag12": "DAGSL12",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Minut111": "SLMIN111",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Minut112": "SLMIN112",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Minut121": "SLMIN121",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Minut122": "SLMIN122",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Timme111": "SLTIM111",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Timme112": "SLTIM112",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Timme121": "SLTIM121",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Sluttid__Timme122": "SLTIM122",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Minut111": "STMIN111",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Minut112": "STMIN112",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Minut121": "STMIN121",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Minut122": "STMIN122",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Timme111": "STTIM111",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Timme112": "STTIM112",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Timme121": "STTIM121",
+        "Avvikande_hastighet__Tidsintervall__Klockslag__Starttid__Timme122": "STTIM122",
+        "Avvikande_hastighet__Tidsintervall__Slutdag11": "SLDAG11",
+        "Avvikande_hastighet__Tidsintervall__Slutdag12": "SLDAG12",
+        "Avvikande_hastighet__Tidsintervall__Slutdatum11": "SLDAT11",
+        "Avvikande_hastighet__Tidsintervall__Slutdatum12": "SLDAT12",
+        "Avvikande_hastighet__Tidsintervall__Startdag11": "STDAG11",
+        "Avvikande_hastighet__Tidsintervall__Startdag12": "STDAG12",
+        "Avvikande_hastighet__Tidsintervall__Startdatum11": "STDAT11",
+        "Avvikande_hastighet__Tidsintervall__Startdatum12": "STDAT12",
+        "Avvikande_hastighet__Totalvikt1": "TOTALVIKT1",
+        "Hogsta_tillatna_hastighet": "HTHAST",
+
+        #"NVDB-Huvudled" - no specific
+
+        #"NVDB-InskrTranspFarligtGods",
+        "Far_inte_foras_stannas_parkeras": "FARINTE",
+        "Galler_inte_fordon1": "FORDTYP1",
+        "Galler_inte_fordon2": "FORDTYP2",
+        "Galler_inte_fordon3": "FORDTYP3",
+        "Galler_inte_fordon4": "FORDTYP4",
+        "Galler_inte_fordon5": "FORDTYP5",
+        "Galler_inte_fordon_som_anvands_for__Galler_inte_fordon_trafikant11": "FORDTRAF11",
+        "Galler_inte_fordon_som_anvands_for__Galler_inte_fordon_trafikant12": "FORDTRAF12",
+        "Galler_inte_fordon_som_anvands_for__Galler_inte_fordon_trafikant13": "FORDTRAF13",
+        "Galler_inte_fordon_som_anvands_for__Plats_for_verksamhet1": "PLATS1",
+        "Galler_inte_fordon_som_anvands_for__Verksamhet11": "VERKSAMH11",
+        "Galler_inte_fordon_som_anvands_for__Verksamhet12": "VERKSAMH12",
+        "Galler_inte_fordon_som_anvands_for__Verksamhet13": "VERKSAMH13",
+
+        #"NVDB-Kollektivkorfalt"
+        "Korfalt_korbana": "KOEFAETKNA",
+
+        #"NVDB-Motortrafikled" - no specific
+        #"NVDB-Motorvag" - no specific
+
+        #"NVDB-Ovrigt_vagnamn"
+        "Namnsattande_organisation": "ORGANISAT",
+
+        #"NVDB-RekomVagFarligtGods",
+        "Rekommendation": "REKOMEND",
+
+        #"NVDB-Slitlager",
+        "Slitlagertyp": "TYP",
+
+        #"NVDB-Tillganglighet",
+        "Tillganglighetsklass": "KLASS",
+
+        #"NVDB-Vagbredd",
+        "Bredd": "BREDD",
+        "Matmetod": "MÄTMETOD",
+
+        #"NVDB-Vagnummer",
+        "Europavag": "EUROPAVÄG",
+        "Huvudnummer": "HUVUDNR",
+        "Lanstillhorighet": "LÄN",
+        "Undernummer": "UNDERNR",
+
+        #"EVB-Driftbidrag_statligt",
+        "Vagnr": "VAGNR1",
+        "Vagdelsnr": "VAGDELSN1",
+        "Slitlager": "SLITLAG1",
+        "Trafikklass": "TRAFIKKL1",
+
+        #"VIS-Funktionellt_priovagnat",
+        "Fpv_klass": "FPVKLASS",
+
+        #"VIS-Omkorningsforbud" - no specific
+
+        #"VIS-Slitlager" - no specific
+
+        #"NVDB-Farthinder",
+        "Lage": "LAEGE",
+
+        #"NVDB-GCM_passage",
+        "Passagetyp": "PASSAGETYP",
+        "Refugpassage": "REFGPASAGE",
+        "Trafikanttyp": "TRAIKATTYP",
+
+        #"NVDB-Hojdhinder45dm"
+        "Hojdhindertyp": "TYP",
+        "Fri_hojd": "FRIHOJD",
+        "Hojdhinderidentitet": "HOJDID",
+
+        #"NVDB-Korsning"
+        "Generaliseringstyp": "GENRALSEYP",
+        "Ingar_i_trafikplats": "TRAIKPATER",
+        "Signalreglering": "SIGALRGLNG",
+        "Tpl_nummer": "TPLUNDRNER",
+
+        #"NVDB-Stopplikt" - no specific
+
+        #"NVDB-Vaghinder",
+        "Hindertyp": "HINDERTYP",
+        "Passerbar_bredd": "PASSBREDD",
+
+        #"NVDB-Vajningsplikt", - no specific
+
+        #"VIS-Jarnvagskorsning"
+        "Plankorsnings_id": "PLAKORNIID",
+        "Jvg_bandel": "JVGBANDEL",
+        "Jvg_kilometer": "JVGILOETER",
+        "Jvg_meter": "JVGMETER",
+        "Antal_spar": "ANTALSPAAR",
+        "Vagprofil_farligt_vagkron": "VAEPROILEN",
+        "Vagprofil_tvar_kurva": "VAEPROILVA",
+        "Vagprofil_brant_lutning": "VAEPROILNG",
+        "Vagskydd": "VAEGSKYDD",
+        "Portalhojd": "PORALHEJJD",
+        "Tagflode": "TAAGFLOEDE",
+        "Kontaktledning": "KONAKTEDNG",
+        "Kort_magasin": "KORMAGSIIN",
+        "Senast_andrad": "SENSTANDAD",
+
+        #"VIS-P_ficka"
+        "Bord_med_sittplatser": "BORMEDITER",
+        "Molok": "MOLOK",
+        "Placering": "PLACERING",
+        "Sopkarl": "SOPKAERL",
+        "Toalett": "TOALETT",
+        "Uppstallbar_langd": "UPPTAELBGD",
+
+        #"VIS-Rastplats"
+        "Alternativ_avkorningspunkt_x_koordinat": "ALTRNAIVAT",
+        "Alternativ_avkorningspunkt_y_koordinat": "ALTRNAIV15",
+        "Antal_markerade_parkeringsplatser_for_lastbil_slap": "ANTLMAKE21",
+        "Antal_markerade_parkeringsplatser_for_personbil": "ANTLMAKEIL",
+        "Avkorningspunkt_x_koordinat": "AVKERNNGAT",
+        "Avkorningspunkt_y_koordinat": "AVKERNNG13",
+        "Latrintomning": "LATINTEMNG",
+        "Lekutrustning": "LEKTRUTNNG",
+        "Ovrig_utrustning": "OEVIGURUNG",
+        "Rastplatsadress": "RASPLASASS",
+        "Rastplatsnamn": "RASPLASNMN",
+        "Restaurang": "RESTAURANG",
+        "Sakerhetsskydd": "SAEERHTSDD",
+        "Skotselansvarig": "SKOTSEANIG",
+        "Utpekad_lamplig_lastbilsparkeringsplats": "UTPKADAETS",
+
+        # Generic time intervals
+        "Tidsintervall__Dagslag": "DAGSL",
+        "Tidsintervall__Dagslag1": "DAGSL1",
+        "Tidsintervall__Dagslag2": "DAGSL2",
+        "Tidsintervall__Dagslag3": "DAGSL3",
+        "Tidsintervall__Klockslag__Sluttid__Minut": "MIN13",
+        "Tidsintervall__Klockslag__Sluttid__Minut11": "SLMIN11",
+        "Tidsintervall__Klockslag__Sluttid__Minut12": "SLMIN12",
+        "Tidsintervall__Klockslag__Sluttid__Minut21": "SLMIN21",
+        "Tidsintervall__Klockslag__Sluttid__Minut22": "SLMIN22",
+        "Tidsintervall__Klockslag__Sluttid__Minut31": "SLMIN31",
+        "Tidsintervall__Klockslag__Sluttid__Minut32": "SLMIN32",
+        "Tidsintervall__Klockslag__Sluttid__Timme": "TIM12",
+        "Tidsintervall__Klockslag__Sluttid__Timme11": "SLTIM11",
+        "Tidsintervall__Klockslag__Sluttid__Timme12": "SLTIM12",
+        "Tidsintervall__Klockslag__Sluttid__Timme21": "SLTIM21",
+        "Tidsintervall__Klockslag__Sluttid__Timme22": "SLTIM22",
+        "Tidsintervall__Klockslag__Sluttid__Timme31": "SLTIM31",
+        "Tidsintervall__Klockslag__Sluttid__Timme32": "SLTIM32",
+        "Tidsintervall__Klockslag__Starttid__Minut": "MINUT",
+        "Tidsintervall__Klockslag__Starttid__Minut11": "STMIN11",
+        "Tidsintervall__Klockslag__Starttid__Minut12": "STMIN12",
+        "Tidsintervall__Klockslag__Starttid__Minut21": "STMIN21",
+        "Tidsintervall__Klockslag__Starttid__Minut22": "STMIN22",
+        "Tidsintervall__Klockslag__Starttid__Minut31": "STMIN31",
+        "Tidsintervall__Klockslag__Starttid__Minut32": "STMIN32",
+        "Tidsintervall__Klockslag__Starttid__Timme": "TIMME",
+        "Tidsintervall__Klockslag__Starttid__Timme11": "STTIM11",
+        "Tidsintervall__Klockslag__Starttid__Timme12": "STTIM12",
+        "Tidsintervall__Klockslag__Starttid__Timme21": "STTIM21",
+        "Tidsintervall__Klockslag__Starttid__Timme22": "STTIM22",
+        "Tidsintervall__Klockslag__Starttid__Timme31": "STTIM31",
+        "Tidsintervall__Klockslag__Starttid__Timme32": "STTIM32",
+        "Tidsintervall__Slutdag": "SLUTDAG",
+        "Tidsintervall__Slutdag1": "SLDAG1",
+        "Tidsintervall__Slutdag2": "SLDAG2",
+        "Tidsintervall__Slutdag3": "SLDAG3",
+        "Tidsintervall__Slutdatum": "SLUTDATUM",
+        "Tidsintervall__Slutdatum1": "SLDAT1",
+        "Tidsintervall__Slutdatum2": "SLDAT2",
+        "Tidsintervall__Slutdatum3": "SLDAT3",
+        "Tidsintervall__Startdag": "STARTDAG",
+        "Tidsintervall__Startdag1": "STDAG1",
+        "Tidsintervall__Startdag2": "STDAG2",
+        "Tidsintervall__Startdag3": "STDAG3",
+        "Tidsintervall__Startdatum": "STARTDATUM",
+        "Tidsintervall__Startdatum1": "STDAT1",
+        "Tidsintervall__Startdatum2": "STDAT2",
+        "Tidsintervall__Startdatum3": "STDAT3"
+    }
+    for alt_key, key in alt_tag_names.items():
+        if alt_key in tags:
+            tags[key] = tags[alt_key]
+            _ = tags.pop(alt_key, None)
+
+    # replace NaN and NaT with None
+    for k, v in tags.items():
+        if pandas.isna(v):
+            tags[k] = None
+
 #
 # Table for tag translations.
 #
@@ -1260,7 +1729,8 @@ TAG_TRANSLATIONS = {
         "ORDNING": None,
         "LANKROLL": "NVDB_road_role",
         "SEQ_NO": None,
-        "VARDVAG": None
+        "VARDVAG": None, # obsolete?
+        "ISHOST": None # new
     },
     "NVDB-Gatutyp": {
         "TYP": "NVDB_gatutyp",
@@ -1355,7 +1825,8 @@ TAG_TRANSLATIONS = {
         "ORDNING": None,
         "LANKROLL": "NVDB_road_role",
         "SEQ_NO": None,
-        "VARDVAG": None,
+        "VARDVAG": None, # obsolete?
+        "ISHOST": None # new
     },
     "EVB-Driftbidrag_statligt": {
         "add_keys_and_values": "NVDB_government_funded=yes",
@@ -1371,6 +1842,7 @@ TAG_TRANSLATIONS = {
         "RIKTNING=Med och mot": "overtaking=no",
     },
     "VIS-Slitlager": {
+        # both enumerations and strings have been used by NVDB
         "TYP=0": None,                  # Uppgift saknas
         "TYP=1": "surface=asphalt",     # Bituminös
         "TYP=2": "surface=asphalt",     # Oljegrus
@@ -1378,7 +1850,15 @@ TAG_TRANSLATIONS = {
         "TYP=4": "surface=gravel",      # Sten
         "TYP=5": "surface=concrete",    # Betong
         "TYP=6": "surface=asphalt",     # Y1G
-        "TYP=7": "surface=asphalt"      # Förseglat grus
+        "TYP=7": "surface=asphalt",     # Förseglat grus
+        "TYP=Uppgift saknas": None,
+        "TYP=Bituminös": "surface=asphalt",
+        "TYP=Oljegrus": "surface=asphalt",
+        "TYP=Grus": "surface=fine_gravel",
+        "TYP=Sten": "surface=gravel",
+        "TYP=Betong": "surface=concrete",
+        "TYP=Y1G": "surface=asphalt",
+        "TYP=Förseglat grus": "surface=asphalt"
     },
     "NVDB-Farthinder": {
         # Ideally TYP=1 should be with priority=* (to differ from TYP=3) but there's no info on which
@@ -1396,6 +1876,17 @@ TAG_TRANSLATIONS = {
         "TYP=9":  "traffic_calming=yes",     # Övrigt farthinder
         "TYP=10": "traffic_calming=dynamic_bump", # Dynamiskt aktivt farthinder
         "TYP=11": "traffic_calming=dynamic_bump", # Dynamiskt passivt farthinder
+        "TYP=avsmalning till ett körfält":  "traffic_calming=choker",
+        "TYP=gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)":  "traffic_calming=hump",
+        "TYP=sidoförskjutning - avsmalning":  "traffic_calming=choker",
+        "TYP=sidoförskjutning - refug":  "traffic_calming=island",
+        "TYP=väghåla":  "traffic_calming=dip",
+        "TYP=vägkudde":  "traffic_calming=cushion",
+        "TYP=förhöjd genomgående gcm-passage":  "traffic_calming=table",
+        "TYP=förhöjd korsning":  "traffic_calming=table",
+        "TYP=övrigt farthinder":  "traffic_calming=yes",
+        "TYP=dynamiskt aktivt farthinder": "traffic_calming=dynamic_bump",
+        "TYP=dynamiskt passivt farthinder": "traffic_calming=dynamic_bump",
         "LAEGE": None
     },
     "NVDB-GCM_passage": {
@@ -1423,7 +1914,8 @@ TAG_TRANSLATIONS = {
         "TRAIKPATER": None,
         "TPLUNDRNER": None,
         "XKOORDINAT": None,
-        "YKOORDINAT": None
+        "YKOORDINAT": None,
+        "Trafikplatsnamn": None, # new
     },
     "NVDB-Stopplikt": {
         "add_keys_and_values":  "highway=stop",
@@ -1454,6 +1946,7 @@ TAG_TRANSLATIONS = {
         "VAEPROILEN": None,              # Vägprofil farligt vägkrön
         "VAEPROILVA": None,              # Vägprofil tvär kurva
         "VAEPROILNG": None,              # Vägprofil brant lutning
+        # NVDB has been seen using both numbers and strings
         "VAEGSKYDD=1": "crossing:barrier=full", # Helbom
         "VAEGSKYDD=2": "crossing:barrier=half",	# Halvbom
         "VAEGSKYDD=3": [ "crossing:bell=yes", "crossing:light=yes" ], # Ljus och ljudsignal
@@ -1461,6 +1954,13 @@ TAG_TRANSLATIONS = {
         "VAEGSKYDD=5": "crossing:bell=yes",	# Ljudsignal
         "VAEGSKYDD=6": "crossing:saltire=yes",  # Kryssmärke
         "VAEGSKYDD=7": "crossing:barrier=no",   # Utan skydd
+        "VAEGSKYDD=Helbom": "crossing:barrier=full",
+        "VAEGSKYDD=Halvbom": "crossing:barrier=half",
+        "VAEGSKYDD=Ljus och ljudsignal": [ "crossing:bell=yes", "crossing:light=yes" ],
+        "VAEGSKYDD=Ljussignal": "crossing:light=yes",
+        "VAEGSKYDD=Ljudsignal": "crossing:bell=yes",
+        "VAEGSKYDD=Kryssmärke": "crossing:saltire=yes",
+        "VAEGSKYDD=Utan skydd": "crossing:barrier=no",
         "PORALHEJJD": "maxheight", # Portalhöjd
         "PORALHEJJD=0.0": None, # Portalhöjd, value for no portal
         "PORALHEJJD=9.0": None, # Portalhöjd, alt value for no portal
