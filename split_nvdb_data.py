@@ -13,6 +13,7 @@ import os
 import glob
 import sys
 import geopandas
+import pandas
 import fiona
 
 _log = logging.getLogger("split_nvdb_data")
@@ -134,10 +135,14 @@ def load_municipalities(lanskod):
     return municipalities
 
 def append_row_to_municipality(m_data, m, row):
-    if m.KOM_KOD in m_data:
-        m_data[m.KOM_KOD].append(row)
+    if m is None:
+        kom_kod = -1
     else:
-        m_data[m.KOM_KOD] = [ row ]
+        kom_kod = m.KOM_KOD
+    if kom_kod in m_data:
+        m_data[kom_kod].append(row)
+    else:
+        m_data[kom_kod] = [ row ]
 
 def main():
 
@@ -266,23 +271,32 @@ def main():
                         append_row_to_municipality(m_data, m, row)
             if not contained:
                 # this should not happen -- all geodata should be in some municipality
-                _log.info(f"geometry with RLID {row.RLID} not contained nor intersecting with any municipality")
+                if row.get('ELEMENT_ID') is not None:
+                    row_id = row.get('ELEMENT_ID')
+                else:
+                    row_id = row.get('RLID')
+                _log.info(f"geometry with id {row_id} not contained nor intersecting with any municipality. Adding to 'unknown'.")
+                append_row_to_municipality(m_data, None, row)
 
         # write geometry files for each municipality
         cleaned_layer_name = layer_name.replace('*', '-')
+        muni = [ { 'code': -1, 'name': 'unknown' }]
         for m in municipalities:
-            if m.KOM_KOD in m_data:
-                _log.info(f"Saving {cleaned_layer_name}.gkpg for {m.KOMMUNNAMN}")
+            muni.append({ 'code': m.KOM_KOD, 'name': m.KOMMUNNAMN })
+        for m in muni:
+            code = m['code']
+            name = m['name']
+            if code in m_data:
+                _log.info(f"Saving {cleaned_layer_name}.gkpg for {name}")
 
                 empty_copy = gdf.drop(gdf.index)
-                mgdf = empty_copy
-                mgdf = mgdf.append(m_data[m.KOM_KOD], ignore_index=True)
+                mgdf = pandas.concat([empty_copy, pandas.DataFrame(m_data[code])], ignore_index=True)
 
-                path = os.path.join(output_dir, m.KOMMUNNAMN)
+                path = os.path.join(output_dir, name)
                 if not os.path.exists(path):
                     os.mkdir(path)
                 path = os.path.join(path, f"{cleaned_layer_name}.gpkg")
-                mgdf.to_file(path)
+                geopandas.GeoDataFrame(mgdf).to_file(path)
 
     # Create zip archives for each municipality
     dirnames = next(os.walk(output_dir), (None, [], None))[1]
