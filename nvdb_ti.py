@@ -196,7 +196,7 @@ def merge_multiple_time_intervals(dst, src):
     return merge_str
 
 def parse_hourmin_interval(values):
-    return "%02d:%02d-%02d:%02d" % (values[0], values[1], values[2], values[3])
+    return "%02d:%02d-%02d:%02d" % (int(values[0]), int(values[1]), int(values[2]), int(values[3]))
 
 def parse_date_interval(values):
     di = parse_range_date(values[0]) + "-" + parse_range_date(values[1])
@@ -205,6 +205,10 @@ def parse_date_interval(values):
     return di
 
 def parse_day_interval(values):
+    if isinstance(values[0], float):
+        values[0] = int(values[0])
+    if isinstance(values[1], float):
+        values[1] = int(values[1])
     day_map = { "måndag": "Mo", "tisdag": "Tu", "onsdag": "We", "torsdag": "Th", "fredag": "Fr", "lördag": "Sa", "söndag": "Su", \
                 "1": "Mo", "2": "Tu", "3": "We", "4": "Th", "5": "Fr", "6": "Sa", "7": "Su" }
     if values[1] is None:
