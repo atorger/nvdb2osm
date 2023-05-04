@@ -163,6 +163,9 @@ def parse_speed_limit(tags, key):
     # is not the same as living street.
     if speed == "gångfart":
         speed = 5
+    elif speed in [ "varierande", "1000", 1000 ]:
+        # FIXME no support for tagging varying speed limit
+        speed = -1
     elif isinstance(speed, str):
         speed = int(speed)
     elif speed is None:
@@ -172,8 +175,6 @@ def parse_speed_limit(tags, key):
         _log.warning(f"unexpected speed value {key} {speed} (RLID {tags['RLID']})")
         append_fixme_value(tags, "Bad %s speed value" % key)
         speed = 5
-    elif speed >= 1000: # observed to be used as undefined value in some cases
-        speed = -1
     del tags[key]
     return speed
 
