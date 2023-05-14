@@ -1031,7 +1031,9 @@ def tag_translation_Vagnummer(tags):
         undernr_str = ""
     else:
         undernr_str = "." + str(undernr)
-    if tags.get("EUROPAVÄG", None) is None or tags["EUROPAVÄG"] == -1:
+
+    # New standard seems to provide string "Ja" if it's an Europe road, kept old ways as well.
+    if tags.get("EUROPAVÄG", None) is None or tags["EUROPAVÄG"] == "Ja" or tags["EUROPAVÄG"] == -1:
         # E road number with space (eg "E 4" instead of "E4") is not Swedish standard,
         # but we need to follow the standard used in OSM over Europe which is using
         # a space.
