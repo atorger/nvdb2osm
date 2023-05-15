@@ -2033,7 +2033,7 @@ def postprocess_miscellaneous_tags(tags):
                 v = float(v)
             except (ValueError, TypeError):
                 continue
-        if k in ["SLUTAVST", "STARTAVST"]:
+        if k in ["SLUTAVST", "STARTAVST", "SHAPE_LEN", "AVST"]:
             continue
         new_v = round(v, 1)
         if new_v != v:
@@ -2047,6 +2047,10 @@ def postprocess_miscellaneous_tags(tags):
 def final_pass_postprocess_miscellaneous_tags(way_db):
     for way in way_db:
         postprocess_miscellaneous_tags(way.tags)
+    for p in way_db.point_db:
+        nodes = way_db.point_db[p]
+        for node in nodes:
+            postprocess_miscellaneous_tags(node.tags)
 
 # cleanup_used_nvdb_tags()
 #
