@@ -11,10 +11,10 @@ Det körs på kommandoraden:
 Exempel:
 
 Dela upp länsfilen till kommuner:
-`split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_Shape.zip split_files`
+`split_nvdb_data.py --lanskod_filter 25 Norrbottens_län_GeoPackage.zip split_files`
 
 Konvertera en kommun till OSM:
-`nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper.zip split_files/Luleå.zip luleå.osm`
+`nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper2_0_GeoPackage.zip split_files/Luleå.zip luleå.osm`
 
 Även om `Luleå.zip` ovan innehåller bara vägar som är inom kommunen,
 så vill man ändå ange `--municipality_filter Luleå` då det ser till att
@@ -34,7 +34,7 @@ först, vilket man kan göra med split_nvdb_data.py-skriptet.
 Skriptet lägger inte till järnväg (järnväg kartläggs lämpligen
 separat), men för att kunna lägga järnvägskorsningar på rätt position
 behöver skriptet ändå det nationella järnvägsnätet. Den filen hittas
-också på lastkajen: Järnvägsnät_grundegenskaper.zip
+också på lastkajen: Järnvägsnät_grundegenskaper2_0_GeoPackage.zip
 Det är en fil för hela Sverige så man använder samma för alla
 kommuner.
 
