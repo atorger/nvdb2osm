@@ -4,11 +4,11 @@
 # parse to a "time interval" class and then work on that rather than just work directly on
 # strings
 #
+import re
 import logging
 import pandas as pd
 
 from sortedcontainers import SortedDict
-from scanf import scanf
 
 _log = logging.getLogger("nvdb_ti")
 time_interval_strings = set()
@@ -237,16 +237,20 @@ def parse_range_date(date_str):
 def simplify_time_interval_once(ti_str):
     # FIXME: support more cases
 
-    val = scanf('Mo-Sa %2d:%2d-%2d:%2d; Su %2d:%2d-%2d:%2d; PH %2d:%2d-%2d:%2d', ti_str)
-    if val is not None:
+    pattern = r'Mo-Sa (\d{2}):(\d{2})-(\d{2}):(\d{2}); Su (\d{2}):(\d{2})-(\d{2}):(\d{2}); PH (\d{2}):(\d{2})-(\d{2}):(\d{2})'
+    match = re.match(pattern, ti_str)
+    if match:
+        val = match.groups()
         for i in range(0, 4):
             if val[i+0] != val[i+4] or val[i+0] != val[i+8]:
                 return ti_str
         return "%02d:%02d-%02d:%02d" % val[:4]
 
     # Mo-Fr 22:00-06:00; Sa 22:00-06:00 => Mo-Sa 22:00-06:00
-    val = scanf('Mo-Fr %2d:%2d-%2d:%2d; Sa %2d:%2d-%2d:%2d%*s', ti_str)
-    if val is not None:
+    pattern = r'Mo-Fr (\d{2}):(\d{2})-(\d{2}):(\d{2}); Sa (\d{2}):(\d{2})-(\d{2}):(\d{2})\s*\w*'
+    match = re.match(pattern, ti_str)
+    if match:
+        val = match.groups()
         for i in range(0, 4):
             if val[i+0] != val[i+4]:
                 return ti_str
