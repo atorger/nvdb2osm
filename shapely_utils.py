@@ -7,7 +7,7 @@ from geometry_basics import *
 # Convert shapely linestring object to list of Point()
 #
 def shapely_linestring_to_way(geometry):
-    assert (geometry.type == "LineString"), "Unexpected geometry type"
+    assert (geometry.geom_type == "LineString"), "Unexpected geometry type"
     xl, yl = geometry.xy
     way = []
     for x, y in zip(xl, yl):

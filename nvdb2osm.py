@@ -106,7 +106,7 @@ def read_nvdb_geometry(directory_or_zip, name, tag_translations, nvdb_total_boun
 
         process_tag_translations(way, tag_translations)
 
-        if geometry.type == "Point":
+        if geometry.geom_type == "Point":
             points = Point(geometry.x, geometry.y)
         else:
             points = shapely_linestring_to_way(geometry)
