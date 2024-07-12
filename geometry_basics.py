@@ -11,7 +11,10 @@ class Point:
     def __getitem__(self, i):
         if i == 0:
             return self.x
-        return self.y
+        elif i == 1:
+            return self.y
+        else:
+            raise IndexError('Index out of range')
     def __eq__(self, other):
         return isinstance(other, Point) and self.x == other.x and self.y == other.y
     def __hash__(self):
