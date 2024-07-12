@@ -464,6 +464,7 @@ def tag_translation_BegrFordBredd(tags):
     tags.pop("FORD_BREDD", None)
     for i in range(1, 4):
         tags.pop("FORDTRAF" + str(i), None) # doesn't seem to be used
+    _ = [tags.pop(key, None) for key in [ "BETECKNING" ]]
     tag_translation_single_value_with_time_interval(tags, key, value)
 
 # tag_translation_BegrFordLangd()
@@ -498,6 +499,7 @@ def tag_translation_BegrFordLangd(tags):
         tags["access:conditional"] = f"destination @ (maxlength>{maxlength})"
     else:
         tags["maxlength"] = maxlength
+    _ = [tags.pop(key, None) for key in [ "BETECKNING" ]]
 
 # tag_translation_ForbudTrafik()
 #
@@ -623,7 +625,7 @@ def tag_translation_ForbudTrafik(tags):
     while "VERKSAMH1" + str(idx) in list(tags):
         del tags["VERKSAMH1" + str(idx)]
         idx += 1
-    _ = [tags.pop(key, None) for key in ["BESKRGFART", "BSEKR_GEJ1", "GENOMFART", "TOTALVIKT"]]
+    _ = [tags.pop(key, None) for key in ["BESKRGFART", "BSEKR_GEJ1", "GENOMFART", "TOTALVIKT", "BETECKNING"]]
 
     _log.debug(f"ForbudTrafik output {tags}")
 
@@ -1706,6 +1708,7 @@ TAG_TRANSLATIONS = {
     "NVDB-ForbjudenFardriktning": {
         "RIKTNING=Mot": "oneway=yes",
         "RIKTNING=Med": "oneway=-1",
+        "BETECKNING": None,
         "expect_unset_time_intervals": True
     },
     "NVDB-ForbudTrafik": {
@@ -1843,6 +1846,7 @@ TAG_TRANSLATIONS = {
         "RIKTNING=Med":         "overtaking:forward=no",
         "RIKTNING=Mot":         "overtaking:backward=no",
         "RIKTNING=Med och mot": "overtaking=no",
+        "BETECKNING": None
     },
     "VIS-Slitlager": {
         # both enumerations and strings have been used by NVDB
@@ -1924,7 +1928,8 @@ TAG_TRANSLATIONS = {
         "add_keys_and_values":  "highway=stop",
         "RIKTNING=Med":         "direction=forward",
         "RIKTNING=Mot":         "direction=backward",
-        "RIKTNING=Med och mot": None
+        "RIKTNING=Med och mot": None,
+        "BETECKNING": None
     },
     "NVDB-Vaghinder": {
         "translator_function": tag_translation_Vaghinder
@@ -1933,7 +1938,8 @@ TAG_TRANSLATIONS = {
         "add_keys_and_values":  "highway=give_way",
         "RIKTNING=Med":         "direction=forward",
         "RIKTNING=Mot":         "direction=backward",
-        "RIKTNING=Med och mot": None
+        "RIKTNING=Med och mot": None,
+        "BETECKNING": None
     },
 #    "NVDB-Vandmojlighet": {
 #        "add_keys_and_values": "highway=turning_circle",
