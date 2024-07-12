@@ -11,18 +11,17 @@ class Point:
     def __getitem__(self, i):
         if i == 0:
             return self.x
-        elif i == 1:
+        if i == 1:
             return self.y
-        else:
-            raise IndexError('Index out of range')
+        raise IndexError('Index out of range')
     def __eq__(self, other):
         return isinstance(other, Point) and self.x == other.x and self.y == other.y
     def __hash__(self):
         return hash((self.x, self.y))
     def __repr__(self):
         if self.dist >= 0:
-            return "<x:%s y:%s dist:%g>" % (self.x, self.y, self.dist)
-        return "<x:%s y:%s>" % (self.x, self.y)
+            return f"<x:{self.x} y:{self.y} dist:{self.dist:.6g}>"
+        return f"<x:{self.x} y:{self.y}>"
 
 def dist2d(p1, p2):
     dx = p2.x - p1.x
@@ -115,8 +114,7 @@ def calc_way_length(points):
     min_dist = dist2d(points[0], points[1])
     for p in it:
         dist = dist2d(prev, p)
-        if dist < min_dist:
-            min_dist = dist
+        min_dist = min(dist, min_dist)
         length += dist
         prev = p
     return length, min_dist
