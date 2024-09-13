@@ -402,7 +402,7 @@ def tag_translation_Barighet(tags):
             start_winter = parse_range_date(tags["STATDAUMO3"])
             stop_winter = parse_range_date(tags["SLUDATMVOD"])
             tags["maxweight:conditional"] = str(tags["wc"]) + " @ (" + start_winter + "-" + stop_winter + ")"
-    _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3", "BETECKNING"]]
+    _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3", "RIKTNING", "BETECKNING"]]
 
 # tag_translation_BegrAxelBoggiTryck()
 #
@@ -743,6 +743,7 @@ def tag_translation_Hastighetsgrans(tags):
 
     tags.pop("HAVGIE1", None)
     tags.pop("TOTALVIKT1", None)
+    tags.pop("BETECKNING", None)
 
 # tag_translation_InskrTranspFarligtGods()
 #
@@ -781,8 +782,7 @@ def tag_translation_InskrTranspFarligtGods(tags):
         tags.pop("FORDTRAF1" + str(i), None)
     for i in range(1, 4):
         tags.pop("VERKSAMH1" + str(i), None)
-    tags.pop("PLATS1", None)
-    tags.pop("RIKTNING", None)
+    _ = [tags.pop(key, None) for key in ["PLATS1", "RIKTNING", "BETECKNING"]]
 
 # tag_translation_Kollektivkorfalt()
 #
@@ -795,6 +795,7 @@ def tag_translation_InskrTranspFarligtGods(tags):
 def tag_translation_Kollektivkorfalt(tags):
 
     ti_tags = {
+        # FIXME maybe we should look at RIKTNING as well
         "DAGSL1": tags.get("DAGSLAG", None),
         "STDAT1": tags.get("STARTDATUM", "1899-12-29"),
         "SLDAT1": tags.get("SLUTDATUM", "1899-12-29"),
@@ -806,6 +807,9 @@ def tag_translation_Kollektivkorfalt(tags):
         "SLMIN11": tags.get("MIN13", -1),
         "RLID": tags["RLID"]
     }
+    # DAGSLAG seems to have been replaced by DAGSSL
+    if (ti_tags["DAGSL1"] is None):
+        ti_tags["DAGSL1"] = tags.get("DAGSSL", None)
     # case with only TIM12 set seems to be quite common, so we fix that to make a parsable time
     all_undefined = True
     for k in [ "STTIM11", "SLTIM11", "STMIN11", "SLMIN11"]:
@@ -844,7 +848,7 @@ def tag_translation_Kollektivkorfalt(tags):
     else:
         tags["lanes:bus" + direction] = lane_count
 
-    _ = [tags.pop(key, None) for key in [ "MIN13", "MINUT", "TIM12", "TIMME", "DAGSLAG", "STARTDATUM", "SLUTDATUM", "STARTDAG", "SLUTDAG", "KOEFAETKNA" ]]
+    _ = [tags.pop(key, None) for key in [ "MIN13", "MINUT", "TIM12", "TIMME", "DAGSLAG", "DAGSL", "STARTDATUM", "SLUTDATUM", "STARTDAG", "SLUTDAG", "KOEFAETKNA", "RIKTNING", "BETECKNING" ]]
 
 # tag_translation_P_ficka()
 #
@@ -1700,6 +1704,8 @@ TAG_TRANSLATIONS = {
     },
     "NVDB-CykelVgsKat": {
         "FOEBINELRI": "NVDB_cykelvagkat",
+        "Primar_funktion": None,
+        "Kvarterscykelvag": None
     },
     "NVDB-Farjeled": {
         "LEDSNAMN": "name",
@@ -1755,6 +1761,7 @@ TAG_TRANSLATIONS = {
         "translator_function": tag_translation_Hastighetsgrans,
     },
     "NVDB-Huvudled": {
+        "BETECKNING": None,
         "add_keys_and_values": "priority_road=designated",
     },
     "NVDB-InskrTranspFarligtGods": {
@@ -1777,9 +1784,11 @@ TAG_TRANSLATIONS = {
         "MILOEZNKSS=None": None
     },
     "NVDB-Motortrafikled": {
+        "BETECKNING": None,
         "add_keys_and_values": "NVDB_motortrafikled=yes"
     },
     "NVDB-Motorvag": {
+        "BETECKNING": None,
         "add_keys_and_values": "NVDB_motorvag=yes"
     },
     "NVDB-Ovrigt_vagnamn": {
@@ -1846,6 +1855,10 @@ TAG_TRANSLATIONS = {
         "RIKTNING=Med":         "overtaking:forward=no",
         "RIKTNING=Mot":         "overtaking:backward=no",
         "RIKTNING=Med och mot": "overtaking=no",
+        # FIXME: no info on what 1,2,3, but the guess is reasonable
+        "RIKTNING=1": "overtaking:forward=no",
+        "RIKTNING=2": "overtaking:backward=no",
+        "RIKTNING=3": "overtaking=no",
         "BETECKNING": None
     },
     "VIS-Slitlager": {

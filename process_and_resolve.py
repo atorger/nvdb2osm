@@ -2078,5 +2078,5 @@ def log_used_and_leftover_keys(in_use):
     _log.info("Current keys in use:")
     for k, v in in_use.items():
         _log.info(f"  '{k}': {v}")
-        if k[0].isupper() and k != "NVDB:RLID" and k != "NVDB_extra_nodes":
+        if any(char.isupper() for char in k) and k != "NVDB:RLID" and k != "NVDB_extra_nodes":
             _log.warning(f"key {k} was not parsed")
