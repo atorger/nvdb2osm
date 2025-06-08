@@ -50,7 +50,7 @@ def read_geometry_from_file(directory_or_zip, name):
         return None
 
     _log.info(f"Reading file {filename}")
-    gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
+    gdf = geopandas.read_file(gdf_filename)
     _log.info(f"done ({len(gdf)} segments)")
     return gdf
 

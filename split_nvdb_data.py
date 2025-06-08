@@ -71,7 +71,7 @@ def read_gpkg_layer(filename, layer_name):
         if len(files) > 0:
             filename = "zip://" + str(filename) + "!" + files[0]
     _log.info(f"Reading layer {layer_name} from file {filename}")
-    gdf = geopandas.read_file(filename, encoding='cp1252', layer=layer_name)
+    gdf = geopandas.read_file(filename, layer=layer_name)
     _log.info(f"done ({len(gdf)} segments)")
     assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
     return gdf
@@ -291,6 +291,7 @@ def main():
 
                 empty_copy = gdf.drop(gdf.index)
                 mgdf = pandas.concat([empty_copy, pandas.DataFrame(m_data[code])], ignore_index=True)
+                mgdf.crs = "epsg:3006"
 
                 path = os.path.join(output_dir, name)
                 if not os.path.exists(path):
