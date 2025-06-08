@@ -1269,12 +1269,15 @@ def preprocess_tags(tags):
         "SIDE": "SIDA",
         "Typ": "TYP",
         "ROLE": "LANKROLL",
+        "Lankroll": "LANKROLL",
         "SEQ_NO": "SEQ_NO",
         "Namn": "NAMN",
         "Beteckning": "BETECKNING",
         "Galler_genomfart": "GENOMFART",
         "X_koordinat": "XKOORDINAT",
         "Y_koordinat": "YKOORDINAT",
+        "Ordningsnummer": "ORDNING",
+        "Vard": "VARDVAG",
 
         # Antal_korfalt2
         "Korfalt_i_vagens_bakriktning": "KOEFAETING",
@@ -1726,14 +1729,16 @@ TAG_TRANSLATIONS = {
         "SIDA=Vänster":           "NVDB_gagata_side=left",
         "SIDA=Höger":             "NVDB_gagata_side=right",
         "SIDA=Vänster och höger": "NVDB_gagata_side=both",
-        "SIDA=None": None
+        "SIDA=None": None,
+        "BETECKNING": None
     },
     "NVDB-Gangfartsomrade": {
         "add_keys_and_values":    "NVDB_gangfartsomrode=yes",
         "SIDA=Vänster":           "NVDB_gangfartsomrode_side=left",
         "SIDA=Höger":             "NVDB_gangfartsomrode_side=right",
         "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both",
-        "SIDA=None": None
+        "SIDA=None": None,
+        "BETECKNING": None
     },
     "NVDB-Gatunamn": {
         "NAMN": "name",
@@ -1741,8 +1746,8 @@ TAG_TRANSLATIONS = {
         "ORDNING": None,
         "LANKROLL": "NVDB_road_role",
         "SEQ_NO": None,
-        "VARDVAG": None, # obsolete?
-        "ISHOST": None # new
+        "VARDVAG": None,
+        "ISHOST": None
     },
     "NVDB-Gatutyp": {
         "TYP": "NVDB_gatutyp",
@@ -1835,13 +1840,15 @@ TAG_TRANSLATIONS = {
 #        "ORGNISTIER": None
 #    },
     "NVDB-Vagnummer": {
+        # TODO: maybe there is a better way now to make use of Värdväg, IsHost etc.
         "translator_function": tag_translation_Vagnummer,
         "RIKTNING": None,
         "ORDNING": None,
         "LANKROLL": "NVDB_road_role",
         "SEQ_NO": None,
-        "VARDVAG": None, # obsolete?
-        "ISHOST": None # new
+        "VARDVAG": None,
+        "ISHOST": None,
+        "BETECKNING": None
     },
     "EVB-Driftbidrag_statligt": {
         "add_keys_and_values": "NVDB_government_funded=yes",
