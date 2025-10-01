@@ -989,8 +989,8 @@ class WayDatabase:
                 assert way.way[0] == way.way[-1]
 
         elif len(way.way) > 2 and way.way[-1] == ref_way.way[-1] and way.way[-1].dist < way.way[-2].dist:
-            # P-shaped loop, ie endpoint attaches to midpoint on the own way.
-            # Very rare (seen in Stockholm dataset), and sort of illegal
+            # P-shaped loop (lasso), ie endpoint attaches to midpoint on the own way.
+            # Very rare (seen in Stockholm and Botkyrka dataset), and sort of illegal
             _log.warning(f"endpoint attaches to own midpoint for RLID {way.rlid}")
             way.way[-1].dist = ref_way.way[-1].dist
             if self._perform_self_testing:

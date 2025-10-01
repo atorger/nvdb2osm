@@ -111,7 +111,10 @@ class GeometrySearch:
                 return point
             if dist1 < dist2:
                 return prev
-            return p
+            # if way.way is a lasso (should be unusual), that is last point exists earlier, we always return the first
+            # (shorter distance) that way the user can more easily identify the lasso case
+            first_p = next((x for x in way.way if x == p), None)
+            return first_p
 
         raise RuntimeError(f"Insertion point not found for {way.rlid} {point}")
 

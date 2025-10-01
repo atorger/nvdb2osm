@@ -14,7 +14,7 @@ class Point:
         if i == 1:
             return self.y
         raise IndexError('Index out of range')
-    def __eq__(self, other):
+    def __eq__(self, other): # note: for equality we only check x/y not dist/node_id
         return isinstance(other, Point) and self.x == other.x and self.y == other.y
     def __hash__(self):
         return hash((self.x, self.y))
