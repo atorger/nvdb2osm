@@ -16,6 +16,9 @@ Dela upp länsfilen till kommuner:
 Konvertera en kommun till OSM:
 `nvdb2osm.py -v --municipality_filter Luleå --railway_file=Järnvägsnät_grundegenskaper2_0_GeoPackage.zip split_files/Luleå.zip luleå.osm`
 
+Om filen har en split-fil kan man dela upp kommunen i mindre delar utöver en fil för hela kommunen:
+`nvdb2osm.py -v --municipality_filter Luleå --railway_file=jv2.zip --split_file=data/Luleå-split.geojson --split_dir=split_output split_files/Luleå.zip luleå.osm`
+
 Även om `Luleå.zip` ovan innehåller bara vägar som är inom kommunen,
 så vill man ändå ange `--municipality_filter Luleå` då det ser till att
 vägar som går över kommungränsen faktiskt också skärs av vid gränsen,
