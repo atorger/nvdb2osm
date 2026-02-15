@@ -227,8 +227,8 @@ def parse_range_date(date_str):
         mon = date_str.month
         day = str(date_str.day)
     else:
-        # old string format
-        date_str = date_str.split("-")
+        # old string format, may be 1899-10-11 or 1899/10/11
+        date_str = re.split(r"[-/]", date_str)
         mon = int(date_str[1])
         day = date_str[2]
     mon_str = [ "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ][mon]
