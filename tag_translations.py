@@ -100,7 +100,6 @@
 
 import logging
 import string
-import math
 import pandas
 
 from nvdb_ti import parse_time_interval_tags, parse_range_date
@@ -143,7 +142,7 @@ def add_extra_nodes_tag(tags, extra_nodes):
     for kv in extra_nodes:
         node_str = "["
         for k, v in kv.items():
-            node_str += "%s=%s, " % (k, v)
+            node_str += f"{k}={v}, "
         node_str = node_str[:-2] + "], "
         kvset.add(node_str)
     en_str = "".join(kvset)
@@ -171,7 +170,7 @@ def parse_speed_limit(tags, key):
     elif speed is None:
         speed = -1
 
-    if not (isinstance(speed, int) or isinstance(speed, float)):
+    if not isinstance(speed, (int, float)):
         _log.warning(f"unexpected speed value {key} {speed} (RLID {tags['RLID']})")
         append_fixme_value(tags, "Bad %s speed value" % key)
         speed = 5
@@ -183,17 +182,17 @@ def parse_speed_limit(tags, key):
 # Parse NVDB direction and convert to OSM :forward/:backward or nothing.
 #
 def parse_direction(tags):
-    if tags.get("RIKTNING", None) in ["Med och mot", None, "", -1, "-1"]:
+    if tags.get("Riktning", None) in ["Med och mot", None, "", -1, "-1"]:
         dir_str = ""
-    elif tags["RIKTNING"] == "Med":
+    elif tags["Riktning"] == "Med":
         dir_str = ":forward"
-    elif tags["RIKTNING"] == "Mot":
+    elif tags["Riktning"] == "Mot":
         dir_str = ":backward"
     else:
         dir_str = ""
-        _log.warning(f"invalid value of RIKTNING {tags['RIKTNING']} (RLID {tags['RLID']})")
-        append_fixme_value(tags, "Bad RIKTNING value")
-    tags.pop("RIKTNING", None)
+        _log.warning(f"invalid value of Riktning {tags['Riktning']} (RLID {tags['RLID']})")
+        append_fixme_value(tags, "Bad Riktning value")
+    tags.pop("Riktning", None)
     return dir_str
 
 # parse_vehicle_types()
@@ -402,7 +401,7 @@ def tag_translation_Barighet(tags):
             start_winter = parse_range_date(tags["STATDAUMO3"])
             stop_winter = parse_range_date(tags["SLUDATMVOD"])
             tags["maxweight:conditional"] = str(tags["wc"]) + " @ (" + start_winter + "-" + stop_winter + ")"
-    _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3", "RIKTNING", "BETECKNING"]]
+    _ = [tags.pop(key, None) for key in ["wc", "BAEIGHTSOD", "SLUDATMVOD", "STATDAUMO3", "Riktning", "Beteckning"]]
 
 # tag_translation_BegrAxelBoggiTryck()
 #
@@ -437,7 +436,7 @@ def tag_translation_BegrAxelBoggiTryck(tags):
         tags.pop("TRYCK" + str(i), None)
         tags.pop("TYPTRYCK" + str(i), None)
     # FIXME: we should probably not ignore the new field FORDTRAF (restriction does not apply to vehicle type XYZ)
-    _ = [tags.pop(key, None) for key in [ "AARTAL1", "AARTAL2", "LOEPNUMME1", "LOEPNUMME2", "MEDELADEON", "ORGNISTI1", "ORGNISTI2", "BETECKNING", "FORDTRAF" ]]
+    _ = [tags.pop(key, None) for key in [ "AARTAL1", "AARTAL2", "LOEPNUMME1", "LOEPNUMME2", "MEDELADEON", "ORGNISTI1", "ORGNISTI2", "Beteckning", "FORDTRAF" ]]
 
 # tag_translation_BegrBruttovikt()
 #
@@ -447,9 +446,9 @@ def tag_translation_BegrAxelBoggiTryck(tags):
 def tag_translation_BegrBruttovikt(tags):
     key = "maxweightrating"
     value = tags["BRUTTOVIKT"]
-    tags.pop("RIKTNING", None) # ignored
+    tags.pop("Riktning", None) # ignored
     tags.pop("FORD_TAG", None) # ignored
-    tags.pop("BETECKNING", None) # ignored
+    tags.pop("Beteckning", None) # ignored
     tags.pop("FORDTRAF", None) # ignored, FIXME probably should not be ignored
     tags.pop("BRUTTOVIKT", None)
     tag_translation_single_value_with_time_interval(tags, key, value)
@@ -464,7 +463,7 @@ def tag_translation_BegrFordBredd(tags):
     tags.pop("FORD_BREDD", None)
     for i in range(1, 4):
         tags.pop("FORDTRAF" + str(i), None) # doesn't seem to be used
-    _ = [tags.pop(key, None) for key in [ "BETECKNING" ]]
+    _ = [tags.pop(key, None) for key in [ "Beteckning" ]]
     tag_translation_single_value_with_time_interval(tags, key, value)
 
 # tag_translation_BegrFordLangd()
@@ -499,7 +498,7 @@ def tag_translation_BegrFordLangd(tags):
         tags["access:conditional"] = f"destination @ (maxlength>{maxlength})"
     else:
         tags["maxlength"] = maxlength
-    _ = [tags.pop(key, None) for key in [ "BETECKNING" ]]
+    _ = [tags.pop(key, None) for key in [ "Beteckning" ]]
 
 # tag_translation_ForbudTrafik()
 #
@@ -518,7 +517,7 @@ def tag_translation_ForbudTrafik(tags):
     # GE/             Gäller ej.Tidsintervall (= tidsintervall när "gäller-ej"-fordonen får köra)
     # FORDTRA1[1..10] Gäller ej.Fordon/trafikant
     # VERKSAMH1[1..7] Gäller ej.Verksamhet
-    # RIKTNING        Riktning
+    # Riktning        Riktning
 
     rlid = tags["RLID"]
     ti = parse_time_interval_tags(tags)
@@ -625,7 +624,7 @@ def tag_translation_ForbudTrafik(tags):
     while "VERKSAMH1" + str(idx) in list(tags):
         del tags["VERKSAMH1" + str(idx)]
         idx += 1
-    _ = [tags.pop(key, None) for key in ["BESKRGFART", "BSEKR_GEJ1", "GENOMFART", "TOTALVIKT", "BETECKNING"]]
+    _ = [tags.pop(key, None) for key in ["BESKRGFART", "BSEKR_GEJ1", "GENOMFART", "TOTALVIKT", "Beteckning"]]
 
     _log.debug(f"ForbudTrafik output {tags}")
 
@@ -743,7 +742,7 @@ def tag_translation_Hastighetsgrans(tags):
 
     tags.pop("HAVGIE1", None)
     tags.pop("TOTALVIKT1", None)
-    tags.pop("BETECKNING", None)
+    tags.pop("Beteckning", None)
 
 # tag_translation_InskrTranspFarligtGods()
 #
@@ -782,7 +781,7 @@ def tag_translation_InskrTranspFarligtGods(tags):
         tags.pop("FORDTRAF1" + str(i), None)
     for i in range(1, 4):
         tags.pop("VERKSAMH1" + str(i), None)
-    _ = [tags.pop(key, None) for key in ["PLATS1", "RIKTNING", "BETECKNING"]]
+    _ = [tags.pop(key, None) for key in ["PLATS1", "Riktning", "Beteckning"]]
 
 # tag_translation_Kollektivkorfalt()
 #
@@ -795,7 +794,7 @@ def tag_translation_InskrTranspFarligtGods(tags):
 def tag_translation_Kollektivkorfalt(tags):
 
     ti_tags = {
-        # FIXME maybe we should look at RIKTNING as well
+        # FIXME maybe we should look at Riktning as well
         "DAGSL1": tags.get("DAGSLAG", None),
         "STDAT1": tags.get("STARTDATUM", "1899-12-29"),
         "SLDAT1": tags.get("SLUTDATUM", "1899-12-29"),
@@ -808,7 +807,7 @@ def tag_translation_Kollektivkorfalt(tags):
         "RLID": tags["RLID"]
     }
     # DAGSLAG seems to have been replaced by DAGSSL
-    if (ti_tags["DAGSL1"] is None):
+    if ti_tags["DAGSL1"] is None:
         ti_tags["DAGSL1"] = tags.get("DAGSSL", None)
     # case with only TIM12 set seems to be quite common, so we fix that to make a parsable time
     all_undefined = True
@@ -848,7 +847,7 @@ def tag_translation_Kollektivkorfalt(tags):
     else:
         tags["lanes:bus" + direction] = lane_count
 
-    _ = [tags.pop(key, None) for key in [ "MIN13", "MINUT", "TIM12", "TIMME", "DAGSLAG", "DAGSL", "STARTDATUM", "SLUTDATUM", "STARTDAG", "SLUTDAG", "KOEFAETKNA", "RIKTNING", "BETECKNING" ]]
+    _ = [tags.pop(key, None) for key in [ "MIN13", "MINUT", "TIM12", "TIMME", "DAGSLAG", "DAGSL", "STARTDATUM", "SLUTDATUM", "STARTDAG", "SLUTDAG", "KOEFAETKNA", "Riktning", "Beteckning" ]]
 
 # tag_translation_P_ficka()
 #
@@ -877,8 +876,8 @@ def tag_translation_P_ficka(tags):
         "PLACERING", # "Längs vägen" or "Avskild från vägen, still close enough for layby
         "UPPTAELBGD",
         "SIDA",
-        "XKOORDINAT",
-        "YKOORDINAT"
+        "X_koordinat",
+        "Y_koordinat"
     ]
     for k, v in tags.items():
         if v in [None, "", -1, "-1", "Finns ej", "Okänt"]:
@@ -892,7 +891,7 @@ def tag_translation_P_ficka(tags):
     for k, v in tags.items():
         unknown_key = False
 
-        if k == "NAMN" and v != -1: # Namn
+        if k == "Namn" and v != -1: # Namn
             add_tags["name"] = v
         elif k == "TOALETT":    # Toalett
             extra_nodes.append({"amenity": "toilets"})
@@ -1025,7 +1024,37 @@ def tag_translation_Rastplats(tags):
 
     add_extra_nodes_tag(tags, extra_nodes)
 
+# tag_translation_Vagslag()
+#
+# Road numbers etc, may be more than one per road.
+def tag_translation_Vagslag(tags):
+    huvudnr = tags.get("Vardvaghuvudnummer", None)
+    if huvudnr not in (None, ""):
+        huvudnr = int(huvudnr)
+        undernr = tags.get("Vardvagundernummer", None)
+        if undernr in (None, ""):
+            undernr_str = ""
+        else:
+            undernr_str = "." + str(undernr)
+
+        if tags.get("Vardvag_europavag", None) == "Ja":
+            # E road number with space (eg "E 4" instead of "E4") is not Swedish standard,
+            # but we need to follow the standard used in OSM over Europe which is using
+            # a space.
+            tags["NVDB_vagnummer"] = "E " + str(huvudnr) + undernr_str
+        else:
+            if huvudnr > 499:
+                # Län need to be resolved later from AGGREGAT-KommunLanReg
+                lan_str = "NVDB_lansbeteckning "
+            else:
+                lan_str = ""
+            tags["NVDB_vagnummer"] = lan_str + str(huvudnr) + undernr_str
+
+    _ = [tags.pop(key, None) for key in ["Vardvaghuvudnummer", "Vardvagundernummer", "Vardvag_europavag"]]
+
 # tag_translation_Vagnummer()
+#
+# Note: replaced with translation_Vagslag
 #
 # Road numbers, may be more than one per road. Information is refined in highway
 # resolve function.
@@ -1084,8 +1113,8 @@ def tag_translation_Vagnummer(tags):
 # Barriers
 #
 def tag_translation_Vaghinder(tags):
-    hindertyp = tags["HINDERTYP"]
-    passbredd = tags["PASSBREDD"]
+    hindertyp = tags["Hindertyp"]
+    passbredd = tags["Passerbar_bredd"]
     if passbredd is not None and passbredd >= 0:
         tags["maxwidth"] = passbredd
 
@@ -1104,24 +1133,26 @@ def tag_translation_Vaghinder(tags):
         tags["barrier"] = "block"
     elif hindertyp == "spårviddshinder":
         tags["barrier"] = "bus_trap"
+    elif hindertyp == "stenhinder":
+        tags["barrier"] = "block"
     elif hindertyp == "övrigt":
         tags["barrier"] = "yes"
     else:
-        append_fixme_value(tags, "Vaghinder: unknown hindertyp")
-        _log.warning(f"unknown hindertyp {hindertyp} (RLID {tags['RLID']})")
+        append_fixme_value(tags, "Vaghinder: unknown Hindertyp")
+        _log.warning(f"unknown Hindertyp {hindertyp} (RLID {tags['RLID']})")
 
-    del tags["PASSBREDD"]
-    del tags["HINDERTYP"]
+    del tags["Passerbar_bredd"]
+    del tags["Hindertyp"]
 
 # preprocess_name()
 #
-# NVDB has some quirks in its name (NAMN) tags sometimes, like all uppercase etc. This is
+# NVDB has some quirks in its name (Namn) tags sometimes, like all uppercase etc. This is
 # cleaned up here.
 #
 def preprocess_name(name):
 
     if not isinstance(name, str) or name == "-1":
-        # sometimes NAMN is set to None or -1
+        # sometimes Namn is set to None or -1
         return None
 
     # strip leading/trailing whitespace in name (rare, but happens)
@@ -1185,8 +1216,8 @@ def process_tag_translations(tags, tag_translations):
     if not bool(tag_translations):
         return
 
-    if "NAMN" in tags:
-        name = tags["NAMN"]
+    if "Namn" in tags:
+        name = tags["Namn"]
         new_name = preprocess_name(name)
         if new_name != name:
             if new_name is None:
@@ -1194,7 +1225,7 @@ def process_tag_translations(tags, tag_translations):
                     _log.info(f"Removed invalid name: '{name}'")
             else:
                 _log.info(f"Changed name: '{name}' => '{new_name}'")
-            tags["NAMN"] = new_name
+            tags["Namn"] = new_name
 
     if "translator_function" in tag_translations:
         tag_translations["translator_function"](tags)
@@ -1256,6 +1287,11 @@ def process_tag_translations(tags, tag_translations):
 def preprocess_tags(tags):
 
     alt_tag_names = {
+        # Note 2026-02-16: the script was made at the time NVDB had shape files with 10 character tag names,
+        # and then kept backwards compatible. This means many new tags are translated into old less readable
+        # tag names. Going forward, try to instead keeep the more readable names the default.
+
+
         # common/generic tags
         "ELEMENT_ID": "RLID",
         "VALID_FROM": "FRAN_DATUM",
@@ -1265,17 +1301,18 @@ def preprocess_tags(tags):
         "MEASURE": "AVST",
         "EXTENT_LENGTH": "SHAPE_LEN",
 
-        "DIRECTION": "RIKTNING",
+        "DIRECTION": "Riktning",
+        "RIKTNING": "Riktning",
         "SIDE": "SIDA",
-        "Typ": "TYP",
+        "TYP": "Typ",
         "ROLE": "LANKROLL",
         "Lankroll": "LANKROLL",
         "SEQ_NO": "SEQ_NO",
-        "Namn": "NAMN",
-        "Beteckning": "BETECKNING",
+        "NAMN": "Namn",
+        "BETECKNING": "Beteckning",
         "Galler_genomfart": "GENOMFART",
-        "X_koordinat": "XKOORDINAT",
-        "Y_koordinat": "YKOORDINAT",
+        "XKOORDINAT": "X_koordinat",
+        "YKOORDINAT": "Y_koordinat",
         "Ordningsnummer": "ORDNING",
         "Vard": "VARDVAG",
 
@@ -1348,7 +1385,7 @@ def preprocess_tags(tags):
 
         # BegrBruttovikt
         "Avser_aven_fordonstag": "FORD_TAG",
-        "Galler_inte_fordon_trafikant": "FORDTRAF",
+        #"Galler_inte_fordon_trafikant": "FORDTRAF",
         "Hogsta_tillatna_bruttovikt": "BRUTTOVIKT",
 
         #"NVDB-BegrFordBredd"
@@ -1358,9 +1395,9 @@ def preprocess_tags(tags):
         "Hogsta_tillatna_fordonsbredd": "FORD_BREDD",
 
         #"NVDB-BegrFordLangd"
-        "Galler_inte_fordon_trafikant1": "FORDTRAF1",
-        "Galler_inte_fordon_trafikant2": "FORDTRAF2",
-        "Galler_inte_fordon_trafikant3": "FORDTRAF3",
+        #"Galler_inte_fordon_trafikant1": "FORDTRAF1",
+        #"Galler_inte_fordon_trafikant2": "FORDTRAF2",
+        #"Galler_inte_fordon_trafikant3": "FORDTRAF3",
         "Hogsta_tillatna_fordonslangd": "FORD_LGD",
 
         #"NVDB-Bro_och_tunnel"
@@ -1431,16 +1468,11 @@ def preprocess_tags(tags):
         "Galler_ej__Tidsintervall__Startdatum12": "GESTDAT12",
 
         # "NVDB-FunkVagklass"
-        "Klass": "KLASS",
+        "KLASS": "Klass",
 
         #"NVDB-Gagata" - no specific
         #"NVDB-Gangfartsomrade" - no specific
         #"NVDB-Gatunamn" - no specific
-
-        #"NVDB-Gatutyp"
-        "Avfartsvag_pafartsvag": "AVFRTSAEEG",
-        "Industrivag": "INDSTRVAEG",
-        "Uppsamlande": "UPPAMLNDDE",
 
         #"NVDB-GCM_belyst" - no specific
 
@@ -1515,10 +1547,7 @@ def preprocess_tags(tags):
         "Rekommendation": "REKOMEND",
 
         #"NVDB-Slitlager",
-        "Slitlagertyp": "TYP",
-
-        #"NVDB-Tillganglighet",
-        "Tillganglighetsklass": "KLASS",
+        "Slitlagertyp": "Typ",
 
         #"NVDB-Vagbredd",
         "Bredd": "BREDD",
@@ -1552,7 +1581,7 @@ def preprocess_tags(tags):
         "Trafikanttyp": "TRAIKATTYP",
 
         #"NVDB-Hojdhinder45dm"
-        "Hojdhindertyp": "TYP",
+        "Hojdhindertyp": "Typ",
         "Fri_hojd": "FRIHOJD",
         "Hojdhinderidentitet": "HOJDID",
 
@@ -1565,26 +1594,26 @@ def preprocess_tags(tags):
         #"NVDB-Stopplikt" - no specific
 
         #"NVDB-Vaghinder",
-        "Hindertyp": "HINDERTYP",
-        "Passerbar_bredd": "PASSBREDD",
+        "HINDERTYP": "Hindertyp",
+        "PASSBREDD": "Passerbar_bredd",
 
         #"NVDB-Vajningsplikt", - no specific
 
         #"VIS-Jarnvagskorsning"
-        "Plankorsnings_id": "PLAKORNIID",
-        "Jvg_bandel": "JVGBANDEL",
-        "Jvg_kilometer": "JVGILOETER",
-        "Jvg_meter": "JVGMETER",
-        "Antal_spar": "ANTALSPAAR",
-        "Vagprofil_farligt_vagkron": "VAEPROILEN",
-        "Vagprofil_tvar_kurva": "VAEPROILVA",
-        "Vagprofil_brant_lutning": "VAEPROILNG",
-        "Vagskydd": "VAEGSKYDD",
-        "Portalhojd": "PORALHEJJD",
-        "Tagflode": "TAAGFLOEDE",
-        "Kontaktledning": "KONAKTEDNG",
-        "Kort_magasin": "KORMAGSIIN",
-        "Senast_andrad": "SENSTANDAD",
+        "PLAKORNIID": "Plankorsnings_id",
+        "JVGBANDEL": "Jvg_bandel",
+        "JVGILOETER": "Jvg_kilometer",
+        "JVGMETER": "Jvg_meter",
+        "ANTALSPAAR": "Antal_spar",
+        "VAEPROILEN": "Vagprofil_farligt_vagkron",
+        "VAEPROILVA": "Vagprofil_tvar_kurva",
+        "VAEPROILNG": "Vagprofil_brant_lutning",
+        "VAEGSKYDD": "Vagskydd",
+        "PORALHEJJD": "Portalhojd",
+        "TAAGFLOEDE": "Tagflode",
+        "KONAKTEDNG": "Kontaktledning",
+        "KORMAGSIIN": "Kort_magasin",
+        "SENSTANDAD": "Senast_andrad",
 
         #"VIS-P_ficka"
         "Bord_med_sittplatser": "BORMEDITER",
@@ -1675,11 +1704,75 @@ def preprocess_tags(tags):
 # Table for tag translations.
 #
 TAG_TRANSLATIONS = {
+    "AGGREGAT-Vagslag": {
+        "translator_function": tag_translation_Vagslag,
+        #"Vardvag_europavag"
+        #"Vardvaghuvudnummer"
+        #"Vardvagundernummer"
+        "Typ": "NVDB_gatutyp",
+        "Avfartsvag_pafartsvag": None,
+        "Bro_och_tunnel": None,
+        "Bussgata": None,
+        "Cirkulationsplats": None,
+        "Gagata": None,
+        "Gangfartsomrade": None,
+        "Gastvag1_europavag": None,
+        "Gastvag1huvudnummer": None,
+        "Gastvag1undernummer": None,
+        "Gastvag2_europavag": None,
+        "Gastvag2huvudnummer": None,
+        "Gastvag2undernummer": None,
+        "Gatunamn": None,
+        "Genomgaende_vagnummervag": None,
+        "Industrivag": None,
+        "Uppsamlande": None
+    },
+    "AGGREGAT-KommunLanReg": {
+        "Lansbeteckning": "NVDB_lansbeteckning",
+        "Kommunkod": None,
+        "Kommunnamn": None,
+        "Lanskod": None,
+        "Lansnamn": None,
+        "Regionkod": None,
+        "Regionnamn": None,
+        "Vaghallare_vaghallartyp": None,
+        "Vagtrafiknat_nattyp": None
+    },
+    "AGGREGAT-Plankorsning_vag_jarnvag": {
+        "Plankorsnings_id": None,
+        "Antal_spar": "NVDB_rwc_tracks", # Unfortunately, this AGGREGAT does not have this
+        "Vagprofil_farligt_vagkron": None,
+        "Vagprofil_tvar_kurva": None,
+        "Vagprofil_brant_lutning": None,
+        # NVDB has been seen using both numbers and strings
+        "Vagskydd=0": None, # Uppgift saknas
+        "Vagskydd=1": "crossing:barrier=full", # Helbom
+        "Vagskydd=2": "crossing:barrier=half",	# Halvbom
+        "Vagskydd=3": "crossing:light=yes",    # Ljussignal
+        "Vagskydd=4": [ "crossing:bell=yes", "crossing:light=yes" ], # Ljus- och ljudsignal
+        "Vagskydd=5": "crossing:bell=yes",	# Ljudsignal
+        "Vagskydd=6": "crossing:saltire=yes",  # Kryssmärke
+        "Vagskydd=7": "crossing:barrier=no",   # Utan skydd
+        "Vagskydd=Uppgift saknas": None,
+        "Vagskydd=Helbom": "crossing:barrier=full",
+        "Vagskydd=Halvbom": "crossing:barrier=half",
+        "Vagskydd=Ljussignal": "crossing:light=yes",
+        "Vagskydd=Ljus- och ljudsignal": [ "crossing:bell=yes", "crossing:light=yes" ],
+        "Vagskydd=Ljudsignal": "crossing:bell=yes",
+        "Vagskydd=Kryssmärke": "crossing:saltire=yes",
+        "Vagskydd=Oskyddad": "crossing:barrier=no",
+        "Portalhojd": "maxheight",
+        "Portalhojd=0.0": None, # Portalhöjd, value for no portal
+        "Portalhojd=9.0": None, # Portalhöjd, alt value for no portal
+        "Tagflode": None,
+        "Kontaktledning": None,  # Contact line, in OSM set on railway, not crossing
+        "Kort_magasin": None,
+    },
     "NVDB-Antal_korfalt2": {
         "KOEFAETSAL": "lanes",
         "KOEFAETING": None,
         "KOEFAETIN1": None,
-        "RIKTNING": None
+        "Riktning": None
     },
     "NVDB-Barighet": {
         "translator_function": tag_translation_Barighet,
@@ -1699,11 +1792,11 @@ TAG_TRANSLATIONS = {
     "NVDB-Bro_och_tunnel": {
         "IDENTITET": None,
         "LAENGD": None,
-        "NAMN": None
+        "Namn": None
     },
     "NVDB-Cirkulationsplats": {
         "add_keys_and_values": "junction=roundabout",
-        "RIKTNING": None
+        "Riktning": None
     },
     "NVDB-CykelVgsKat": {
         "FOEBINELRI": "NVDB_cykelvagkat",
@@ -1715,22 +1808,37 @@ TAG_TRANSLATIONS = {
         "add_keys_and_values": "route=ferry"
     },
     "NVDB-ForbjudenFardriktning": {
-        "RIKTNING=Mot": "oneway=yes",
-        "RIKTNING=Med": "oneway=-1",
-        "BETECKNING": None,
+        "Riktning=Mot": "oneway=yes",
+        "Riktning=Med": "oneway=-1",
+        "Beteckning": None,
         "expect_unset_time_intervals": True
+    },
+    "NVDB-Forbud_omkorn": {
+        "Riktning=Med":         "overtaking:forward=no",
+        "Riktning=Mot":         "overtaking:backward=no",
+        "Riktning=Med och mot": "overtaking=no",
+        # FIXME: no info on what 1,2,3, but the guess is reasonable
+        "Riktning=1": "overtaking:forward=no",
+        "Riktning=2": "overtaking:backward=no",
+        "Riktning=3": "overtaking=no",
+        # FIXME: translate more detailed overtaking rules related to vehicles
+        "Fordon_som_trots_forbudet_far_koras_om": None,
+        "Galler_fordon": None,
+        "Beteckning": None
     },
     "NVDB-ForbudTrafik": {
         "translator_function": tag_translation_ForbudTrafik,
     },
-    "NVDB-FunkVagklass": {},
+    "NVDB-FunkVagklass": {
+        "Klass": "NVDB_funk_klass"
+    },
     "NVDB-Gagata": {
         "add_keys_and_values":    "NVDB_gagata=yes",
         "SIDA=Vänster":           "NVDB_gagata_side=left",
         "SIDA=Höger":             "NVDB_gagata_side=right",
         "SIDA=Vänster och höger": "NVDB_gagata_side=both",
         "SIDA=None": None,
-        "BETECKNING": None
+        "Beteckning": None
     },
     "NVDB-Gangfartsomrade": {
         "add_keys_and_values":    "NVDB_gangfartsomrode=yes",
@@ -1738,23 +1846,24 @@ TAG_TRANSLATIONS = {
         "SIDA=Höger":             "NVDB_gangfartsomrode_side=right",
         "SIDA=Vänster och höger": "NVDB_gangfartsomrode_side=both",
         "SIDA=None": None,
-        "BETECKNING": None
+        "Beteckning": None
     },
     "NVDB-Gatunamn": {
-        "NAMN": "name",
-        "RIKTNING": None,
+        "Namn": "name",
+        "Riktning": None,
         "ORDNING": None,
         "LANKROLL": "NVDB_road_role",
         "SEQ_NO": None,
         "VARDVAG": None,
         "ISHOST": None
     },
-    "NVDB-Gatutyp": {
-        "TYP": "NVDB_gatutyp",
-        "INDSTRVAEG": None,
-        "UPPAMLNDDE": None,
-        "AVFRTSAEEG": None
-    },
+    # Ersatt av AGGREGAT-Vagslag
+    #"NVDB-Gatutyp": {
+    #    "Typ": "NVDB_gatutyp",
+    #    "INDSTRVAEG": None,
+    #    "UPPAMLNDDE": None,
+    #    "AVFRTSAEEG": None
+    #},
     "NVDB-GCM_belyst": {
         "add_keys_and_values": "lit=yes"
     },
@@ -1766,7 +1875,7 @@ TAG_TRANSLATIONS = {
         "translator_function": tag_translation_Hastighetsgrans,
     },
     "NVDB-Huvudled": {
-        "BETECKNING": None,
+        "Beteckning": None,
         "add_keys_and_values": "priority_road=designated",
     },
     "NVDB-InskrTranspFarligtGods": {
@@ -1788,16 +1897,16 @@ TAG_TRANSLATIONS = {
         "MILOEZNKSS=Miljözon klass 3": "environmental_zone:sv=3", # custom tag
         "MILOEZNKSS=None": None
     },
-    "NVDB-Motortrafikled": {
-        "BETECKNING": None,
+    "NVDB-Motortrafikled": { # replaced by more detailed Gatutyp in AGGREGAT-Vagslag
+        "Beteckning": None,
         "add_keys_and_values": "NVDB_motortrafikled=yes"
     },
-    "NVDB-Motorvag": {
-        "BETECKNING": None,
+    "NVDB-Motorvag": { # replaced by more detailed Gatutyp in AGGREGAT-Vagslag
+        "Beteckning": None,
         "add_keys_and_values": "NVDB_motorvag=yes"
     },
     "NVDB-Ovrigt_vagnamn": {
-        "NAMN": "name",
+        "Namn": "name",
         "ORGANISAT": None
     },
     "NVDB-Reflinjetillkomst": {
@@ -1816,17 +1925,17 @@ TAG_TRANSLATIONS = {
     },
     "NVDB-Slitlager": {
         # note: surface=paved would be more correct, but asphalt is so dominant in Sweden that we use that
-        "TYP=belagd": "surface=asphalt",
+        "Typ=belagd": "surface=asphalt",
 
         # Note 1: NVDB's "grus" is more specific than it should be, "obelagd"/unpaved would be more correct as
         # grus is used for all roads that are not paved.
-        "TYP=grus":   "surface=unpaved"
+        "Typ=grus":   "surface=unpaved"
     },
     "NVDB-Tillganglighet": {
-        "KLASS=A": "NVDB_availability_class=1",
-        "KLASS=B": "NVDB_availability_class=2",
-        "KLASS=C": "NVDB_availability_class=3",
-        "KLASS=D": "NVDB_availability_class=4"
+        "Tillganglighetsklass=A": "NVDB_availability_class=1",
+        "Tillganglighetsklass=B": "NVDB_availability_class=2",
+        "Tillganglighetsklass=C": "NVDB_availability_class=3",
+        "Tillganglighetsklass=D": "NVDB_availability_class=4"
     },
     "NVDB-Vagbredd": {
         "BREDD": "width",
@@ -1842,13 +1951,13 @@ TAG_TRANSLATIONS = {
     "NVDB-Vagnummer": {
         # TODO: maybe there is a better way now to make use of Värdväg, IsHost etc.
         "translator_function": tag_translation_Vagnummer,
-        "RIKTNING": None,
+        "Riktning": None,
         "ORDNING": None,
         "LANKROLL": "NVDB_road_role",
         "SEQ_NO": None,
         "VARDVAG": None,
         "ISHOST": None,
-        "BETECKNING": None
+        "Beteckning": None
     },
     "EVB-Driftbidrag_statligt": {
         "add_keys_and_values": "NVDB_government_funded=yes",
@@ -1858,62 +1967,62 @@ TAG_TRANSLATIONS = {
         "TRAFIKKL1": None,
     },
     "VIS-Funktionellt_priovagnat": {},
-    "VIS-Omkorningsforbud": {
-        "RIKTNING=Med":         "overtaking:forward=no",
-        "RIKTNING=Mot":         "overtaking:backward=no",
-        "RIKTNING=Med och mot": "overtaking=no",
+    "VIS-Omkorningsforbud": { # replaced by NVDB-Forbud_omkorn
+        "Riktning=Med":         "overtaking:forward=no",
+        "Riktning=Mot":         "overtaking:backward=no",
+        "Riktning=Med och mot": "overtaking=no",
         # FIXME: no info on what 1,2,3, but the guess is reasonable
-        "RIKTNING=1": "overtaking:forward=no",
-        "RIKTNING=2": "overtaking:backward=no",
-        "RIKTNING=3": "overtaking=no",
-        "BETECKNING": None
+        "Riktning=1": "overtaking:forward=no",
+        "Riktning=2": "overtaking:backward=no",
+        "Riktning=3": "overtaking=no",
+        "Beteckning": None
     },
     "VIS-Slitlager": {
         # both enumerations and strings have been used by NVDB
-        "TYP=0": None,                  # Uppgift saknas
-        "TYP=1": "surface=asphalt",     # Bituminös
-        "TYP=2": "surface=asphalt",     # Oljegrus
-        "TYP=3": "surface=fine_gravel", # Grus
-        "TYP=4": "surface=gravel",      # Sten
-        "TYP=5": "surface=concrete",    # Betong
-        "TYP=6": "surface=asphalt",     # Y1G
-        "TYP=7": "surface=asphalt",     # Förseglat grus
-        "TYP=Uppgift saknas": None,
-        "TYP=Bituminös": "surface=asphalt",
-        "TYP=Oljegrus": "surface=asphalt",
-        "TYP=Grus": "surface=fine_gravel",
-        "TYP=Sten": "surface=gravel",
-        "TYP=Betong": "surface=concrete",
-        "TYP=Y1G": "surface=asphalt",
-        "TYP=Förseglat grus": "surface=asphalt"
+        "Typ=0": None,                  # Uppgift saknas
+        "Typ=1": "surface=asphalt",     # Bituminös
+        "Typ=2": "surface=asphalt",     # Oljegrus
+        "Typ=3": "surface=fine_gravel", # Grus
+        "Typ=4": "surface=gravel",      # Sten
+        "Typ=5": "surface=concrete",    # Betong
+        "Typ=6": "surface=asphalt",     # Y1G
+        "Typ=7": "surface=asphalt",     # Förseglat grus
+        "Typ=Uppgift saknas": None,
+        "Typ=Bituminös": "surface=asphalt",
+        "Typ=Oljegrus": "surface=asphalt",
+        "Typ=Grus": "surface=fine_gravel",
+        "Typ=Sten": "surface=gravel",
+        "Typ=Betong": "surface=concrete",
+        "Typ=Y1G": "surface=asphalt",
+        "Typ=Förseglat grus": "surface=asphalt"
     },
     "NVDB-Farthinder": {
-        # Ideally TYP=1 should be with priority=* (to differ from TYP=3) but there's no info on which
+        # Ideally Typ=1 should be with priority=* (to differ from Typ=3) but there's no info on which
         # side the choker is unfortunately.
-        "TYP=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
+        "Typ=1":  "traffic_calming=choker",  # Avsmalning till ett körfält
         # Could also be "bump", but "hump" is statistically much more common
-        "TYP=2":  "traffic_calming=hump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
-        # TYP=3 is similar to TYP=1, but not as narrow choker.
-        "TYP=3":  "traffic_calming=choker",  # Sidoförskjutning - avsmalning
-        "TYP=4":  "traffic_calming=island",  # Sidoförskjutning - refug
-        "TYP=5":  "traffic_calming=dip",     # Väghåla
-        "TYP=6":  "traffic_calming=cushion", # Vägkudde
-        "TYP=7":  "traffic_calming=table",   # Förhöjd genomgående GCM-passage
-        "TYP=8":  "traffic_calming=table",   # Förhöjd korsning
-        "TYP=9":  "traffic_calming=yes",     # Övrigt farthinder
-        "TYP=10": "traffic_calming=dynamic_bump", # Dynamiskt aktivt farthinder
-        "TYP=11": "traffic_calming=dynamic_bump", # Dynamiskt passivt farthinder
-        "TYP=avsmalning till ett körfält":  "traffic_calming=choker",
-        "TYP=gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)":  "traffic_calming=hump",
-        "TYP=sidoförskjutning - avsmalning":  "traffic_calming=choker",
-        "TYP=sidoförskjutning - refug":  "traffic_calming=island",
-        "TYP=väghåla":  "traffic_calming=dip",
-        "TYP=vägkudde":  "traffic_calming=cushion",
-        "TYP=förhöjd genomgående gcm-passage":  "traffic_calming=table",
-        "TYP=förhöjd korsning":  "traffic_calming=table",
-        "TYP=övrigt farthinder":  "traffic_calming=yes",
-        "TYP=dynamiskt aktivt farthinder": "traffic_calming=dynamic_bump",
-        "TYP=dynamiskt passivt farthinder": "traffic_calming=dynamic_bump",
+        "Typ=2":  "traffic_calming=hump",    # Gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)
+        # Typ=3 is similar to Typ=1, but not as narrow choker.
+        "Typ=3":  "traffic_calming=choker",  # Sidoförskjutning - avsmalning
+        "Typ=4":  "traffic_calming=island",  # Sidoförskjutning - refug
+        "Typ=5":  "traffic_calming=dip",     # Väghåla
+        "Typ=6":  "traffic_calming=cushion", # Vägkudde
+        "Typ=7":  "traffic_calming=table",   # Förhöjd genomgående GCM-passage
+        "Typ=8":  "traffic_calming=table",   # Förhöjd korsning
+        "Typ=9":  "traffic_calming=yes",     # Övrigt farthinder
+        "Typ=10": "traffic_calming=dynamic_bump", # Dynamiskt aktivt farthinder
+        "Typ=11": "traffic_calming=dynamic_bump", # Dynamiskt passivt farthinder
+        "Typ=avsmalning till ett körfält":  "traffic_calming=choker",
+        "Typ=gupp (cirkulärt gupp eller gupp med ramp utan gcm-passage)":  "traffic_calming=hump",
+        "Typ=sidoförskjutning - avsmalning":  "traffic_calming=choker",
+        "Typ=sidoförskjutning - refug":  "traffic_calming=island",
+        "Typ=väghåla":  "traffic_calming=dip",
+        "Typ=vägkudde":  "traffic_calming=cushion",
+        "Typ=förhöjd genomgående gcm-passage":  "traffic_calming=table",
+        "Typ=förhöjd korsning":  "traffic_calming=table",
+        "Typ=övrigt farthinder":  "traffic_calming=yes",
+        "Typ=dynamiskt aktivt farthinder": "traffic_calming=dynamic_bump",
+        "Typ=dynamiskt passivt farthinder": "traffic_calming=dynamic_bump",
         "LAEGE": None
     },
     "NVDB-GCM_passage": {
@@ -1930,75 +2039,77 @@ TAG_TRANSLATIONS = {
     "NVDB-Hojdhinder45dm": {
         "FRIHOJD": "maxheight",
         "HOJDID": None,
-        "TYP": None
+        "Typ": None
     },
     "NVDB-Korsning": {
         "GENRALSEYP": "NVDB_generaliseringstyp",
         "SIGALRGLNG=ja":    [ "highway=traffic_signals" ],
         "SIGALRGLNG=nej":   None,
         "SIGALRGLNG=okänt": None,
-        "NAMN": "name",
+        "Namn": "name",
         "TRAIKPATER": None,
         "TPLUNDRNER": None,
-        "XKOORDINAT": None,
-        "YKOORDINAT": None,
+        "X_koordinat": None,
+        "Y_koordinat": None,
         "Trafikplatsnamn": None, # new
     },
     "NVDB-Stopplikt": {
         "add_keys_and_values":  "highway=stop",
-        "RIKTNING=Med":         "direction=forward",
-        "RIKTNING=Mot":         "direction=backward",
-        "RIKTNING=Med och mot": None,
-        "BETECKNING": None
+        "Riktning=Med":         "direction=forward",
+        "Riktning=Mot":         "direction=backward",
+        "Riktning=Med och mot": None,
+        "Beteckning": None
     },
     "NVDB-Vaghinder": {
         "translator_function": tag_translation_Vaghinder
     },
     "NVDB-Vajningsplikt": {
         "add_keys_and_values":  "highway=give_way",
-        "RIKTNING=Med":         "direction=forward",
-        "RIKTNING=Mot":         "direction=backward",
-        "RIKTNING=Med och mot": None,
-        "BETECKNING": None
+        "Riktning=Med":         "direction=forward",
+        "Riktning=Mot":         "direction=backward",
+        "Riktning=Med och mot": None,
+        "Beteckning": None
     },
 #    "NVDB-Vandmojlighet": {
 #        "add_keys_and_values": "highway=turning_circle",
-#        "KLASS": None,
-#        "TYP": None,
+#        "Klass": None,
+#        "Typ": None,
 #    },
-    "VIS-Jarnvagskorsning": {
-        "PLAKORNIID": None,              # Plankorsnings-Id
-        "JVGBANDEL": None,               # Jvg-bandel
-        "JVGILOETER": None,              # Jvg-kilometer
-        "JVGMETER": None,                # Jvg-meter
-        "ANTALSPAAR": "NVDB_rwc_tracks", # Antal spår
-        "VAEPROILEN": None,              # Vägprofil farligt vägkrön
-        "VAEPROILVA": None,              # Vägprofil tvär kurva
-        "VAEPROILNG": None,              # Vägprofil brant lutning
+    "VIS-Jarnvagskorsning": { # Replaced by AGGREGAT-Plankorsning_vag_jarnvag
+        "Plankorsnings_id": None,
+        "Jvg_bandel": None,
+        "Jvg_kilometer": None,
+        "Jvg_meter": None,
+        "Antal_spar": "NVDB_rwc_tracks",
+        "Vagprofil_farligt_vagkron": None,
+        "Vagprofil_tvar_kurva": None,
+        "Vagprofil_brant_lutning": None,
         # NVDB has been seen using both numbers and strings
-        "VAEGSKYDD=1": "crossing:barrier=full", # Helbom
-        "VAEGSKYDD=2": "crossing:barrier=half",	# Halvbom
-        "VAEGSKYDD=3": [ "crossing:bell=yes", "crossing:light=yes" ], # Ljus och ljudsignal
-        "VAEGSKYDD=4": "crossing:light=yes",    # Ljussignal
-        "VAEGSKYDD=5": "crossing:bell=yes",	# Ljudsignal
-        "VAEGSKYDD=6": "crossing:saltire=yes",  # Kryssmärke
-        "VAEGSKYDD=7": "crossing:barrier=no",   # Utan skydd
-        "VAEGSKYDD=Helbom": "crossing:barrier=full",
-        "VAEGSKYDD=Halvbom": "crossing:barrier=half",
-        "VAEGSKYDD=Ljus och ljudsignal": [ "crossing:bell=yes", "crossing:light=yes" ],
-        "VAEGSKYDD=Ljussignal": "crossing:light=yes",
-        "VAEGSKYDD=Ljudsignal": "crossing:bell=yes",
-        "VAEGSKYDD=Kryssmärke": "crossing:saltire=yes",
-        "VAEGSKYDD=Utan skydd": "crossing:barrier=no",
-        "PORALHEJJD": "maxheight", # Portalhöjd
-        "PORALHEJJD=0.0": None, # Portalhöjd, value for no portal
-        "PORALHEJJD=9.0": None, # Portalhöjd, alt value for no portal
-        "TAAGFLOEDE": None,   # Tågflöde
-        "KONAKTEDNG": None,   # Contact line, in OSM set on railway, not crossing
-        "KORMAGSIIN": None,   # Kort magasin
-        "XKOORDINAT": None,   # X-koordinat
-        "YKOORDINAT": None,   # Y-koordinat
-        "SENSTANDAD": None    # Senast ändrad
+        "Vagskydd=0": None, # Uppgift saknas
+        "Vagskydd=1": "crossing:barrier=full", # Helbom
+        "Vagskydd=2": "crossing:barrier=half",	# Halvbom
+        "Vagskydd=3": [ "crossing:bell=yes", "crossing:light=yes" ], # Ljus och ljudsignal
+        "Vagskydd=4": "crossing:light=yes",    # Ljussignal
+        "Vagskydd=5": "crossing:bell=yes",	# Ljudsignal
+        "Vagskydd=6": "crossing:saltire=yes",  # Kryssmärke
+        "Vagskydd=7": "crossing:barrier=no",   # Utan skydd
+        "Vagskydd=Uppgift saknas": None,
+        "Vagskydd=Helbom": "crossing:barrier=full",
+        "Vagskydd=Halvbom": "crossing:barrier=half",
+        "Vagskydd=Ljus och ljudsignal": [ "crossing:bell=yes", "crossing:light=yes" ],
+        "Vagskydd=Ljussignal": "crossing:light=yes",
+        "Vagskydd=Ljudsignal": "crossing:bell=yes",
+        "Vagskydd=Kryssmärke": "crossing:saltire=yes",
+        "Vagskydd=Utan skydd": "crossing:barrier=no",
+        "Portalhojd": "maxheight",
+        "Portalhojd=0.0": None, # Portalhöjd, value for no portal
+        "Portalhojd=9.0": None, # Portalhöjd, alt value for no portal
+        "Tagflode": None,
+        "Kontaktledning": None,  # Contact line, in OSM set on railway, not crossing
+        "Kort_magasin": None,
+        "X_koordinat": None,
+        "Y_koordinat": None,
+        "Senast_andrad": None
     },
     "VIS-P_ficka": {
         "translator_function": tag_translation_P_ficka

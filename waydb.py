@@ -625,6 +625,7 @@ class WayDatabase:
 
     def insert_rlid_node(self, node, data_src_name, do_snap=True):
         did_snap = False
+        snap_way = None
         if do_snap:
             dist, p, snap_way = self._ref_gs.snap_point_into_geometry(node.way, self.POINT_SNAP_DISTANCE, self.MAX_SNAP_DISTANCE)
             if p is None:
@@ -1397,8 +1398,7 @@ class WayDatabase:
                     for w in ways:
                         length, _ = calc_way_length(w.way)
                         if w.way[ep_idx] == ep:
-                            if length > max_rev_len:
-                                max_rev_len = length
+                            max_rev_len = max(max_rev_len, length)
                         elif length > max_len:
                             max_len = length
                 if max_rev_len == -1 and max_len == -1:

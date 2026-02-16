@@ -107,6 +107,9 @@ class TwoDimSearch:
         xit = self.xmap.irange(point_x - distance, point_x + distance)
         distance_sq = distance * distance
         min_dist = distance_sq + 1
+        min_x = None # init for dumb pylint
+        min_y = None # init for dumb pylint
+        min_ymap = None # init for dumb pylint
         for x in xit:
             ymap = self.xmap[x]
             yit = ymap.irange(point_y - distance, point_y + distance)

@@ -50,5 +50,5 @@ class NvdbSegment:
 
     def __repr__(self):
         if isinstance(self.way, list):
-            return "<rlid:%s %g..%g>" % (self.rlid, self.way[0].dist, self.way[-1].dist)
-        return "<rlid:%s %s>" % (self.rlid, latlon_str(self.way))
+            return f"<rlid:{self.rlid} {self.way[0].dist:g}..{self.way[-1].dist:g}>"
+        return f"<rlid:{self.rlid} {latlon_str(self.way)}>"

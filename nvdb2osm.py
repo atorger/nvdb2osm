@@ -26,6 +26,7 @@ _log = logging.getLogger("nvdb2osm")
 #
 #
 def read_geometry_from_file(directory_or_zip, name):
+    gdf_filename = None
     if zipfile.is_zipfile(directory_or_zip):
         zf = zipfile.ZipFile(directory_or_zip)
         files = [fn for fn in zf.namelist() if fn.endswith(name + ".shp") or fn.endswith(name + ".gpkg")]
@@ -45,11 +46,11 @@ def read_geometry_from_file(directory_or_zip, name):
             filename = files[0]
             gdf_filename = files[0]
 
-    if len(files) == 0:
+    if gdf_filename is None:
         _log.info(f"No file name *{name}.gpkg (or .shp) in {directory_or_zip}")
         return None
 
-    _log.info(f"Reading file {filename}")
+    _log.info(f"Reading file {gdf_filename}")
     gdf = geopandas.read_file(gdf_filename)
     _log.info(f"done ({len(gdf)} segments)")
     return gdf
@@ -197,6 +198,9 @@ def main():
         "NVDB-GCM_vagtyp",   # all footways/cycleways
         "NVDB-CykelVgsKat",  # most often redundant, otherwise complements GCM_vagtyp
 
+        "AGGREGAT-Vagslag",
+        "AGGREGAT-KommunLanReg",
+
         # just alphabetical order
         "NVDB-Antal_korfalt2",
         "NVDB-Barighet",
@@ -208,11 +212,12 @@ def main():
         "NVDB-Cirkulationsplats",
         "NVDB-Farjeled",
         "NVDB-ForbjudenFardriktning",
+        "NVDB-Forbud_omkorn",
         "NVDB-ForbudTrafik",
         "NVDB-Gagata",
         "NVDB-Gangfartsomrade",
         "NVDB-Gatunamn",
-        "NVDB-Gatutyp",
+        #"NVDB-Gatutyp", replaced with AGGREGAT-Vagslag
         "NVDB-GCM_belyst",
         "NVDB-GCM_separation",
         "NVDB-Hastighetsgrans",
@@ -230,7 +235,7 @@ def main():
         "NVDB-Vagnummer",
         "EVB-Driftbidrag_statligt",
         "VIS-Funktionellt_priovagnat",
-        "VIS-Omkorningsforbud",
+        #"VIS-Omkorningsforbud", replaced by NVDB-Forbud_omkorn
         "VIS-Slitlager"
     ]
 
@@ -245,6 +250,7 @@ def main():
         "VIS-Jarnvagskorsning",
         "VIS-P_ficka",
         "VIS-Rastplats",
+        "AGGREGAT-Plankorsning_vag_jarnvag"
     ]
     parser = argparse.ArgumentParser(description='Convert NVDB-data from Trafikverket to OpenStreetMap XML')
     parser.add_argument('--dump_layers', help="Write an OSM XML file for each layer", action='store_true')
@@ -378,7 +384,7 @@ def main():
             points = preprocess_footcycleway_crossings(points, way_db)
         elif name == "NVDB-Korsning":
             points = process_street_crossings(points, way_db, name)
-        elif name == "VIS-Jarnvagskorsning":
+        elif name in ("VIS-Jarnvagskorsning", "AGGREGAT-Plankorsning_vag_jarnvag"):
             if len(points) > 0:
                 railways = []
                 if not skip_railway:
@@ -394,7 +400,7 @@ def main():
                     for index, row in gdf.iterrows():
                         if bounds_intersect(row.geometry.bounds, nvdb_total_bounds):
                             seg = NvdbSegment({ "geometry": shapely_linestring_to_way(row.geometry),
-                                                "RLID": "RW-%s" % index
+                                                "RLID": f"RW-{index}"
                                                })
                             railways.append(seg)
                     _log.info(f"Done ({len(railways)} of {len(gdf)} segments kept)")

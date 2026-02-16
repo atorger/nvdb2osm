@@ -8,6 +8,8 @@ Det körs på kommandoraden:
 
 `nvdb2osm.py <katalog eller zip-arkiv med NVDB shape-filer> <output.osm>`
 
+(Om man använder Python UV för pakethantering, skriver man `uv run python nvdb2osm.py ...`)
+
 Exempel:
 
 Dela upp länsfilen till kommuner:
@@ -45,16 +47,6 @@ Skriptet kräver vissa tredjepartsmoduler, listade i requirements.txt,
 installera med `pip install -r requirements.txt`
 
 För generell Python-användning och installation får man Googla :-)
-
-
-Tips för Windows 10-installation
---------------------------------
-
-Anaconda för python gör det enklare:
-
-    conda install geopandas
-    conda install sortedcontainers
-    pip install scanf
 
 
 Hur importen går till

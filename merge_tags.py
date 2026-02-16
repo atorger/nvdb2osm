@@ -67,7 +67,7 @@ def merge_tags(seg, src, data_src_name):
         if not resolved and isinstance(dst[k], list):
             fixme = True
             resolved = True
-            fixmes.append("Could not resolve key %s, alt value %s" % (k, v))
+            fixmes.append(f"Could not resolve key {k}, alt value {v}")
 
 
         # go through things we want to resolve before we look at the date
@@ -164,18 +164,18 @@ def merge_tags(seg, src, data_src_name):
             dist, _ = calc_way_length(way)
             if dist < 1.0:
                 # short segment, we don't care
-                solution = "short segment (%g), keeping old value" % dist
+                solution = f"short segment {dist:g}, keeping old value"
                 resolved = True
 
         if not resolved:
             fixme = True
             resolved = True
-            fixmes.append("Could not resolve key %s, alt value %s" % (k, v))
+            fixmes.append(f"Could not resolve key {k}, alt value {v}")
 
         if fixme:
             res_str = "Warning: not resolved, added fixme tag"
         else:
-            res_str = "Resolved, using %s (%s)" % (dst[k], solution)
+            res_str = f"Resolved, using {dst[k]} {solution}"
         if fixme or solution not in ("list", "prioritized layer"):
             _log.warning(f"Conflicting value for key '{k}' ('{v}' and '{ov}', RLID {seg.rlid}). {res_str}")
 

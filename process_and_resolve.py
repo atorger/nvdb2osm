@@ -19,6 +19,7 @@ MINOR_HIGHWAYS = [ "residential", "unclassified", "service", "track" ]
 
 NVDB_USED_KEYS = [
     "NVDB_vagnummer",
+    "NVDB_lansbeteckning",
     "NVDB_gagata",
     "NVDB_gangfartsomrode",
     "NVDB_gangfartsomrode_side",
@@ -34,7 +35,7 @@ NVDB_USED_KEYS = [
     "NVDB_road_role",
     "NVDB_government_funded",
     "NVDB_availability_class",
-    "KLASS",
+    "NVDB_funk_klass",
     "FPVKLASS",
     "GCMTYP",
     "KONTRUTION",
@@ -470,7 +471,7 @@ def preprocess_railway_crossings(points, way_db, railways):
         crossing_tag = "level_crossing"
         for w in ways:
             if w.rlid == node.rlid:
-                if "KLASS" not in w.tags:
+                if "NVDB_funk_klass" not in w.tags:
                     crossing_tag = "crossing"
                 crossings = rw_gs.find_crossing_ways(w)
                 for w_and_cp in crossings:
@@ -560,6 +561,22 @@ def compare_vagnummer(r1, r2):
     # Sort on under number
     return u1 - u2
 
+# resolve_vagnummer()
+#
+# fix road number formatting
+#
+def resolve_vagnummer(way):
+    if "NVDB_vagnummer" not in way.tags:
+        return
+    refs = way.tags["NVDB_vagnummer"]
+    lan = way.tags.get("NVDB_lansbeteckning", "NVDB_lansbeteckning_missing")
+    if isinstance(refs, list):
+        refs = [str(r).replace("NVDB_lansbeteckning", lan) for r in refs]
+        refs.sort(key=cmp_to_key(compare_vagnummer))
+    else:
+        refs = str(refs).replace("NVDB_lansbeteckning", lan)
+    way.tags["ref"] = refs
+
 # resolve_highways()
 #
 # Using information from multiple layers, figure out what the highway tag should be (and some side tags)
@@ -572,13 +589,9 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
     for way in way_db:
 
         # convert tags
-        if "NVDB_vagnummer" in way.tags:
-            refs = way.tags["NVDB_vagnummer"]
-            if isinstance(refs, list):
-                refs.sort(key=cmp_to_key(compare_vagnummer))
-            way.tags["ref"] = refs
+        resolve_vagnummer(way)
 
-        klass = int(way.tags.get("KLASS", -1))
+        klass = int(way.tags.get("NVDB_funk_klass", -1))
         tags = {}
         if "GCMTYP" in way.tags:
             # Note GCM-typ values was changed by Trafikverket in November 2021. This code handles only the new values
@@ -660,7 +673,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
         #       Cykelvägskategorier and Gatutyp/Vägtyp.
         elif "NVDB_cykelvagkat" in way.tags \
              and "NVDB_gatutyp" not in way.tags \
-             and "KLASS" not in way.tags:
+             and "NVDB_funk_klass" not in way.tags:
             # value is one of "Regional cykelväg", "Huvudcykelväg", "Lokal cykelväg", we tag all the same
             tags["highway"] = "cycleway"
             tags["foot"] = "yes"
@@ -676,26 +689,26 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             # We ignore NVDB_gangfartsomrode_side, from investigations it seems that even if
             # on only one side the speed limit is set to 5 km/h.
             tags["highway"] = "living_street"
-        elif "NVDB_motorvag" in way.tags:
+        elif "NVDB_motorvag" in way.tags: # replaced by more detailed Gatutyp in AGGREGAT-Vagslag
             tags["highway"] = "motorway"
-        elif "NVDB_motortrafikled" in way.tags:
+        elif "NVDB_motortrafikled" in way.tags: # replaced by more detailed Gatutyp in AGGREGAT-Vagslag
             tags["highway"] = "trunk"
             tags["motorroad"] = "yes"
         elif "ref" in way.tags: # road number
 
             # Note that even if a road has a road number (and is officially for example "Primär Länsväg") we
-            # still use KLASS instead of road number to set primary/secondary/tertiary. It's common that
+            # still use NVDB_funk_klass instead of road number to set primary/secondary/tertiary. It's common that
             # functional class changes even if the road number is the same (as the road gets into more rural areas,
             # functional class is often lowered)
             #
             # There is a less detailed function road class, FPVKLASS, which matches better to what is currently
-            # mapped in OSM, so that is used when it results in a higher level than KLASS.
+            # mapped in OSM, so that is used when it results in a higher level than NVDB_funk_klass.
             #
             # A road with road number will not get worse than tertiary.
             #
             if klass == -1:
-                #raise RuntimeError("KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
-                #print("Warning: KLASS is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
+                #raise RuntimeError("NVDB_funk_klass is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
+                #print("Warning: NVDB_funk_klass is missing for RLID %s (ref %s)" % (way.rlid, way.tags["NVDB_vagnummer"]));
                 tags["fixme"] = "could not resolve highway tag"
             else:
                 fpvklass_translations = {
@@ -711,7 +724,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 else:
                     fpv_level = fpvklass_translations[way.tags.get("FPVKLASS", -1)]
 
-                klass = int(way.tags["KLASS"])
+                klass = int(way.tags["NVDB_funk_klass"])
                 if klass <= 1:
                     k_level = 0 # trunk
                 elif klass <= 2:
@@ -721,8 +734,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 else:
                     k_level = 3 # tertiary
 
-                if fpv_level < k_level:
-                    k_level = fpv_level
+                k_level = min(k_level, fpv_level)
 
                 levels = [ "trunk", "primary", "secondary", "tertiary" ]
                 tags["highway"] = levels[k_level]
@@ -730,7 +742,15 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             gatutyp = way.tags["NVDB_gatutyp"]
             if gatutyp == "Övergripande länk":
                 raise RuntimeError() # should already be handled
-            if gatutyp == "Huvudgata":
+
+            if gatutyp == "Motorväg":
+                tags["highway"] = "motorway"
+            elif gatutyp == "Motortrafikled":
+                tags["highway"] = "trunk"
+                tags["motorroad"] = "yes"
+            elif gatutyp == "Mötesfri väg":
+                tags["highway"] = "trunk"
+            elif gatutyp == "Huvudgata":
                 if klass <= 1:
                     tags["highway"] = "trunk" # 0, 1
                 elif klass <= 2:
@@ -741,6 +761,10 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                     tags["highway"] = "tertiary" # 5
                 else:
                     tags["highway"] = "residential"
+            elif gatutyp == "Landsväg": # should already be handled through road number
+                tags["highway"] = "unclassified"
+            elif gatutyp == "Landsväg liten": # should already be handled through road number
+                tags["highway"] = "unclassified"
             elif gatutyp == "Lokalgata stor":
                 tags["highway"] = "residential"
             elif gatutyp == "Lokalgata liten":
@@ -756,12 +780,16 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
                 tags["highway"] = "unclassified"
             elif gatutyp == "Småväg":
                 tags["highway"] = "unclassified"
+            elif gatutyp == "Småväg enkel standard":
+                tags["highway"] = "track"
+            elif gatutyp == "Oklassificerad":
+                tags["highway"] = "track"
             else:
                 raise RuntimeError(f"Unknown gatutyp {gatutyp}")
-        elif "KLASS" in way.tags:
-            # KLASS (from FunkVagklass) on it's own is used here last as a fallback
-            # when there is no other information to rely on. KLASS is a metric on how
-            # important a road is, and it depends on context. KLASS 8 can for example
+        elif "NVDB_funk_klass" in way.tags:
+            # NVDB_funk_klass (from FunkVagklass) on it's own is used here last as a fallback
+            # when there is no other information to rely on. NVDB_funk_klass is a metric on how
+            # important a road is, and it depends on context. NVDB_funk_klass 8 can for example
             # be used both on forestry roads in rural areas and on living and pedestrian
             # streets in a city.
             #
@@ -773,7 +801,7 @@ def resolve_highways(way_db, small_road_resolve_algorithm):
             # City roads should normally already been resolved by other layers, so here
             # we apply the highway tag as best suited in rural areas. Exception:
             # The NVDB-Gatunamn which provides NVDB_road_role tag is used to differ
-            # between service/unclassified and track on KLASS 8 and 9. (Names on forestry
+            # between service/unclassified and track on NVDB_funk_klass 8 and 9. (Names on forestry
             # and other private roads comes from NVDB-Ovrigt_vagnamn and doesn't have
             # role tag set)
             #
@@ -937,7 +965,7 @@ def upgrade_unclassified_stumps_connected_to_residential(way_db):
 
 # guess_upgrade_tracks
 #
-# There's not enough information for small roads (KLASS (7) 8, 9) so highway tag cannot be 100%
+# There's not enough information for small roads (NVDB_funk_klass (7) 8, 9) so highway tag cannot be 100%
 # correctly resolved, so manual adjustment will be required. The goal of this function is to
 # make guesses that minimizes the need of manual adjustment
 #
@@ -1114,7 +1142,7 @@ def guess_upgrade_tracks(way_db):
     # Upgrade roads that connect larger roads to unclassified
     #
     roads = get_connected_roads(undecided, way_db.gs, \
-                                lambda w : w not in leads_nowhere and w in undecided and int(w.tags.get("KLASS", 9)) <= 8)
+                                lambda w : w not in leads_nowhere and w in undecided and int(w.tags.get("NVDB_funk_klass", 9)) <= 8)
     larger_road_tags = MAJOR_HIGHWAYS + MINOR_HIGHWAYS
     larger_road_tags.remove("track")
     larger_road_tags.remove("service")
@@ -1293,7 +1321,7 @@ def guess_upgrade_tracks(way_db):
 # sort_multiple_road_names()
 #
 # Sort road/street road names for segments that have more than one name.
-# The sorting try to figure out which name is more prominent by assuming the lower KLASS number
+# The sorting try to figure out which name is more prominent by assuming the lower NVDB_funk_klass number
 # (from NVDB-FunkVagklass) is more prominent, and if that is the same, the longer way is used
 #
 # For roundabouts it is assumed that the main name is correct (as we set that before this is called),
@@ -1320,7 +1348,7 @@ def sort_multiple_road_names(way_db):
 
     def follow_road_name(way_db, way, name, other_names):
         len_sum, _ = calc_way_length(way.way)
-        min_klass = way.tags.get("KLASS", 1000)
+        min_klass = way.tags.get("NVDB_funk_klass", 1000)
         if any_in(other_names, get_all_names(way)):
             min_klass = 1000
         match_set = set({ way })
@@ -1339,17 +1367,16 @@ def sort_multiple_road_names(way_db):
                             len_sum += length
                             new_match_set.add(w1)
 
-                            # only consider KLASS if none of the other names is in this segment
+                            # only consider NVDB_funk_klass if none of the other names is in this segment
                             if not any_in(names, other_names):
-                                klass = int(w1.tags.get("KLASS", 1000))
-                                if klass < min_klass:
-                                    min_klass = klass
+                                klass = int(w1.tags.get("NVDB_funk_klass", 1000))
+                                min_klass = min(min_klass, klass)
                         tried_set.add(w1)
             match_set = new_match_set
         return len_sum, min_klass
 
     def compare_nl_item(i1, i2):
-        if i1[2] != i2[2]: # sort on KLASS, lowest number first
+        if i1[2] != i2[2]: # sort on NVDB_funk_klass, lowest number first
             return i1[2] - i2[2]
         if i1[1] != i2[1]: # sort on length, longest length first
             if i1[1] > i2[1]:
@@ -1587,6 +1614,9 @@ def remove_redundant_cycleway_names(way_db):
                 break
     _log.info(f"done (removed {remove_count} redundant names)")
 
+def way_is_small_road_gatutyp(way):
+    return way.tags.get("NVDB_gatutyp", "Småväg") in ("Småväg enkel standard", "Småväg")
+
 # remove_redundant_speed_limits()
 #
 # Sweden have default maxspeed as 70 when there is no road signs, or 50 in residential areas
@@ -1613,10 +1643,10 @@ def remove_redundant_speed_limits(way_db):
         if maxspeed not in (50, 70):
             # not any of the default speeds, keep
             continue
-        if "NVDB_gatutyp" in way.tags:
-            # residential area, keep speed limits
+        if not way_is_small_road_gatutyp(way):
+            # not a basic road outside residential areas, keep speed limits
             continue
-        klass = int(way.tags.get("KLASS", "9"))
+        klass = int(way.tags.get("NVDB_funk_klass", "9"))
         if klass >= 7 and way.tags.get("highway", None) in ["service", "unclassified", "track"]:
             way.tags.pop("maxspeed", None)
             remove_count += 1
@@ -1687,7 +1717,7 @@ def cleanup_highway_widths(way_db):
         if "highway" not in way.tags:
             continue
         highway = way.tags["highway"]
-        if (highway == "unclassified" and "NVDB_gatutyp" not in way.tags) or highway == "track":
+        if (highway == "unclassified" and way_is_small_road_gatutyp(way)) or highway == "track":
             # According to tests, not reliable data, so we remove it
             way.tags.pop("width", None)
             remove_count += 1
@@ -1695,7 +1725,7 @@ def cleanup_highway_widths(way_db):
 
         if apply_second_pass:
             # This is good data, but to some not deemed important enough to keep
-            klass = int(way.tags.get("KLASS", "9"))
+            klass = int(way.tags.get("NVDB_funk_klass", "9"))
             if klass >= 7 or highway == "residential":
                 way.tags.pop("width", None)
                 remove_count += 1
@@ -1769,10 +1799,8 @@ def round_highway_widths(way_db):
             max_width = min_width = road[0].tags["width"]
             for way in road:
                 width = way.tags["width"]
-                if width > max_width:
-                    max_width = width
-                if width < min_width:
-                    min_width = width
+                max_width = max(width, max_width)
+                min_width = min(width, min_width)
             if max_width == min_width:
                 continue
             avg = round((max_width + min_width) / 2, 1)

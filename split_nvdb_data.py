@@ -90,6 +90,7 @@ def read_epsg_shapefile(directory_or_zip, name):
         prefix = split_name[0]
         name = split_name[1]
 
+    gdf_filename = None
     if zipfile.is_zipfile(directory_or_zip):
         zf = zipfile.ZipFile(directory_or_zip)
         files = [fn for fn in zf.namelist() if prefix in fn and fn.endswith(name + ".shp")]
@@ -104,11 +105,11 @@ def read_epsg_shapefile(directory_or_zip, name):
             filename = files[0]
             gdf_filename = files[0]
 
-    if len(files) == 0:
+    if gdf_filename is None:
         _log.warning(f"No file name *{name}.shp in {directory_or_zip}")
         return None
 
-    _log.info(f"Reading file {filename}")
+    _log.info(f"Reading file {gdf_filename}")
     gdf = geopandas.read_file(gdf_filename, encoding='cp1252')
     _log.info(f"done ({len(gdf)} segments)")
     assert gdf.crs == "epsg:3006", "Expected SWEREF 99 (epsg:3006) geometry"
@@ -175,8 +176,8 @@ def main():
         "NVDB*Huvudled",
         "NVDB*InskrTranspFarligtGods",
         "NVDB*Kollektivkorfalt",
-        "NVDB*Motortrafikled",
-        "NVDB*Motorvag",
+        "NVDB*Motortrafikled", # probably obsolete, AGGREGAT*Vagslag has same info
+        "NVDB*Motorvag", # probably obsolete, AGGREGAT*Vagslag has same info
         "NVDB*Ovrigt_vagnamn",
         "NVDB*RekomVagFarligtGods",
         "NVDB*Slitlager",
@@ -185,7 +186,7 @@ def main():
         "NVDB*Vagnummer", # may be replaced with AGGREGAT*Vagslag
         "EVB*Driftbidrag_statligt",
         "VIS*Funktionellt_priovagnat",
-        "VIS*Omkorningsforbud", # may be replaced with NVDB*Forbud_omkorn
+        "VIS*Omkorningsforbud", # probably obsolete, may be replaced with NVDB*Forbud_omkorn
         "VIS*Slitlager",
         "NVDB*Farthinder",
         "NVDB*GCM_passage",
@@ -225,7 +226,7 @@ def main():
     geometry_file = args.geo_file
     output_dir = args.output_dir
     lanskod = int(args.lanskod_filter)
-    include_all_layers = args.include_all_layers;
+    include_all_layers = args.include_all_layers
 
     log_version()
 
@@ -242,14 +243,14 @@ def main():
 
     is_gpkg = is_gpkg_file(geometry_file)
     if is_gpkg:
-        layer_list = get_gpkg_layer_list(geometry_file);
+        layer_list = get_gpkg_layer_list(geometry_file)
         if include_all_layers:
             _log.info("Including all layers without changing their names")
             layer_map = {}
             layer_names = layer_list
             for layer in layer_list:
-                if layer_name.startswith("Net_VAG"):
-                    _log.info(f"skipping layer {layer_name} (Net_VAG layers known to not work)");
+                if layer.startswith("Net_VAG"):
+                    _log.info(f"skipping layer {layer} (Net_VAG layers known to not work)")
                     continue
                 layer_map[layer] = layer
                 _log.info(f"Layer: {layer}")
