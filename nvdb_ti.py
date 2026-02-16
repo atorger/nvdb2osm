@@ -220,17 +220,17 @@ def parse_day_type(values):
 
 # parse_range_date()
 #
-# Translate NVDB range date to OSM syntax (exapmle: "1899-10-11" => "Oct 10")
+# Translate NVDB range date to OSM syntax (example: "1899-10-11" => "Oct 10")
 #
 def parse_range_date(date_str):
     if isinstance(date_str, pd.Timestamp):
         mon = date_str.month
         day = str(date_str.day)
     else:
-        # old string format, may be 1899-10-11 or 1899/10/11
-        date_str = re.split(r"[-/]", date_str)
-        mon = int(date_str[1])
-        day = date_str[2]
+        # old string format, may be 1899-10-11 or 1899/10/11 00:00:00
+        split_date_str = re.split(r"[-/ ]", date_str)
+        mon = int(split_date_str[1])
+        day = str(int(split_date_str[2]))
     mon_str = [ "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ][mon]
     return mon_str + " " + day
 
