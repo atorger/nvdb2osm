@@ -34,16 +34,18 @@ def is_gpkg_file(filename):
         return len(files) > 0
     return str(filename).endswith(".gpkg")
 
-def read_gpkg_layer_names(filename, layer_names):
+def get_gpkg_layer_list(filename):
     if zipfile.is_zipfile(filename):
         zf = zipfile.ZipFile(filename)
         files = [fn for fn in zf.namelist() if fn.endswith(".gpkg")]
         if len(files) > 0:
             filename = "zip://" + str(filename) + "!" + files[0]
 
-    layer_map = {}
     _log.info(f"Reading layer list from {filename}")
-    files = fiona.listlayers(filename)
+    return fiona.listlayers(filename)
+
+def make_gpkg_layer_map(files, layer_names):
+    layer_map = {}
     for layer_name in layer_names:
         name = layer_name
         split_name = name.split('*')
@@ -57,10 +59,10 @@ def read_gpkg_layer_names(filename, layer_names):
             layer_map[layer_name] = matching_files[0]
             _log.info(f"{layer_name} matches layer {matching_files[0]}")
         else:
-            _log.info(f"no matching layer for {layer_name}")
+            _log.warning(f"no matching layer for {layer_name}")
     for layer in files:
         if layer not in layer_map.values():
-            _log.info(f"{layer} unsused")
+            _log.info(f"unsused layer: {layer}")
 
     return layer_map
 
@@ -161,11 +163,12 @@ def main():
         "NVDB*Cirkulationsplats",
         "NVDB*Farjeled",
         "NVDB*ForbjudenFardriktning",
+        "NVDB*Forbud_omkorn",
         "NVDB*ForbudTrafik",
         "NVDB*Gagata",
         "NVDB*Gangfartsomrade",
         "NVDB*Gatunamn",
-        "NVDB*Gatutyp",
+        "NVDB*Gatutyp", # may be replaced with AGGREGAT*Vagslag
         "NVDB*GCM_belyst",
         "NVDB*GCM_separation",
         "NVDB*Hastighetsgrans",
@@ -179,10 +182,10 @@ def main():
         "NVDB*Slitlager",
         "NVDB*Tillganglighet",
         "NVDB*Vagbredd",
-        "NVDB*Vagnummer",
+        "NVDB*Vagnummer", # may be replaced with AGGREGAT*Vagslag
         "EVB*Driftbidrag_statligt",
         "VIS*Funktionellt_priovagnat",
-        "VIS*Omkorningsforbud",
+        "VIS*Omkorningsforbud", # may be replaced with NVDB*Forbud_omkorn
         "VIS*Slitlager",
         "NVDB*Farthinder",
         "NVDB*GCM_passage",
@@ -194,6 +197,9 @@ def main():
         "VIS*Jarnvagskorsning",
         "VIS*P_ficka",
         "VIS*Rastplats",
+        "AGGREGAT*Vagslag", # contains vägnummer mm, overlaps with some other layer (which may or may not be included)
+        "AGGREGAT*Plankorsning_vag_jarnvag",
+        "AGGREGAT*KommunLanReg",
     ]
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -206,6 +212,7 @@ def main():
     parser = argparse.ArgumentParser(description='Split NVDB-data from Trafikverket into smaller files')
     parser.add_argument('geo_file', type=pathlib.Path, help="zip/dir/gpkg with NVDB *.shp/*.gpkg")
     parser.add_argument('output_dir', type=pathlib.Path, help="directory to save output geometry files")
+    parser.add_argument('--include_all_layers', help="Include all layers without name change (for debugging)", action='store_true')
     parser.add_argument('--lanskod_filter', help="Only include municipalities belonging to länskod", default="-1")
     parser.add_argument(
         '-d', '--debug',
@@ -218,6 +225,7 @@ def main():
     geometry_file = args.geo_file
     output_dir = args.output_dir
     lanskod = int(args.lanskod_filter)
+    include_all_layers = args.include_all_layers;
 
     log_version()
 
@@ -234,7 +242,22 @@ def main():
 
     is_gpkg = is_gpkg_file(geometry_file)
     if is_gpkg:
-        layer_map = read_gpkg_layer_names(geometry_file, layer_names)
+        layer_list = get_gpkg_layer_list(geometry_file);
+        if include_all_layers:
+            _log.info("Including all layers without changing their names")
+            layer_map = {}
+            layer_names = layer_list
+            for layer in layer_list:
+                if layer_name.startswith("Net_VAG"):
+                    _log.info(f"skipping layer {layer_name} (Net_VAG layers known to not work)");
+                    continue
+                layer_map[layer] = layer
+                _log.info(f"Layer: {layer}")
+        else:
+            layer_map = make_gpkg_layer_map(layer_list, layer_names)
+    elif include_all_layers:
+        _log.error("The include all layers flag only works with gpkg")
+        sys.exit(1)
 
     for layer_idx, layer_name in enumerate(layer_names):
         _log.info(f"Reading layer {layer_name} ({layer_idx+1} of {len(layer_names)} layers) from {geometry_file}")
